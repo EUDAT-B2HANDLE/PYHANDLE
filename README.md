@@ -20,7 +20,7 @@ As soon as the library is available on PyPi, you can install it via pip:
 
 ## Using the REST interface
 
-1. from pyhandle.handleclient import 
+1. from pyhandle.handleclient import HandleClientFactory
 1. client = HandleClientFactory('rest')
 1. handle = 'prefix/suffix'
 1. record = client.retrieve_handle_record(handle)
