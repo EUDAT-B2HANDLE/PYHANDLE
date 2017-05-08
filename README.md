@@ -20,14 +20,14 @@ As soon as the library is available on PyPi, you can install it via pip:
 
 ## Using the REST interface
 
-1. from pyhandle.handleclient import HandleClientFactory
+1. from pyhandle.handleclient import PyHandleClient
 1. client = HandleClientFactory('rest')
 1. handle = 'prefix/suffix'
 1. record = client.retrieve_handle_record(handle)
 
 ## Using the DB interface (MySQL)
 
-1. from pyhandle.handleclient import HandleClientFactory
+1. from pyhandle.handleclient import PyHandleClient
 1. credentials = {'db_host':'xxx', 'db_user':'xxx', 'db_pass':'xxx', 'db_name':'xxx'}
 1. client = HandleClientFactory('db', credentials)
 1. handle = 'prefix/suffix'
