@@ -60,7 +60,8 @@ handle_server_url = 'https://handle.dkrz.de:8004'
 Now we create a client that has write access to the server.
 
 ```py
-client.instantiate_with_username_and _password(handle_server_url, user, password, HTTPS_verify=False)
+client = PyHandleClient('rest').instantiate_with_username_and _password(handle_server_url, user, password, 
+HTTPS_verify=False)
 ```
 
 In their most simple form, PIDs are simple redirection to a URL. In this case, all they have is an entry that stores the URL. You can simply create such a handle using the method register_handle():
