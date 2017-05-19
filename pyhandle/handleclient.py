@@ -54,7 +54,7 @@ class PyHandleClient(object):
                                                                       reverselookup_password, **config)
     # Methods for REST and DB
 
-    def retrieve_handle(self, handle):
+    def retrieve_handle_record(self, handle):
         return self.handle_client.retrieve_handle_record(handle)
 
     def get_value_from_handle(self, handle, key):
