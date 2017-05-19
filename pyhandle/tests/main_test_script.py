@@ -1,5 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import print_function, absolute_import
+
 import unittest
 import argparse
 import logging
@@ -9,6 +9,7 @@ import pyhandle.tests.testcases as testcases
 
 
 # Unit tests:
+from .testcases.handle_client_factory_unit_test import PyHandleClientTestCase
 from .testcases.handleclient_unit_test import RESTHandleClientNoaccessTestCase
 from .testcases.handleconnector_unit_test import RESTHandleConnectorNoaccessTestCase
 from .testcases.handleclient_read_patched_unit_test import RESTHandleClientReadaccessFakedTestCase
@@ -60,7 +61,7 @@ if __name__ == '__main__':
         mocked_access = True
     if 'read' in param.testtype:
         read_access = True
-        from .testcases.handleclient_read_integration_test import EUDATHandleClientReadaccessTestCase
+        from .testcases.handleclient_read_integration_test import RESTHandleClientReadaccessTestCase
     if 'write' in param.testtype:
         write_access = True
         import logging
@@ -77,6 +78,9 @@ if __name__ == '__main__':
         search_access = True
         from .testcases.handleclient_search_integration_test import RESTHandleClientSearchTestCase
 
+    if 'factory' in param.testtype:
+        factory = True
+        from .testcases.handle_client_factory_unit_test import PyHandleClientTestCase
 
     # Collection tests:
     verbosity = 5
@@ -105,7 +109,7 @@ if __name__ == '__main__':
         n = noaccess_connector.countTestCases()
         numtests += n
         print('Number of tests for handle system connector (no access required):\t\t\t\t' + str(n))
-        
+
         credentials = unittest.TestLoader().loadTestsFromTestCase(PIDClientCredentialsTestCase)
         tests_to_run.append(credentials)
         n = credentials.countTestCases()
@@ -120,25 +124,25 @@ if __name__ == '__main__':
 
     if mocked_access:
 
-        mocked_read = unittest.TestLoader().loadTestsFromTestCase(RESTTHandleClientReadaccessFakedTestCase)
+        mocked_read = unittest.TestLoader().loadTestsFromTestCase(RESTHandleClientReadaccessFakedTestCase)
         tests_to_run.append(mocked_read)
         n = mocked_read.countTestCases()
         numtests += n
         print('Number of tests for client (faked read access):\t\t\t\t\t' + str(n))
 
-        patched_read = unittest.TestLoader().loadTestsFromTestCase(EUDATHandleClientReadaccessPatchedTestCase)
+        patched_read = unittest.TestLoader().loadTestsFromTestCase(RESTHandleClientReadaccessPatchedTestCase)
         tests_to_run.append(patched_read)
         n = patched_read.countTestCases()
         numtests += n
         print('Number of tests for patched read access:\t\t\t\t\t' + str(n))
 
-        patched_write = unittest.TestLoader().loadTestsFromTestCase(EUDATHandleClientWriteaccessPatchedTestCase)
+        patched_write = unittest.TestLoader().loadTestsFromTestCase(RESTHandleClientWriteaccessPatchedTestCase)
         tests_to_run.append(patched_write)
         n = patched_write.countTestCases()
         numtests += n
         print('Number of tests for patched write access:\t\t\t\t\t' + str(n))
 
-        patched_conn = unittest.TestLoader().loadTestsFromTestCase(EUDATHandleConnectorAccessPatchedTestCase)
+        patched_conn = unittest.TestLoader().loadTestsFromTestCase(RESTHandleConnectorAccessPatchedTestCase)
         tests_to_run.append(patched_conn)
         n = patched_conn.countTestCases()
         numtests += n
@@ -147,7 +151,7 @@ if __name__ == '__main__':
 
     if read_access:
 
-        read = unittest.TestLoader().loadTestsFromTestCase(EUDATHandleClientReadaccessTestCase)
+        read = unittest.TestLoader().loadTestsFromTestCase(RESTHandleClientReadaccessTestCase)
         tests_to_run.append(read)
         n = read.countTestCases()
         numtests += n
@@ -155,16 +159,16 @@ if __name__ == '__main__':
 
     if write_access:
 
-        write = unittest.TestLoader().loadTestsFromTestCase(EUDATHandleClientWriteaccessTestCase)
+        write = unittest.TestLoader().loadTestsFromTestCase(RESTHandleClientWriteaccessTestCase)
         tests_to_run.append(write)
         n = write.countTestCases()
         numtests += n
         print('Number of integration tests for client (write access required):\t\t\t' + str(n))
-        
-        
+
+
     if search_access:
 
-        search = unittest.TestLoader().loadTestsFromTestCase(EUDATHandleClientSearchTestCase)
+        search = unittest.TestLoader().loadTestsFromTestCase(RESTHandleClientSearchTestCase)
         tests_to_run.append(search)
         n = search.countTestCases()
         numtests += n

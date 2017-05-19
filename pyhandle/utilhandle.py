@@ -99,7 +99,7 @@ def check_handle_syntax_with_index(string, base_already_checked=False):
         check_handle_syntax(string)
     return True
 
-def create_authentication_string(username, password):
+def                                                                                                                                                                                                                                                         create_authentication_string(username, password):
     '''
     Creates an authentication string from the username and password.
 
