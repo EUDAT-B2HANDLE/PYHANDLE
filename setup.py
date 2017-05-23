@@ -85,7 +85,7 @@ setup(name='pyhandle',
       keywords=['handles', 'PIDs'],   
       download_url='https://github.com/EUDAT-B2SAFE/PYHANDLE',
       license='Apache License 2.0',
-      packages=['pyhandle', 'pyhandle/tests', 'pyhandle/tests/testcases'],
+      packages=find_packages(),
       zip_safe=False,
       install_requires=[
           'requests',
