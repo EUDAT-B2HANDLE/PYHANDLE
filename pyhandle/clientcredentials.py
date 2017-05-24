@@ -12,7 +12,9 @@ import os
 import logging
 import pyhandle
 from pyhandle.handleexceptions import CredentialsFormatError, HandleSyntaxError
+import pyhandle.utilhandle as utilhandle
 import pyhandle.util as util
+
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(util.NullHandler())

@@ -1,0 +1,4 @@
+include README.md
+include pyhandle/tests/resources/*PUBLIC.json
+include pyhandle/tests/testcredentials/*_PUBLIC.json
+include pyhandle/tests/testcredentials/fake_certs_and_keys/*.pem

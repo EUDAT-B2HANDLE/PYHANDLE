@@ -11,6 +11,7 @@ import requests  # This import is needed for mocking in unit tests.
 
 from past.builtins import xrange
 from pyhandle.compatibility_helper import decoded_response, set_encoding_variable
+from pyhandle.pyhandleclient import HandleClient
 from .. import utilhandle
 from .. import hsresponses
 from .. import util
@@ -22,7 +23,7 @@ from ..handleexceptions import IllegalOperationException
 from ..handlesystemconnector import HandleSystemConnector
 from ..searcher import Searcher
 
-      
+
 # parameters for debugging
 # LOG_FILENAME = 'example.log'
 # logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
@@ -35,11 +36,13 @@ encoding_value = set_encoding_variable()
 
 
 
-class RESTHandleClient(object):
+class RESTHandleClient(HandleClient):
     '''
     PyHandle rest client class.
     (formerly B2HANDLE EUDATHandleClient main class)
     '''
+
+    HANDLE_CLIENT = 'rest'
 
     # Instantiation:
     
