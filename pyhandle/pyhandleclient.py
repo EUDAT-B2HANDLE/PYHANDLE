@@ -35,6 +35,9 @@ class HandleClient(object):
     def instantiate_with_credentials(self, credentials, **config):
         raise NotImplementedError()
 
+    def register_handle(self, handle, url, overwrite=False, **args):
+        raise  NotImplementedError()
+
     @classmethod
     def check_client(cls, client):
         return client == cls.HANDLE_CLIENT

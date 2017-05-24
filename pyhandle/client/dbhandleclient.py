@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 import logging
 import pymysql
+import sys
+import time
 
 from .. import util
 from pyhandle.dbhsexceptions import DBHandleNotFoundException, DBHandleKeyNotFoundException, \
@@ -10,10 +12,6 @@ from pyhandle.pyhandleclient import HandleClient
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(util.NullHandler())
-REQUESTLOGGER = logging.getLogger('log_all_requests_of_testcases_to_file')
-REQUESTLOGGER.propagate = False
-
-
 
 class DBHandleClient(HandleClient):
 
@@ -203,6 +201,8 @@ class DBHandleClient(HandleClient):
         '''
         LOGGER.debug('register_handle...')
 
+        ts = int(time.time())
+
         # default idx for url
         idx = 1
         # If already exists and can't be overwritten:
@@ -213,8 +213,12 @@ class DBHandleClient(HandleClient):
                 LOGGER.error(msg + ', as it already exists.')
                 raise DBHandleAlreadyExistsException(handle=handle, msg=msg)
 
-        query = "INSERT INTO handles (handle, idx, type, data) values ('%s', '%s', '%s', '%s')" % (handle, idx, 'URL',
-                                                                                                   url)
+        # Create handle without HS_ADMIN
+        query = "INSERT INTO handles (handle, idx, type, data, ttl_type, ttl, timestamp, admin_read, " \
+                "admin_write, pub_read, " \
+                "pub_write) values (" \
+                "'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (handle, idx, 'URL', url, '0',
+                                                                                       '86400', ts, '1', '1', '1', '0')
         self.execute_query(query)
 
     def add_handle_value(self, handle, key):
@@ -400,6 +404,7 @@ class DBHandleClient(HandleClient):
         :param: handle: The handle in which the value will be added
         :param: **kvpairs: any other key-value pairs
         '''
+        ts = int(time.time())
 
         if kvpairs is not None:
             self.handle_key = str(kvpairs['handle_key'])
@@ -407,8 +412,13 @@ class DBHandleClient(HandleClient):
 
         newidx = self.create_new_index(handle)
 
-        query = "INSERT INTO handles (idx, handle, type, data, ttl_type, ttl) VALUES ('%s', '%s', '%s', '%s', '%s', " \
-                "'%s')" % (newidx, handle, self.handle_key, self.handle_value, '0', '86400')
+        query = "INSERT INTO handles (idx, handle, type, data, ttl_type, ttl, timestamp, admin_read, admin_write, " \
+                "pub_read, " \
+                "pub_write" \
+                ") VALUES ('%s', '%s', '%s', '%s', " \
+                "'%s', '%s', " \
+                "'%s', '%s', '%s', '%s', '%s')" % (newidx, handle, self.handle_key, self.handle_value, '0', '86400',
+                                                   ts, '1', '1', '1', '0')
         result = self.execute_query(query)
 
     def create_new_index(self, handle, url=False, hs_admin=False):
@@ -508,7 +518,7 @@ class DBHandleClient(HandleClient):
 
         handle_records = self.execute_query(query)
 
-        handle_records = self.convert_query_result_to_dict(handle_records)
+        #handle_records = self.convert_query_result_to_dict(handle_records)
 
         return handle_records
 
@@ -516,7 +526,7 @@ class DBHandleClient(HandleClient):
         '''
         Execute the SQL query formulated by user
         :param query: the sql query to be performed
-        :return: handle_record:
+        :return: handle_records:
         '''
 
         handle_records = self.execute_query(query)

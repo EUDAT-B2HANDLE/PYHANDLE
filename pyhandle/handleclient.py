@@ -2,6 +2,7 @@
 This module provides the main client for the PYHANDLE
     library.
 '''
+from __future__ import absolute_import
 
 import logging
 import pyhandle
@@ -57,6 +58,9 @@ class PyHandleClient(object):
     def retrieve_handle_record(self, handle):
         return self.handle_client.retrieve_handle_record(handle)
 
+    def retrieve_handle_record_all(self, handle):
+        return self.handle_client.retrieve_handle_record(handle)
+
     def get_value_from_handle(self, handle, key):
         return self.handle_client.get_value_from_handle(handle, key)
 
@@ -64,7 +68,7 @@ class PyHandleClient(object):
         self.handle_client.modify_handle_value(handle, **kvpairs)
 
     def delete_handle_value(self, handle, key):
-            self.handle_client.delete_handle_value(handle, key)
+        self.handle_client.delete_handle_value(handle, key)
 
     def delete_handle(self, handle):
         self.handle_client.delete_handle(handle)
@@ -73,7 +77,10 @@ class PyHandleClient(object):
         return self.handle_client.generate_and_register_handle(prefix, location, checksum, **extratypes)
 
     def register_handle(self, handle, location, checksum=None, overwrite=False, **extratypes):
-        self.handle_client.register_handle(handle, location, checksum=None, overwrite=False, **extratypes)
+        return self.handle_client.register_handle(handle, location, checksum=None, overwrite=False, **extratypes)
+
+    def search_handle(self, **args):
+        return self.handle_client.search_handle(**args)
 
     # Methods for DB
     def list_handles(self):
@@ -81,3 +88,4 @@ class PyHandleClient(object):
 
     def check_if_handle_exists(self, handle):
         return self.handle_client.check_if_handle_exists(handle)
+
