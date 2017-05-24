@@ -9,7 +9,7 @@ import pyhandle.tests.testcases as testcases
 
 
 # Unit tests:
-from .testcases.handle_client_factory_unit_test import PyHandleClientTestCase
+#from .testcases.handle_client_factory_unit_test import PyHandleClientTestCase
 from .testcases.handleclient_unit_test import RESTHandleClientNoaccessTestCase
 from .testcases.handleconnector_unit_test import RESTHandleConnectorNoaccessTestCase
 from .testcases.handleclient_read_patched_unit_test import RESTHandleClientReadaccessFakedTestCase
