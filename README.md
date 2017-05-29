@@ -19,7 +19,6 @@ As soon as the library is available on PyPi, you can install it via pip:
 * host$ pip install _pyhandle_
 
 
-
 # License
 
 Copyright 2015-2017, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara
