@@ -8,6 +8,7 @@ PyHandle is based on a prior development of the [EUDAT project](https://eudat.eu
 As [B2Handle](https://github.com/EUDAT-B2SAFE/B2HANDLE) was developed with a specific scope - Handle operations in the EUDAT project - in mind, it has been improved and made more generic to cater to a broader audience.
 PyHandle will soon be available on PyPi.
 
+
 # Installation
 
 You can install the PyHandle library as follows:
