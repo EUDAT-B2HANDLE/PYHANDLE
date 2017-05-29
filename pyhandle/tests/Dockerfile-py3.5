@@ -1,0 +1,17 @@
+# vim:set ft=dockerfile:
+FROM       eudat-pyhandle:py3.5
+
+RUN        pip3 install \
+           mock \
+           coverage \
+           nose
+
+VOLUME     /opt/PYHANDLE/pyhandle/tests
+
+WORKDIR    /opt/PYHANDLE/pyhandle/tests
+
+COPY       docker-entrypoint.sh ./
+
+ENTRYPOINT ["./docker-entrypoint.sh"]
+
+CMD        ["coverage"]

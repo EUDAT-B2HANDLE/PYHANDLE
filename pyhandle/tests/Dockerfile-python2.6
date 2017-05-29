@@ -1,0 +1,22 @@
+# vim:set ft=dockerfile:
+FROM       eudat-pyhandle:python2.6
+
+RUN        easy_install pip
+RUN        pip install \
+           argparse \
+           unittest2 \
+           mock \
+           coverage \
+           nose
+RUN        pip install setuptools
+RUN 	   apt-get update && apt-get install -y python-setuptools
+
+VOLUME     /opt/PYHANDLE/pyhandle/tests
+
+WORKDIR    /opt/PYHANDLE/pyhandle/tests
+
+COPY       docker-entrypoint.sh ./
+
+ENTRYPOINT ["./docker-entrypoint.sh"]
+
+CMD ["coverage"]
