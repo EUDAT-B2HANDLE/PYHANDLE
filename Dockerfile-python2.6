@@ -4,8 +4,8 @@ FROM       centos:6
 RUN        yum -y update && yum clean all && yum -y install \
            python-setuptools
 
-ADD        . /opt/B2HANDLE
+ADD        . /opt/PYHANDLE
 
-WORKDIR    /opt/B2HANDLE
+WORKDIR    /opt/PYHANDLE
 
 RUN python setup.py install

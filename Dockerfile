@@ -8,8 +8,8 @@ RUN        apt-get update && apt-get install -y --no-install-recommends \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
-ADD        . /opt/B2HANDLE
+ADD        . /opt/PYHANDLE
 
-WORKDIR    /opt/B2HANDLE
+WORKDIR    /opt/PYHANDLE
 
 RUN python setup.py install
