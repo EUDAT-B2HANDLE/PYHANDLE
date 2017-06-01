@@ -24,8 +24,6 @@ Contents:
    pyhandleclient
    pyhandleclientrest
    pyhandleclientdb
-.. todo::
-   PyHandleBatch
 
 Indices and tables
 ==================

@@ -19,6 +19,13 @@ You can install the PyHandle library as follows:
 As soon as the library is available on PyPi, you can install it via pip:
 * host$ pip install _pyhandle_
 
+# Building the documentation
+
+PyHandle uses [Sphinx](http://www.sphinx-doc.org) for documentation, requiring at least version 1.3. Sphinx and the 
+sphinx_rtd_theme can be installed via pip. To build HTML documentation locally, then run:
+```bash
+python setup.py build_sphinx
+```
 
 # License
 

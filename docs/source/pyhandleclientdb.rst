@@ -89,7 +89,7 @@ Handle record methods
 
 .. automethod:: pyhandle.client.dbhandleclient.DBHandleClient.search_handle
 
-.. automodule:: pyhandle.client.dbhandleclient.DBHandleClient.list_all_handles
+.. automethod:: pyhandle.client.dbhandleclient.DBHandleClient.list_all_handles
 
 Helper methods
 --------------
