@@ -52,9 +52,9 @@ print(value2)
 For modifying/creating handle records, we first need to authenticate. In this tutorial, we will use a username and a password. (There is other methods, e.g. using client certificates.)
 
 ```py
-user = '300:21.T14998/USER_TRAINING'
-password = 'K_rTb39UsG+M'
-handle_server_url = 'https://handle.dkrz.de:8004'
+user = '300:xxxx/xxxx'
+password = 'xxxxxxx'
+handle_server_url = 'xxxxxxxx'
 ```
 
 Now we create a client that has write access to the server.
