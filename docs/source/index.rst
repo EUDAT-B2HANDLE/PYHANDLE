@@ -13,7 +13,8 @@ The library offers both a client for the HTTP REST interface and a client that i
 .. important::
    In order to perform operations on Handles it is mandatory to select which client you want to work with.
    There are currently two interfaces to interact with Handle System server: The REST interface and the native (SQL)
-   database.
+   database (see :doc:`pyhandleclient`).
+
 
 
 Contents:

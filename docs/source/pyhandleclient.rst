@@ -30,11 +30,11 @@ and then:
 
 * DB
 
-  .. code:: python
+.. code:: python
 
    client = PyHandleClient('db', credentials)
 
-The *credentials* parameter is not required when creating a REST client. It has instantiation methods that are
+The *credentials* parameter is not required when creating a REST client. The latter has instantiation methods, which are
 presented in `Instantiation`_
 The credentials are mandatory when creating a DB client. In that case, information about the database have to be
 passed to the client (see :doc:`pyhandleclientdb`).
@@ -43,7 +43,7 @@ passed to the client (see :doc:`pyhandleclientdb`).
 Instantiation
 =============
 
-When creating a REST client instance there are several constructors with differences in
+When instantiating the REST client there are several constructors with differences in
 the permissions and thus possible actions on the Handle server.
 Aside from the default constructor :meth:`~pyhandle.client.resthandleclient.RESTHandleClient.__init__`, there are
 several shorthand constructors:

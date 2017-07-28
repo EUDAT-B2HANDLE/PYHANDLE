@@ -58,8 +58,6 @@ Modifying a Handle record
 Searching for a Handle
   Use :meth:`~pyhandle.client.dbhandleclient.DBHandleClient.search_handle` to search for Handles with a specific key and
   value.
-  Please note that searching requires access to a search servlet whose access information, if it differs from the handle server,
-  has to be specified at client instantiation.
 
 
 Full method documentation
