@@ -38,6 +38,12 @@ class HandleClient(object):
     def register_handle(self, handle, url, overwrite=False, **args):
         raise  NotImplementedError()
 
+    def add_admin_entry(self, handle):
+        raise NotImplementedError()
+
+    def get_query_from_user(self, query):
+        raise NotImplementedError()
+
     @classmethod
     def check_client(cls, client):
         return client == cls.HANDLE_CLIENT

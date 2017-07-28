@@ -2,10 +2,14 @@ from __future__ import absolute_import
 
 import logging
 import pymysql
+import uuid
 import sys
-import time
+
+
 
 from .. import util
+from ..util import timemanager
+
 from pyhandle.dbhsexceptions import DBHandleNotFoundException, DBHandleKeyNotFoundException, \
     DBHandleAlreadyExistsException, DBHandleKeyNotSpecifiedException
 from pyhandle.pyhandleclient import HandleClient
@@ -57,7 +61,9 @@ class DBHandleClient(HandleClient):
     def execute_query(self, query):
         '''
         Execute the SQL query.
+
         :param query: the sql query to be performed
+
         :return: result_as_dict: the result of the sql query as dictionary
         '''
 
@@ -83,9 +89,11 @@ class DBHandleClient(HandleClient):
         '''
         Search for handles containing the specified key with the specified
         value.
+
         :param key_value_pairs: Optional. Several search fields and values can
             be specified as key-value-pairs,
             e.g. CHECKSUM=123456, URL=www.foo.com
+
         :return: A list of all Handles (list of strings) that bear the given key with
             given value of given prefix or server. The list may be empty and
             may also contain more than one element.
@@ -113,11 +121,44 @@ class DBHandleClient(HandleClient):
 
         return list_handles
 
+    def search_handle_multiple_keys(self, **args):
+        '''
+        Search for handles containing the specified key with the specified
+        value.
+
+        :param **args: Several search fields and values can
+            be specified as key-value-pairs,
+            e.g. CHECKSUM=123456, URL=www.foo.com
+
+        :return: A list of all Handles (list of strings) that bear the given key with
+            given value of given prefix or server. The list may be empty and
+            may also contain more than one element.
+        '''
+
+        query_result = []
+
+        # Check if there is any key-value pairs to be searched.
+        if len(args) == 0:
+            LOGGER.debug('search_handle: No key value pair was specified.')
+            msg = 'No search terms have been specified. Please specify' + \
+                  ' at least one key-value-pair.'
+            raise DBHandleKeyNotSpecifiedException(msg=msg)
+
+        for key, value in args.items():
+            query = "SELECT handle from handles WHERE type in ('%s') AND data in ('%s')" % (key, value)
+            query_result.append(self.execute_query(query))
+            if query_result is None:
+                break
+
+
+        return query_result
+
     def execute_query_customized(self, handle, key=None, query=None):
         '''
-        Execute the SQL query
+        Execute the customized SQL query.
+
         :param query: the sql query to be performed
-        :return: result: query result as list of dictionaries
+        :return: Query result as list of dictionaries
         '''
 
         LOGGER.debug('Get handle, key and execute query')
@@ -138,8 +179,9 @@ class DBHandleClient(HandleClient):
     def convert_query_result_to_dict(self, query_result):
         '''
         Convert the query result (list) to dictionary
+
         :param query_result: the result of the sql query (list)
-        :return: query_as_dict
+        :return: The result of the query as a dictionary (No HS values)
         '''
 
         LOGGER.debug('Convert query result to dict')
@@ -167,8 +209,9 @@ class DBHandleClient(HandleClient):
     def check_if_handle_exists(self, handle):
         '''
         This statement is used to query whether or not a given handle exists in the database
-        :param handle: The handle being queried
-        :return: True if handle exists
+
+        :param handle: The handle being queried.
+        :return: True if handle exists.
         '''
 
         query_result_as_dict = {}
@@ -184,6 +227,52 @@ class DBHandleClient(HandleClient):
         else:
             return False
 
+    def generate_PID_name(self, prefix=None):
+        '''
+        Generate a unique random Handle name (random UUID). The Handle is not
+        registered. If a prefix is specified, the PID name has the syntax
+        <prefix>/<generatedname>, otherwise it just returns the generated
+        random name (suffix for the Handle).
+
+        :param prefix: Optional. The prefix to be used for the Handle name.
+        :return: The handle name in the form <prefix>/<generatedsuffix> or
+            <generatedsuffix>.
+        '''
+
+        LOGGER.debug('generate_PID_name...')
+
+        randomuuid = uuid.uuid4()
+        if prefix is not None:
+            return prefix + '/' + str(randomuuid)
+        else:
+            return str(randomuuid)
+
+    def generate_and_register_handle(self, prefix, location, checksum=None, **extratypes):
+        '''
+        Register a new Handle with a unique random name (random UUID).
+
+        :param prefix: The prefix of the handle to be registered. The method
+            will generate a suffix.
+        :param location: The URL of the data entity to be referenced.
+        :param checksum: Optional. The checksum string.
+        :param extratypes: Optional. Additional key value pairs as dict.
+
+        :return: The new handle name.
+        '''
+
+        LOGGER.debug('generate_and_register_handle...')
+
+        handle = self.generate_PID_name(prefix)
+        handle = self.register_handle(
+            handle,
+            location,
+            checksum,
+            overwrite=True,
+            **extratypes
+        )
+
+        return handle
+
     def register_handle(self, handle, url, overwrite=False, **args):
         '''
         Register a new Handle with given name. If the handle already exists
@@ -192,38 +281,50 @@ class DBHandleClient(HandleClient):
 
         :param handle: The full name of the handle to be registered (prefix
             and suffix)
-        :param url; The URL of the data entity to be referenced
+        :param url: The URL of the data entity to be referenced
         :param overwrite: Optional. If set to True, an existing handle record
             will be overwritten. Defaults to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
             set to False.
-
         '''
         LOGGER.debug('register_handle...')
 
-        ts = int(time.time())
+        ts = timemanager.generate_timestamp()
+
+        default_admin_value = '07f30000000e302e4e412f32312e543134393938000000c8'
+
+        handle_exists = self.check_if_handle_exists(handle)
 
         # default idx for url
         idx = 1
         # If already exists and can't be overwritten:
         if overwrite == False:
-            handle_exists = self.check_if_handle_exists(handle)
+
             if handle_exists:
                 msg = 'Could not register handle'
                 LOGGER.error(msg + ', as it already exists.')
                 raise DBHandleAlreadyExistsException(handle=handle, msg=msg)
 
+        if handle_exists:
+           self.delete_handle(handle)
+
         # Create handle without HS_ADMIN
         query = "INSERT INTO handles (handle, idx, type, data, ttl_type, ttl, timestamp, admin_read, " \
                 "admin_write, pub_read, " \
                 "pub_write) values (" \
-                "'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (handle, idx, 'URL', url, '0',
+                "'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (handle, idx, 'URL', url,
+                                                                                       '0',
                                                                                        '86400', ts, '1', '1', '1', '0')
         self.execute_query(query)
+
+        # Add HS_ADMIN values (default values 0.NA/prefix)
+
+        self.add_admin_entry(handle)
 
     def add_handle_value(self, handle, key):
         '''
         Add a key-value pair from a handle record.
+
         :param handle: Handle from whose record they entry should be deleted.
         :param key: Key to be deleted.
         '''
@@ -237,11 +338,13 @@ class DBHandleClient(HandleClient):
     def get_value_from_handle(self, handle, key):
         '''
         Retrieve a single value from a single handle.
+
         :param handle: The handle to take the value from.
         :param key: The key.
-        :raises::exc:'~pyhandle.handleexceptions.DBHandleNotFoundException'
-        :raises::exc:'~pyhandle.handleexceptions.DBHandleKeyNotFoundException'
-        :return: string containing the value.
+
+        :raises: :exc:`~pyhandle.dbhsexceptions.DBHandleNotFoundException`
+        :raises: :exc:`~pyhandle.dbhsexceptions.DBHandleKeyNotFoundException`
+        :return: A string containing the value.
         '''
 
         LOGGER.debug('Get value from handle')
@@ -266,9 +369,12 @@ class DBHandleClient(HandleClient):
 
     def delete_handle(self, handle):
         '''
-        Delete handle and its handle record
+        Delete handle and its handle record.
+
         :param handle: Handle being deleted
-        :raises::exc:'~pyhandle.handleexceptions.DBHandleNotFoundException'
+
+        :raises: :exc:`~pyhandle.dbhsexceptions.DBHandleNotFoundException`
+
         '''
 
         LOGGER.debug('delete handle')
@@ -303,9 +409,12 @@ class DBHandleClient(HandleClient):
     def get_list_of_idx(self, handle):
         '''
         Create a list of indices already used.
-        :param handle
-        :return list_idx: list of indices
+
+        :param handle: the handle to extract the indexes from.
+
+        :return: List of indices
         '''
+
         list_idx = []
         query = "SELECT idx FROM handles WHERE handle='%s'" % handle
         query_result = self.execute_query(query)
@@ -315,7 +424,10 @@ class DBHandleClient(HandleClient):
         return list_idx
 
     def list_all_handles(self):
-        ''' Get a list of all of the handles in the database. '''
+        ''' Get a list of all of the handles in the database.
+
+        :return: A list of all handles in the table
+        '''
 
         list_all_handles = []
         query = 'SELECT DISTINCT handle FROM handles'
@@ -326,9 +438,11 @@ class DBHandleClient(HandleClient):
 
     def list_handles_by_prefix(self, prefix):
         ''' Get a list of handles in the database that have a given prefix.
+
         :param prefix: The prefix, including the slash ('/') character.
-        :raises::exc:'~pyhandle.handleexceptions.HandleNotFoundOnDBException'
-        :return handle_records: list of handles
+
+        :raises: :exc:`~pyhandle.handleexceptions.HandleNotFoundOnDBException`
+        :return: List of handles
         '''
 
         query = "SELECT DISTINCT handle FROM handles WHERE handle LIKE '%s'" % prefix
@@ -338,14 +452,22 @@ class DBHandleClient(HandleClient):
     def retrieve_handle_record(self, handle):
         '''
         Retrieve a handle record from the Handle server database as a dict.
-        :param handle
-        :return handle_records_as_dict:
+
+        :param handle: The handle whose record is to be retrieved.
+
+        :raises: :exc:`~pyhandle.dbhsexceptions.DBHandleNotFoundException`
+        :return: The handle record values as a list.
         '''
 
         LOGGER.info("Retrieving handle record (db)")
-        query = "SELECT type, data FROM handles WHERE handle= '%s'" % handle
+        handle_record_exists = self.check_if_handle_exists(handle)
+        if handle_record_exists:
+            query = "SELECT type, data FROM handles WHERE handle= '%s'" % handle
+            handle_records = self.execute_query(query)
+        else:
+            msg = 'Handle not found'
+            raise DBHandleNotFoundException(handle=handle)
 
-        handle_records = self.execute_query(query)
         handle_records_as_dict = self.convert_query_result_to_dict(handle_records)
         return handle_records_as_dict
 
@@ -354,6 +476,7 @@ class DBHandleClient(HandleClient):
         This statement is used to update a single handle value with new values. The value to
         update is identified by the handle and index.
         Modify entries (key-value pairs).
+
         :param handle: Handle whose record is to be modified
         :param key: The key to be added/modified
         :param ttl: Optional. Integer value. If ttl should be set to a
@@ -362,7 +485,8 @@ class DBHandleClient(HandleClient):
             These will be the handle value types and values that will be
             modified. The keys are the names or the handle value types (e.g.
             "URL"). The values are the new values to store in "data".
-        :raises::exc:`~pyhandle.dbhsexceptions.DBHandleNotFoundException`
+
+        :raises: :exc:`~pyhandle.dbhsexceptions.DBHandleNotFoundException`
         '''
 
         LOGGER.info("Modify handle value (db)")
@@ -394,6 +518,7 @@ class DBHandleClient(HandleClient):
         query = "SELECT idx FROM handles WHERE handle='%s' AND type= '%s'" % (handle, key)
         query_result = self.execute_query(query)
 
+
         list_idx = query_result[0]['idx']
 
         return list_idx
@@ -401,10 +526,12 @@ class DBHandleClient(HandleClient):
     def create_new_value(self, handle, **kvpairs):
         '''
         Add new handle value.
+
         :param: handle: The handle in which the value will be added
         :param: **kvpairs: any other key-value pairs
         '''
-        ts = int(time.time())
+
+        ts = timemanager.generate_timestamp()
 
         if kvpairs is not None:
             self.handle_key = str(kvpairs['handle_key'])
@@ -413,13 +540,29 @@ class DBHandleClient(HandleClient):
         newidx = self.create_new_index(handle)
 
         query = "INSERT INTO handles (idx, handle, type, data, ttl_type, ttl, timestamp, admin_read, admin_write, " \
-                "pub_read, " \
-                "pub_write" \
-                ") VALUES ('%s', '%s', '%s', '%s', " \
-                "'%s', '%s', " \
-                "'%s', '%s', '%s', '%s', '%s')" % (newidx, handle, self.handle_key, self.handle_value, '0', '86400',
+                "pub_read, pub_write) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" \
+                "" % (newidx, handle, self.handle_key, self.handle_value, '0', '86400', ts, '1', '1', '1', '0')
+        self.execute_query(query)
+
+
+    def add_admin_entry(self, handle):
+        '''
+        Create an HS_ADMIN entry.
+        The admin value is byte array constant, which means that all handle created use the same HS_ADMIN value.
+
+        :param handle: The handle in which the HS-ADMIN value is added
+        '''
+
+        admin_idx = '100'
+        admin_value = '07f30000000e302e4e412f32312e543134393938000000c8'
+
+        ts = timemanager.generate_timestamp()
+
+        query = "INSERT INTO handles (idx, handle, type, data, ttl_type, ttl, timestamp, admin_read, admin_write, " \
+                "pub_read, pub_write) VALUES ('%s', '%s', '%s', X'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" \
+                % (admin_idx, handle, 'HS_ADMIN', admin_value, '0', '86400',
                                                    ts, '1', '1', '1', '0')
-        result = self.execute_query(query)
+        self.execute_query(query)
 
     def create_new_index(self, handle, url=False, hs_admin=False):
         '''
@@ -433,6 +576,7 @@ class DBHandleClient(HandleClient):
             of the following).
         :return: An integer.
         '''
+
         start = 2
 
         # reserved indices:
@@ -474,10 +618,11 @@ class DBHandleClient(HandleClient):
 
     def check_if_key_exists(self, handle, key):
         '''
-        Check if a given key exists in a handle record
+        Check if a given key exists in a handle record.
+
         :param handle: The handle in which the key is searched
         :param key: The key
-        :return True if key exists
+        :return: True if key exists
         '''
 
         query_result = self.retrieve_handle_record(handle)
@@ -491,6 +636,7 @@ class DBHandleClient(HandleClient):
         '''
         This statement is used to retrieve the set of handle values associated with a handle
         from the database.
+
         :param handle: The name of the handle to be queried.
         :return: handle_records: This contains
                 idx positive integer value: unique across all values for the handle
@@ -518,15 +664,14 @@ class DBHandleClient(HandleClient):
 
         handle_records = self.execute_query(query)
 
-        #handle_records = self.convert_query_result_to_dict(handle_records)
-
         return handle_records
 
     def get_query_from_user(self, query):
         '''
-        Execute the SQL query formulated by user
+        Execute the SQL query formulated by user.
+
         :param query: the sql query to be performed
-        :return: handle_records:
+        :return: The handle record
         '''
 
         handle_records = self.execute_query(query)
@@ -536,22 +681,29 @@ class DBHandleClient(HandleClient):
     @staticmethod
     def create_list_of_queries(query):
         '''
-        Create a list of queries, which will be executed in a specific order
+        Create a list of queries, which will be executed in a specific order.
+
         :param query: The query to be added to the list.
-        :return query_list: A list of queries
+        :return: A list of queries
         '''
 
         list_queries = []
         list_queries.append(query)
         return list_queries
 
-
-    def connection_status(self, handle_db_connection):
-        if self.__handle_db_connection:
+    @staticmethod
+    def connection_status(handle_db_connection):
+        '''
+        Check whether a connection to DB is open.
+        :param handle_db_connection:
+        :return: True if connection is open
+        '''
+        if handle_db_connection:
             return True
         return False
 
     def _db_disconnect(self):
         ''' Close the connection to the database. '''
+
         self._handle_db_connection.close()
 

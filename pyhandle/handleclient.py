@@ -24,6 +24,12 @@ class PyHandleClient(object):
     HANDLE_CLIENTS = [DBHandleClient, RESTHandleClient]
 
     def __init__(self, client, credentials=None):
+        '''
+        Initialize a REST or Db client.
+
+        :param client: A string that can be 'rest' or 'db'
+        :param credentials: Optional: key-value pairs to specify credentials for the MySQL database.
+        '''
         allowed_args = ['rest', 'db', 'batch']
         if client in allowed_args:
             self.client = client
@@ -33,6 +39,10 @@ class PyHandleClient(object):
             raise ValueError("Allowed clients: 'rest', 'db' or 'batch'")
 
     def select_handle_client(self):
+        '''
+        Instantiate REST or DB client.
+        :return: Instance of the client.
+        '''
         for client in self.HANDLE_CLIENTS:
             if client.check_client(self.client):
                 return client(self.credentials)
@@ -76,16 +86,27 @@ class PyHandleClient(object):
     def generate_and_register_handle(self, prefix, location, checksum=None, **extratypes):
         return self.handle_client.generate_and_register_handle(prefix, location, checksum, **extratypes)
 
-    def register_handle(self, handle, location, checksum=None, overwrite=False, **extratypes):
-        return self.handle_client.register_handle(handle, location, checksum=None, overwrite=False, **extratypes)
+    def register_handle(self, handle, location, overwrite=False, **extratypes):
+        return self.handle_client.register_handle(handle, location, overwrite, **extratypes)
 
     def search_handle(self, **args):
         return self.handle_client.search_handle(**args)
 
+    def search_handle_multiple_keys(self, **args):
+        return self.handle_client.search_handle_multiple_keys(**args)
+
+    def add_admin_entry(self, handle):
+        return self.handle_client.add_admin_entry(self, handle)
+
+    def get_query_from_user(self, query):
+        return self.handle_client.get_query_from_user(query)
+
     # Methods for DB
-    def list_handles(self):
+    def list_all_handles(self):
         return self.handle_client.list_all_handles()
 
     def check_if_handle_exists(self, handle):
         return self.handle_client.check_if_handle_exists(handle)
 
+    def pretty_print(self, handle):
+        self.handle_client.pretty_print(handle)
