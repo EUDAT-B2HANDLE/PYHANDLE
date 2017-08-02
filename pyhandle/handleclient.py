@@ -69,7 +69,7 @@ class PyHandleClient(object):
         return self.handle_client.retrieve_handle_record(handle)
 
     def retrieve_handle_record_all(self, handle):
-        return self.handle_client.retrieve_handle_record(handle)
+        return self.handle_client.retrieve_handle_record_json(handle)
 
     def get_value_from_handle(self, handle, key):
         return self.handle_client.get_value_from_handle(handle, key)
@@ -108,5 +108,5 @@ class PyHandleClient(object):
     def check_if_handle_exists(self, handle):
         return self.handle_client.check_if_handle_exists(handle)
 
-    def pretty_print(self, handle):
-        self.handle_client.pretty_print(handle)
+    def pretty_print(self, record):
+        return self.handle_client.pretty_print(record)

@@ -1,10 +1,10 @@
-import requests
-
 class HandleClient(object):
-
     HANDLE_CLIENT = None
 
     def retrieve_handle_record(self, handle):
+        raise NotImplementedError()
+
+    def retrieve_handle_record_json(self, handle):
         raise NotImplementedError()
 
     def modify_handle_value(self, handle, ttl=None, add_if_not_exist=True, **kvpairs):
@@ -36,7 +36,7 @@ class HandleClient(object):
         raise NotImplementedError()
 
     def register_handle(self, handle, url, overwrite=False, **args):
-        raise  NotImplementedError()
+        raise NotImplementedError()
 
     def add_admin_entry(self, handle):
         raise NotImplementedError()

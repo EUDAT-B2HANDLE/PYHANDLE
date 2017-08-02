@@ -1,24 +1,23 @@
 from __future__ import absolute_import
 
 import logging
-import pymysql
-import uuid
 import sys
+import uuid
 
+import pymysql
 
-
-from .. import util
-from ..util import timemanager
-
+from pyhandle.clientcredentials import PIDClientCredentials
 from pyhandle.dbhsexceptions import DBHandleNotFoundException, DBHandleKeyNotFoundException, \
     DBHandleAlreadyExistsException, DBHandleKeyNotSpecifiedException
 from pyhandle.pyhandleclient import HandleClient
+from .. import util
+from ..util import timeutil
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(util.NullHandler())
 
-class DBHandleClient(HandleClient):
 
+class DBHandleClient(HandleClient):
     _handle_db_connection = None
     _handle_db_cur = None
     HANDLE_CLIENT = 'db'
@@ -37,13 +36,18 @@ class DBHandleClient(HandleClient):
 
         super(DBHandleClient, self).__init__()
 
-        if credentials is not None:
-            self.db_host = credentials['db_host']
-            self.db_user = credentials['db_user']
-            self.db_password = credentials['db_password']
-            self.db_name = credentials['db_name']
-        else:
+        if credentials is None:
             raise ValueError('No credentials given')
+
+        if isinstance(credentials, PIDClientCredentials):
+            self.credentials = credentials.get_all_args()
+        else:
+            self.credentials = credentials
+
+        self.db_host = self.credentials['db_host']
+        self.db_user = self.credentials['db_user']
+        self.db_password = self.credentials['db_password']
+        self.db_name = self.credentials['db_name']
 
         try:
             self._handle_db_connection = pymysql.connect(self.db_host,
@@ -105,7 +109,7 @@ class DBHandleClient(HandleClient):
         if len(args) == 0:
             LOGGER.debug('search_handle: No key value pair was specified.')
             msg = 'No search terms have been specified. Please specify' + \
-                ' at least one key-value-pair.'
+                  ' at least one key-value-pair.'
             raise DBHandleKeyNotSpecifiedException(msg=msg)
 
         for key in args.keys():
@@ -149,7 +153,6 @@ class DBHandleClient(HandleClient):
             query_result.append(self.execute_query(query))
             if query_result is None:
                 break
-
 
         return query_result
 
@@ -200,7 +203,7 @@ class DBHandleClient(HandleClient):
             if skip:
                 skip = False
                 continue
-            temp_dict = {query_result[key]['type'].decode('utf-8'):query_result[key]['data'].decode('utf-8')}
+            temp_dict = {query_result[key]['type'].decode('utf-8'): query_result[key]['data'].decode('utf-8')}
             result_as_dict.update(temp_dict)
             LOGGER.debug('Query result %s', result_as_dict)
 
@@ -289,7 +292,7 @@ class DBHandleClient(HandleClient):
         '''
         LOGGER.debug('register_handle...')
 
-        ts = timemanager.generate_timestamp()
+        ts = timeutil.generate_timestamp()
 
         default_admin_value = '07f30000000e302e4e412f32312e543134393938000000c8'
 
@@ -306,15 +309,15 @@ class DBHandleClient(HandleClient):
                 raise DBHandleAlreadyExistsException(handle=handle, msg=msg)
 
         if handle_exists:
-           self.delete_handle(handle)
+            self.delete_handle(handle)
 
         # Create handle without HS_ADMIN
-        query = "INSERT INTO handles (handle, idx, type, data, ttl_type, ttl, timestamp, admin_read, " \
+        query = "INSERT INTO handles (handle, idx, type, data, ttl_type, ttl, timestamp, refs, admin_read, " \
                 "admin_write, pub_read, " \
                 "pub_write) values (" \
-                "'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (handle, idx, 'URL', url,
-                                                                                       '0',
-                                                                                       '86400', ts, '1', '1', '1', '0')
+                "'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (handle, idx, 'URL', url,
+                                                                                             '0', '86400', ts, '', '1',
+                                                                                             '1', '1', '0')
         self.execute_query(query)
 
         # Add HS_ADMIN values (default values 0.NA/prefix)
@@ -332,8 +335,8 @@ class DBHandleClient(HandleClient):
         LOGGER.debug('Add handle value')
 
         if self.check_if_handle_exists(handle):
-           query = "INSERT INTO handles WHERE handle= '%s' AND type='%s'" % (handle, key)
-           self.execute_query_customized(handle, key, query)
+            query = "INSERT INTO handles WHERE handle= '%s' AND type='%s'" % (handle, key)
+            self.execute_query_customized(handle, key, query)
 
     def get_value_from_handle(self, handle, key):
         '''
@@ -471,7 +474,7 @@ class DBHandleClient(HandleClient):
         handle_records_as_dict = self.convert_query_result_to_dict(handle_records)
         return handle_records_as_dict
 
-    def modify_handle_value(self, handle, ttl= None, add_if_not_exists=True, **kvpairs):
+    def modify_handle_value(self, handle, ttl=None, add_if_not_exists=True, **kvpairs):
         '''
         This statement is used to update a single handle value with new values. The value to
         update is identified by the handle and index.
@@ -499,7 +502,7 @@ class DBHandleClient(HandleClient):
         key_exists = self.check_if_key_exists(handle, handle_key[0])
 
         if handle_record_exists:
-            if  key_exists:
+            if key_exists:
                 # update the value of the key
                 idx_key = self.get_idx_existing_key(handle, handle_key[0])
                 query = "UPDATE handles set data = '%s' WHERE handle = '%s' and idx = '%s'" % (handle_value[0], handle,
@@ -507,8 +510,8 @@ class DBHandleClient(HandleClient):
                 self.execute_query(query)
             elif add_if_not_exists:
                 LOGGER.debug('modify_handle_value: Adding entry "' + str(handle_key) + '"' + \
-                        ' to handle ' + handle)
-                self.create_new_value(handle, handle_key = handle_key[0], handle_value = handle_value[0])
+                             ' to handle ' + handle)
+                self.create_new_value(handle, handle_key=handle_key[0], handle_value=handle_value[0])
         else:
             msg = 'Cannot modify unexisting handle'
             raise DBHandleNotFoundException(handle=handle, msg=msg)
@@ -517,7 +520,6 @@ class DBHandleClient(HandleClient):
 
         query = "SELECT idx FROM handles WHERE handle='%s' AND type= '%s'" % (handle, key)
         query_result = self.execute_query(query)
-
 
         list_idx = query_result[0]['idx']
 
@@ -531,7 +533,7 @@ class DBHandleClient(HandleClient):
         :param: **kvpairs: any other key-value pairs
         '''
 
-        ts = timemanager.generate_timestamp()
+        ts = timeutil.generate_timestamp()
 
         if kvpairs is not None:
             self.handle_key = str(kvpairs['handle_key'])
@@ -539,11 +541,11 @@ class DBHandleClient(HandleClient):
 
         newidx = self.create_new_index(handle)
 
-        query = "INSERT INTO handles (idx, handle, type, data, ttl_type, ttl, timestamp, admin_read, admin_write, " \
-                "pub_read, pub_write) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" \
-                "" % (newidx, handle, self.handle_key, self.handle_value, '0', '86400', ts, '1', '1', '1', '0')
+        query = "INSERT INTO handles (idx, handle, type, data, ttl_type, ttl, timestamp, refs, admin_read, " \
+                "admin_write, pub_read, pub_write) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', " \
+                "'%s', '%s', '%s')" % (
+                    newidx, handle, self.handle_key, self.handle_value, '0', '86400', ts, '', '1', '1', '1', '0')
         self.execute_query(query)
-
 
     def add_admin_entry(self, handle):
         '''
@@ -554,14 +556,17 @@ class DBHandleClient(HandleClient):
         '''
 
         admin_idx = '100'
+        # HS_ADMIN values for 0.NA/21.T14998
         admin_value = '07f30000000e302e4e412f32312e543134393938000000c8'
 
-        ts = timemanager.generate_timestamp()
+        ts = timeutil.generate_timestamp()
 
-        query = "INSERT INTO handles (idx, handle, type, data, ttl_type, ttl, timestamp, admin_read, admin_write, " \
-                "pub_read, pub_write) VALUES ('%s', '%s', '%s', X'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" \
+        query = "INSERT INTO handles (idx, handle, type, data, ttl_type, ttl, timestamp, refs, admin_read, " \
+                "admin_write, " \
+                "pub_read, pub_write) VALUES ('%s', '%s', '%s', X'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', " \
+                "'%s')" \
                 % (admin_idx, handle, 'HS_ADMIN', admin_value, '0', '86400',
-                                                   ts, '1', '1', '1', '0')
+                   ts, '', '1', '1', '1', '0')
         self.execute_query(query)
 
     def create_new_index(self, handle, url=False, hs_admin=False):
@@ -583,7 +588,6 @@ class DBHandleClient(HandleClient):
         reserved_for_url = set([1])
         reserved_for_admin = set(range(100, 200))
         prohibited_indices = reserved_for_url | reserved_for_admin
-
 
         if url:
             prohibited_indices = prohibited_indices - reserved_for_url
@@ -612,7 +616,7 @@ class DBHandleClient(HandleClient):
         value_exists = False
 
         if handle_key[0] in handle_record.keys():
-           return True
+            return True
         else:
             return False
 
@@ -632,7 +636,7 @@ class DBHandleClient(HandleClient):
             return True
         return False
 
-    def retrieve_handle_record_all(self, handle):
+    def retrieve_handle_record_json(self, handle):
         '''
         This statement is used to retrieve the set of handle values associated with a handle
         from the database.
@@ -658,9 +662,7 @@ class DBHandleClient(HandleClient):
         '''
 
         # pylint: disable=missing-docstring
-        query = "SELECT idx, type, data, ttl_type, ttl, timestamp, refs, admin_read, admin_write, pub_read, pub_write " \
-                "FROM handles \
-                WHERE handle = '%s'" % handle
+        query = "SELECT idx, type, data, ttl, timestamp FROM handles WHERE handle = '%s'" % handle
 
         handle_records = self.execute_query(query)
 
@@ -690,6 +692,16 @@ class DBHandleClient(HandleClient):
         list_queries = []
         list_queries.append(query)
         return list_queries
+
+    @staticmethod
+    def pretty_print(record):
+        '''
+        Print the query result as a table.
+        :param record: The result of the query as dict.
+        '''
+        for key, value in record.items():
+            print("----------------------------------------")
+            print("{:<15} {:<25}".format(key, value))
 
     @staticmethod
     def connection_status(handle_db_connection):
