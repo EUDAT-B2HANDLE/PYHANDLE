@@ -3,8 +3,9 @@ from __future__ import absolute_import
 import logging
 import sys
 import uuid
-
 import pymysql
+import binascii
+import codecs
 
 from pyhandle.clientcredentials import PIDClientCredentials
 from pyhandle.dbhsexceptions import DBHandleNotFoundException, DBHandleKeyNotFoundException, \
@@ -287,14 +288,27 @@ class DBHandleClient(HandleClient):
         :param url: The URL of the data entity to be referenced
         :param overwrite: Optional. If set to True, an existing handle record
             will be overwritten. Defaults to False.
+        :param **args: Mandatory key_value parameters for the admin of the Handle being created.
+               Example:
+
+                        admin_handle = 'prefix/suffix'.
+
+                        admin_handle_index = 200.
+
+                        perm = '111111111111'
         :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
             set to False.
         '''
         LOGGER.debug('register_handle...')
 
-        ts = timeutil.generate_timestamp()
+        # Get values for HS_ADMIN
+        self.admin_handle = args['admin_handle']
+        self.admin_handle_index = args['admin_handle_index']
+        self.perm = args['permissions']
 
-        default_admin_value = '07f30000000e302e4e412f32312e543134393938000000c8'
+
+        # Set current UNIX time
+        ts = timeutil.generate_timestamp()
 
         handle_exists = self.check_if_handle_exists(handle)
 
@@ -322,7 +336,7 @@ class DBHandleClient(HandleClient):
 
         # Add HS_ADMIN values (default values 0.NA/prefix)
 
-        self.add_admin_entry(handle)
+        self.add_admin_entry(handle, self.admin_handle, self.admin_handle_index, self.perm)
 
     def add_handle_value(self, handle, key):
         '''
@@ -547,17 +561,28 @@ class DBHandleClient(HandleClient):
                     newidx, handle, self.handle_key, self.handle_value, '0', '86400', ts, '', '1', '1', '1', '0')
         self.execute_query(query)
 
-    def add_admin_entry(self, handle):
+    def add_admin_entry(self, handle, admin_handle, admin_handle_index, perm):
         '''
         Create an HS_ADMIN entry.
         The admin value is byte array constant, which means that all handle created use the same HS_ADMIN value.
 
         :param handle: The handle in which the HS-ADMIN value is added
+        :param admin_handle: The administrator of the Handle (prefix/suffx)
+        :param admin_handle_index: The index of the admin_handle
+        :param permission: The permissions of the administrator of the handle in form '101001010100'
         '''
 
+        hsadmin_index = hex(admin_handle_index)[2:]
+        admin_perm = hex(int(perm, 2))[2:]
+
+        if sys.version_info[0] >= 3:
+            admin_handle = codecs.encode(admin_handle.encode(), 'hex').decode('UTF-8')
+        else:
+            admin_handle =  admin_handle.encode('hex')
+
+        hsadmin_hex_value = '0'+admin_perm+"0000000e"+admin_handle+'000000'+ hsadmin_index
+
         admin_idx = '100'
-        # HS_ADMIN values for 0.NA/21.T14998
-        admin_value = '07f30000000e302e4e412f32312e543134393938000000c8'
 
         ts = timeutil.generate_timestamp()
 
@@ -565,7 +590,7 @@ class DBHandleClient(HandleClient):
                 "admin_write, " \
                 "pub_read, pub_write) VALUES ('%s', '%s', '%s', X'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', " \
                 "'%s')" \
-                % (admin_idx, handle, 'HS_ADMIN', admin_value, '0', '86400',
+                % (admin_idx, handle, 'HS_ADMIN', hsadmin_hex_value, '0', '86400',
                    ts, '', '1', '1', '1', '0')
         self.execute_query(query)
 
@@ -718,4 +743,92 @@ class DBHandleClient(HandleClient):
         ''' Close the connection to the database. '''
 
         self._handle_db_connection.close()
+
+    def retrieve_handle_record_all(self, handle):
+        '''
+        Retrieve all Handle record values including HS_ADMIN
+        Extract HS_ADMIN value from the query result and converts it to Hex.
+        :param handle: The handle from which the HS_ADMIN value is retrieved.
+        :return: hsadmin_hex: hexadecimal value of HS_ADMIN.
+        '''
+
+        scale = 16
+
+        num_of_bits = 12
+
+        hsadmin = ''
+
+        handle_records = self.retrieve_handle_record(handle)
+
+        handle_records_json = self.retrieve_handle_record_json(handle)
+
+        # Get value of HS_ADMIN
+        for k in range(len(handle_records_json)):
+            if handle_records_json[k]['type'] == b'HS_ADMIN':
+                hsadmin = handle_records_json[k]['data']
+
+        hexhsadmin = binascii.hexlify(hsadmin)
+
+        hs_admin_index = self.get_hs_admin_index(hexhsadmin)
+
+        length_record = len(hexhsadmin)
+        admin_handle = binascii.unhexlify(hexhsadmin[12:int(length_record-8)]).decode('utf-8')
+
+        # Get and convert permissions
+        permissions = hexhsadmin[:4]
+
+        perm_bin = bin(int(permissions, scale))[2:].zfill(num_of_bits)
+
+        temp_dict = {'handle': admin_handle, 'index': hs_admin_index, 'permissions': perm_bin}
+
+        handle_records.update({'HS_ADMIN':temp_dict})
+
+        return handle_records
+
+    @staticmethod
+    def get_hs_admin_index(hexhsadmin):
+
+        hexadmin_length = len(hexhsadmin)
+        hs_admin_index = int(hexhsadmin[hexadmin_length-2:hexadmin_length], 16)
+
+        return hs_admin_index
+
+    def build_hs_admin_values_from_hex(self, handle_hex):
+        '''
+        Build the string representation of the HS-ADMIN.
+        Example: 'HS_ADMIN': "{'handle': 'prefix/suffix', 'index': 200, 'permissions': '011111110011'}",
+        :param handle_hex: The value of the handle record in hex format
+        :return: hsadmin_dict: HS_ADMIN values in key-value format
+        '''
+        hsadmin = None
+
+        return hsadmin
+
+    def get_permissions_from_hsadmin_hex(self, handle):
+        '''
+        :param handle: The handle for which the permissions are retrieved.
+        :return: permission: Bit-like permissions
+        '''
+
+        handle_record_hex = self.convert_hs_admin_values_to_hex(handle)
+        permissions = handle_record_hex[:4]
+
+        return permissions
+
+    def convert_permissions_to_binary(self, handle):
+        '''
+
+        :param handle:
+        :return: perm_bin
+        '''
+
+        scale = 16
+
+        num_of_bits = 12
+
+        perm = self.get_permissions_from_hsadmin_hex(handle)
+
+        perm_bin = bin(int(perm, scale))[2:].zfill(num_of_bits)
+
+        return perm_bin
 

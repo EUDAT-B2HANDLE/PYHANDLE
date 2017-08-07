@@ -38,10 +38,13 @@ class HandleClient(object):
     def register_handle(self, handle, url, overwrite=False, **args):
         raise NotImplementedError()
 
-    def add_admin_entry(self, handle):
+    def add_admin_entry(self, handle, admin_handle, admin_handle_index, perm):
         raise NotImplementedError()
 
     def get_query_from_user(self, query):
+        raise NotImplementedError()
+
+    def convert_hs_admin_values_to_hex(self, handle):
         raise NotImplementedError()
 
     @classmethod

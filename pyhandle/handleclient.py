@@ -68,8 +68,11 @@ class PyHandleClient(object):
     def retrieve_handle_record(self, handle):
         return self.handle_client.retrieve_handle_record(handle)
 
-    def retrieve_handle_record_all(self, handle):
+    def retrieve_handle_record_json(self, handle):
         return self.handle_client.retrieve_handle_record_json(handle)
+
+    def retrieve_handle_record_all(self, handle):
+        return self.handle_client.retrieve_handle_record_all(handle)
 
     def get_value_from_handle(self, handle, key):
         return self.handle_client.get_value_from_handle(handle, key)
@@ -92,16 +95,15 @@ class PyHandleClient(object):
     def search_handle(self, **args):
         return self.handle_client.search_handle(**args)
 
-    def search_handle_multiple_keys(self, **args):
-        return self.handle_client.search_handle_multiple_keys(**args)
 
-    def add_admin_entry(self, handle):
-        return self.handle_client.add_admin_entry(self, handle)
 
+    # Methods for DB
     def get_query_from_user(self, query):
         return self.handle_client.get_query_from_user(query)
 
-    # Methods for DB
+    def search_handle_multiple_keys(self, **args):
+        return self.handle_client.search_handle_multiple_keys(**args)
+
     def list_all_handles(self):
         return self.handle_client.list_all_handles()
 
