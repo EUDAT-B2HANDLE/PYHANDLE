@@ -1,11 +1,17 @@
+'''
+This class provides different methods to manage Handles using the database interface.
+
+Author: Sofiane Bendoukha (DKRZ), 2017
+'''
 from __future__ import absolute_import
 
+import binascii
+import codecs
 import logging
 import sys
 import uuid
+
 import pymysql
-import binascii
-import codecs
 
 from pyhandle.clientcredentials import PIDClientCredentials
 from pyhandle.dbhsexceptions import DBHandleNotFoundException, DBHandleKeyNotFoundException, \
@@ -306,7 +312,6 @@ class DBHandleClient(HandleClient):
         self.admin_handle_index = args['admin_handle_index']
         self.perm = args['permissions']
 
-
         # Set current UNIX time
         ts = timeutil.generate_timestamp()
 
@@ -578,9 +583,9 @@ class DBHandleClient(HandleClient):
         if sys.version_info[0] >= 3:
             admin_handle = codecs.encode(admin_handle.encode(), 'hex').decode('UTF-8')
         else:
-            admin_handle =  admin_handle.encode('hex')
+            admin_handle = admin_handle.encode('hex')
 
-        hsadmin_hex_value = '0'+admin_perm+"0000000e"+admin_handle+'000000'+ hsadmin_index
+        hsadmin_hex_value = '0' + admin_perm + "0000000e" + admin_handle + '000000' + hsadmin_index
 
         admin_idx = '100'
 
@@ -772,7 +777,7 @@ class DBHandleClient(HandleClient):
         hs_admin_index = self.get_hs_admin_index(hexhsadmin)
 
         length_record = len(hexhsadmin)
-        admin_handle = binascii.unhexlify(hexhsadmin[12:int(length_record-8)]).decode('utf-8')
+        admin_handle = binascii.unhexlify(hexhsadmin[12:int(length_record - 8)]).decode('utf-8')
 
         # Get and convert permissions
         permissions = hexhsadmin[:4]
@@ -781,7 +786,7 @@ class DBHandleClient(HandleClient):
 
         temp_dict = {'handle': admin_handle, 'index': hs_admin_index, 'permissions': perm_bin}
 
-        handle_records.update({'HS_ADMIN':temp_dict})
+        handle_records.update({'HS_ADMIN': temp_dict})
 
         return handle_records
 
@@ -789,7 +794,7 @@ class DBHandleClient(HandleClient):
     def get_hs_admin_index(hexhsadmin):
 
         hexadmin_length = len(hexhsadmin)
-        hs_admin_index = int(hexhsadmin[hexadmin_length-2:hexadmin_length], 16)
+        hs_admin_index = int(hexhsadmin[hexadmin_length - 2:hexadmin_length], 16)
 
         return hs_admin_index
 
@@ -831,4 +836,3 @@ class DBHandleClient(HandleClient):
         perm_bin = bin(int(perm, scale))[2:].zfill(num_of_bits)
 
         return perm_bin
-
