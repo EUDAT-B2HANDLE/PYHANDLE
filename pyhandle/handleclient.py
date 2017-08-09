@@ -11,6 +11,7 @@ import requests
 from . import util
 from pyhandle.client.dbhandleclient import DBHandleClient
 from pyhandle.client.resthandleclient import RESTHandleClient
+from pyhandle.client.batchhandleclient import BatchHandleClient
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(util.NullHandler())
@@ -21,7 +22,7 @@ REQUESTLOGGER.addHandler(util.NullHandler())
 class PyHandleClient(object):
     ''' PYHANDLE main client class '''
 
-    HANDLE_CLIENTS = [DBHandleClient, RESTHandleClient]
+    HANDLE_CLIENTS = [DBHandleClient, RESTHandleClient, BatchHandleClient]
 
     def __init__(self, client, credentials=None):
         '''
@@ -40,12 +41,19 @@ class PyHandleClient(object):
 
     def select_handle_client(self):
         '''
-        Instantiate REST or DB client.
+        Instantiate REST, DB or Batch client.
         :return: Instance of the client.
         '''
+
         for client in self.HANDLE_CLIENTS:
             if client.check_client(self.client):
-                return client(self.credentials)
+                if self.client == 'db':
+                   return client(self.credentials)
+                else:
+                    return client()
+    # Methods for Batch
+    def create_batch_file(self, batch_file_name=None):
+        return self.handle_client.create_batch_file(batch_file_name)
 
     # Instantiate methods for REST
 
@@ -95,7 +103,11 @@ class PyHandleClient(object):
     def search_handle(self, **args):
         return self.handle_client.search_handle(**args)
 
+    def authenticate_seckey(self, user, password):
+       self.handle_client.authenticate_seckey(user, password)
 
+    def authenticate_private_key(self, user, priv_key_path, pass_phrase=None):
+        self.handle_client.authenticate_seckey(user, priv_key_path, pass_phrase)
 
     # Methods for DB
     def get_query_from_user(self, query):
@@ -112,3 +124,9 @@ class PyHandleClient(object):
 
     def pretty_print(self, record):
         return self.handle_client.pretty_print(record)
+
+    def register_handle_batch(self, handle, url, hdl_admin_index, admin_handle, perm):
+        return self.handle_client.register_handle_batch(handle, url, hdl_admin_index, admin_handle, perm)
+
+    def add_handle_value(self, handle, **kvpairs):
+        self.handle_client.add_handle_value(handle, **kvpairs)
