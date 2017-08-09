@@ -75,6 +75,7 @@ class PIDClientCredentials(object):
         initialize the client, these key-value pairs are passed on
         to the client constructor.
 
+        :param client: Client object to the HS ('rest' or 'db')
         :param handle_server_url: Optional. The URL of the Handle System
             server to read from. Defaults to 'https://hdl.handle.net'
         :param username: Optional. This must be a handle value reference in
@@ -107,6 +108,7 @@ class PIDClientCredentials(object):
 
         # Possible arguments:
         useful_args = [
+            'client',
             'handle_server_url',
             'username',
             'password',
@@ -118,7 +120,12 @@ class PIDClientCredentials(object):
             'reverselookup_password',
             'reverselookup_username',
             'reverselookup_baseuri',
-            'credentials_filename'
+            'credentials_filename',
+            'db_host',
+            'db_user',
+            'db_password',
+            'db_name'
+
         ]
         util.add_missing_optional_args_with_value_none(args, useful_args)
 
@@ -126,6 +133,7 @@ class PIDClientCredentials(object):
         self.__all_args = args
 
         # Args that the constructor understands:
+        self.__client = args['client']
         self.__handle_server_url = args['handle_server_url']
         self.__username = args['username']
         self.__password = args['password']
@@ -138,6 +146,10 @@ class PIDClientCredentials(object):
         self.__reverselookup_username = args['reverselookup_username']
         self.__reverselookup_baseuri = args['reverselookup_baseuri']
         self.__credentials_filename = args['credentials_filename']
+        self.__db_host = args['db_host']
+        self.__db_user = args['db_user']
+        self.__db_password = args['db_password']
+        self.__db_name = args['db_name']
 
         # All the other args collected as "additional config":
         self.__additional_config = self.__collect_additional_arguments(args, useful_args)
@@ -243,6 +255,8 @@ class PIDClientCredentials(object):
                 LOGGER.info(msg)
             else:
                 msg = ''
+                if self.__client is None:
+                    msg += 'Client not provided.'
                 if self.__username and not self.__password:
                     msg += 'Username was provided, but no password. '
                 elif self.__password and not self.__username:
@@ -255,11 +269,16 @@ class PIDClientCredentials(object):
                     msg += 'Reverse lookup credentials not checked yet.'
                 elif self.__reverselookup is False:
                     msg += 'Insufficient credentials for searching.'
+
                 raise CredentialsFormatError(msg=msg)
 
     def get_all_args(self):
         # pylint: disable=missing-docstring
         return self.__all_args
+
+    def get_client(self):
+        # pylint: disable=missing-docstring
+        return self.__client
 
     def get_username(self):
         # pylint: disable=missing-docstring
@@ -312,3 +331,19 @@ class PIDClientCredentials(object):
     def get_reverselookup_baseuri(self):
         # pylint: disable=missing-docstring
         return self.__reverselookup_baseuri
+
+    def get_db_host(self):
+        # pylint: disable=missing-docstring
+        return self.__db_host
+
+    def get_db_user(self):
+        # pylint: disable=missing-docstring
+        return self.__db_user
+
+    def get_db_password(self):
+        # pylint: disable=missing-docstring
+        return self.__db_password
+
+    def get_db_name(self):
+        # pylint: disable=missing-docstring
+        return self.__db_name
