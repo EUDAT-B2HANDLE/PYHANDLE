@@ -47,6 +47,15 @@ class HandleClient(object):
     def convert_hs_admin_values_to_hex(self, handle):
         raise NotImplementedError()
 
+    def create_batch_file(self, batch_file_name=None):
+        raise NotImplementedError()
+
+    def authenticate_seckey(self, user, password):
+        raise NotImplementedError()
+
+    def authenticate_pubkey(self, user, priv_key_path, passphrase=None):
+        raise NotImplementedError()
+
     @classmethod
     def check_client(cls, client):
         return client == cls.HANDLE_CLIENT
