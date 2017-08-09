@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import logging
 import os
 
+
 from pyhandle.pyhandleclient import HandleClient
 from .. import util
 
@@ -73,7 +74,6 @@ class BatchHandleClient(HandleClient):
         with open(batch_file, 'a') as bfile:
             bfile.write('\n\nADD ' + handle + '\n1 URL 86400 1110 UTF8 ' + url)
 
-
     def delete_handle(self, handle):
         '''
         This method deletes an existing Handle completely.
@@ -127,7 +127,7 @@ class BatchHandleClient(HandleClient):
                 bfile.write('\nADD ' + handle + '\n' + str(self.index) + ' ' + self.type + ' 86400 1110 UTF8 ' +
                             self.data)
 
-    def delete_handle_value(self, handle, *value_index):
+    def delete_handle_value(self, handle, value_index):
         '''
         This method removes one or more handle values from an existing handle
         :param handle: The handle containing the value to be deleted
@@ -136,15 +136,18 @@ class BatchHandleClient(HandleClient):
         '''
         LOGGER.debug("Modifying a value of handle (batch)")
 
-        batch_file = self.__base_client_batch_path + '/default_batch_file'
+        batch_file = self.__base_client_batch_path + '/handle_batch'
 
-        with open(batch_file, 'a') as bfile:
-            if len(value_index) == 1:
+        if len(value_index) == 1:
+            with open(batch_file, 'a') as bfile:
                 bfile.write('\nREMOVE ' + str(value_index[0]) + ':' + handle)
 
-            else:
+        else:
+            with open(batch_file, 'a') as bfile:
                 for key in range(len(value_index)):
                     bfile.write('\nREMOVE ' + str(value_index[key]) + ':' + handle)
+
+
 
     def authenticate_seckey(self, user, password):
 
