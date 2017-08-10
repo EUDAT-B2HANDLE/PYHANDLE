@@ -11,6 +11,7 @@ import logging
 import sys
 import uuid
 
+
 import pymysql
 
 from pyhandle.clientcredentials import PIDClientCredentials
@@ -577,7 +578,13 @@ class DBHandleClient(HandleClient):
         :param permission: The permissions of the administrator of the handle in form '101001010100'
         '''
 
+        index_length = 8
         hsadmin_index = hex(admin_handle_index)[2:]
+
+        # Add missing values to index hex
+        for k in range(index_length - len(hsadmin_index)):
+            hsadmin_index = "0" + hsadmin_index
+
         admin_perm = hex(int(perm, 2))[2:]
 
         if sys.version_info[0] >= 3:
@@ -585,7 +592,7 @@ class DBHandleClient(HandleClient):
         else:
             admin_handle = admin_handle.encode('hex')
 
-        hsadmin_hex_value = '0' + admin_perm + "0000000e" + admin_handle + '000000' + hsadmin_index
+        hsadmin_hex_value = '0' + admin_perm + "0000000f" + admin_handle + hsadmin_index
 
         admin_idx = '100'
 
@@ -593,7 +600,7 @@ class DBHandleClient(HandleClient):
 
         query = "INSERT INTO handles (idx, handle, type, data, ttl_type, ttl, timestamp, refs, admin_read, " \
                 "admin_write, " \
-                "pub_read, pub_write) VALUES ('%s', '%s', '%s', X'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', " \
+                "pub_read, pub_write) VALUES ('%s', '%s', '%s', UNHEX('%s'), '%s', '%s', '%s', '%s', '%s', '%s', '%s', " \
                 "'%s')" \
                 % (admin_idx, handle, 'HS_ADMIN', hsadmin_hex_value, '0', '86400',
                    ts, '', '1', '1', '1', '0')
@@ -794,7 +801,7 @@ class DBHandleClient(HandleClient):
     def get_hs_admin_index(hexhsadmin):
 
         hexadmin_length = len(hexhsadmin)
-        hs_admin_index = int(hexhsadmin[hexadmin_length - 2:hexadmin_length], 16)
+        hs_admin_index = int(hexhsadmin[hexadmin_length - 8:hexadmin_length], 16)
 
         return hs_admin_index
 
