@@ -24,17 +24,20 @@ class PyHandleClient(object):
 
     HANDLE_CLIENTS = [DBHandleClient, RESTHandleClient, BatchHandleClient]
 
-    def __init__(self, client, credentials=None):
+    def __init__(self, client,  credentials=None, batch_file_path=None):
         '''
         Initialize a REST or Db client.
 
         :param client: A string that can be 'rest' or 'db'
         :param credentials: Optional: key-value pairs to specify credentials for the MySQL database.
         '''
+
         allowed_args = ['rest', 'db', 'batch']
+
         if client in allowed_args:
             self.client = client
             self.credentials = credentials
+            self.batch_file_path = batch_file_path
             self.handle_client = self.select_handle_client()
         else:
             raise ValueError("Allowed clients: 'rest', 'db' or 'batch'")
@@ -49,13 +52,13 @@ class PyHandleClient(object):
             if client.check_client(self.client):
                 if self.client == 'db':
                    return client(self.credentials)
+                elif self.client == 'batch':
+                    return client(batch_file_path=self.batch_file_path)
                 else:
                     return client()
-    # Methods for Batch
-    def create_batch_file(self, batch_file_name=None):
-        return self.handle_client.create_batch_file(batch_file_name)
 
-    # Instantiate methods for REST
+    def create_batch_file(self, overwrite=False):
+        return self.handle_client.create_batch_file(overwrite)
 
     def instantiate_for_read_access(self, **config):
         return self.handle_client.instantiate_for_read_access()
@@ -71,7 +74,6 @@ class PyHandleClient(object):
                                         **config):
         return self.handle_client.instantiate_for_read_and_search(handle_server_url, reverselookup_username,
                                                                       reverselookup_password, **config)
-    # Methods for REST and DB
 
     def retrieve_handle_record(self, handle):
         return self.handle_client.retrieve_handle_record(handle)
@@ -106,15 +108,11 @@ class PyHandleClient(object):
     def authenticate_seckey(self, user, password):
        self.handle_client.authenticate_seckey(user, password)
 
-    def authenticate_private_key(self, user, priv_key_path, pass_phrase=None):
-        self.handle_client.authenticate_seckey(user, priv_key_path, pass_phrase)
+    def authenticate_pubkey(self, user, priv_key_path, pass_phrase=None):
+        self.handle_client.authenticate_pubkey(user, priv_key_path, pass_phrase)
 
-    # Methods for DB
     def get_query_from_user(self, query):
         return self.handle_client.get_query_from_user(query)
-
-    def search_handle_multiple_keys(self, **args):
-        return self.handle_client.search_handle_multiple_keys(**args)
 
     def list_all_handles(self):
         return self.handle_client.list_all_handles()
