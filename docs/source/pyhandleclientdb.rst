@@ -9,7 +9,7 @@ Handle System server.
    The current version of the library supports MySQL database.
 
 .. important::
-   For the Db client there is no read-only mode. All operations require authentication.
+   The DB client does not provide a read-only mode. All operations require authentication.
 
 Instantiation
 =============
