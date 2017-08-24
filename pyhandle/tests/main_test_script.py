@@ -37,14 +37,13 @@ if __name__ == '__main__':
 
     # Reading test types from args:
     parser.add_argument('testtype', metavar='testtype', nargs='*',
-                        help='a test type to run (unit, factorry, db, read, write, and/or search)',
+                        help='a test type to run (unit, read, write, and/or search)',
                         default=["unit"], action="store")
     param = parser.parse_args()
     print("Specified test types: " + str(param.testtype))
 
     write_access = False
     search_access = False
-    db_access = False
     no_access = False
     mocked_access = False
     read_access = False
@@ -72,12 +71,6 @@ if __name__ == '__main__':
         search_access = True
         from .testcases.handleclient_search_integration_test import RESTHandleClientSearchTestCase
 
-    if 'factory' in param.testtype:
-        factory = True
-
-    if 'db' in param.testtype:
-        db_access = True
-        from .testcases.handle_client_db_unit_test import PyHandleClientDBTestCase
 
     # Collection tests:
     verbosity = 5
@@ -164,19 +157,6 @@ if __name__ == '__main__':
         numtests += n
         print('Number of integration tests for searching (search servlet access required):\t' + str(n))
 
-    if db_access:
-        db_access = unittest.TestLoader().loadTestsFromTestCase(PyHandleClientDBTestCase)
-        tests_to_run.append(db_access)
-        n = write.countTestCases()
-        numtests += n
-        print('Number of integration tests for db client:\t' + str(n))
-
-    if factory:
-        factory = unittest.TestLoader().loadTestsFromTestCase(PyHandleClientDBTestCase)
-        tests_to_run.append(factory)
-        n = write.countTestCases()
-        numtests += n
-        print('Number of integration tests for factory class:\t' + str(n))
 
     # Run them
     print('Run ' + str(numtests) + ' tests.')

@@ -15,7 +15,6 @@ from pyhandle.handleexceptions import CredentialsFormatError, HandleSyntaxError
 import pyhandle.utilhandle as utilhandle
 import pyhandle.util as util
 
-
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(util.NullHandler())
 
@@ -127,6 +126,7 @@ class PIDClientCredentials(object):
             'db_name'
 
         ]
+
         util.add_missing_optional_args_with_value_none(args, useful_args)
 
         # Store args
@@ -151,14 +151,45 @@ class PIDClientCredentials(object):
         self.__db_password = args['db_password']
         self.__db_name = args['db_name']
 
+
         # All the other args collected as "additional config":
         self.__additional_config = self.__collect_additional_arguments(args, useful_args)
 
         # Some checks:
         self.__check_handle_syntax()
         self.__check_file_existence()
-        self.__check_if_enough_args_for_revlookup_auth(args)
-        self.__check_if_enough_args_for_hs_auth()
+
+        if self.__check_client_existence():
+            if self.__client == 'db':
+                self.__check_if_enough_args_for_hs_auth_db(args)
+            elif self.__client == 'rest':
+                self.__check_if_enough_args_for_revlookup_auth(args)
+                self.__check_if_enough_args_for_hs_auth()
+        else:
+            msg = 'Client not provided or empty'
+            raise CredentialsFormatError(msg=msg)
+
+    def __check_client_existence(self):
+        if not self.__client:
+            return False
+        return True
+
+
+    def __check_if_enough_args_for_hs_auth_db(self, args):
+
+        db_args = ['db_host', 'db_user', 'db_password', 'db_name']
+
+        empty_args = []
+
+        for k in db_args:
+            if not args[k]:
+                empty_args.append(k)
+
+        if empty_args:
+            msg = '(%s) are missing or empty' % empty_args
+            raise CredentialsFormatError(msg=msg)
+
+
 
     def __collect_additional_arguments(self, args, used_args):
         temp_additional_config = {}
@@ -235,6 +266,10 @@ class PIDClientCredentials(object):
         # Which authentication method?
         authentication_method = None
 
+        # DB authentication
+        if self.__db_host and self.__db_user and self.__db_password and self.__db_name:
+            authentication_method = 'db_auth'
+
         # Username and Password
         if self.__username and self.__password:
             authentication_method = 'user_password'
@@ -255,8 +290,6 @@ class PIDClientCredentials(object):
                 LOGGER.info(msg)
             else:
                 msg = ''
-                if self.__client is None:
-                    msg += 'Client not provided.'
                 if self.__username and not self.__password:
                     msg += 'Username was provided, but no password. '
                 elif self.__password and not self.__username:
@@ -268,7 +301,7 @@ class PIDClientCredentials(object):
                 if self.__reverselookup is None:
                     msg += 'Reverse lookup credentials not checked yet.'
                 elif self.__reverselookup is False:
-                    msg += 'Insufficient credentials for searching.'
+                     msg += 'Insufficient credentials for searching.'
 
                 raise CredentialsFormatError(msg=msg)
 

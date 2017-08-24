@@ -118,7 +118,8 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         username_check_patch.response_value = True
 
         # Make another connector, to add the handle owner:
-        cred = PIDClientCredentials(handle_server_url='http://handle.server',
+        cred = PIDClientCredentials(client='client',
+                                   handle_server_url='http://handle.server',
                                    username='999:user/name',
                                    password='apassword',
                                    prefix='myprefix',
