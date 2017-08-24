@@ -1,8 +1,8 @@
-'''
+"""
 This class provides different methods to manage Handles using the database interface.
 
 Author: Sofiane Bendoukha (DKRZ), 2017
-'''
+"""
 from __future__ import absolute_import
 
 import binascii
@@ -10,14 +10,14 @@ import codecs
 import logging
 import sys
 import uuid
-
-
 import pymysql
+
 
 from pyhandle.clientcredentials import PIDClientCredentials
 from pyhandle.dbhsexceptions import DBHandleNotFoundException, DBHandleKeyNotFoundException, \
     DBHandleAlreadyExistsException, DBHandleKeyNotSpecifiedException
 from pyhandle.pyhandleclient import HandleClient
+
 from .. import util
 from ..util import timeutil
 
@@ -42,7 +42,6 @@ class DBHandleClient(HandleClient):
 
         LOGGER.debug('\n' + 60 * '*' + '\nInstantiation of DBHandleClient\n' + 60 * '*')
 
-        super(DBHandleClient, self).__init__()
 
         if credentials is None:
             raise ValueError('No credentials given')
@@ -97,21 +96,20 @@ class DBHandleClient(HandleClient):
             print(">>>>>>>>>>>>>", code, message)
         return result
 
-    def search_handle(self, **args):
+    def search_handle(self, pattern=None, **args):
         '''
         Search for handles containing the specified key with the specified
-        value.
+        value (one key-value).
 
-        :param key_value_pairs: Optional. Several search fields and values can
-            be specified as key-value-pairs,
-            e.g. CHECKSUM=123456, URL=www.foo.com
-
+        :param pattern: Optional: This value can be set to do search depending on the handle name.
+        :param args: e.g URL='www.example.com'
         :return: A list of all Handles (list of strings) that bear the given key with
             given value of given prefix or server. The list may be empty and
             may also contain more than one element.
         '''
 
-        query_result = None
+        query_result = []
+        list_handles = []
 
         # Check if there is any key-value pairs to be searched.
         if len(args) == 0:
@@ -123,10 +121,12 @@ class DBHandleClient(HandleClient):
         for key in args.keys():
             key = key
             value = args[key]
-            query = "SELECT handle from handles WHERE type='%s' AND data='%s'" % (key, value)
-            query_result = self.execute_query(query)
+            if pattern:
+                query = "SELECT handle from handles WHERE handle LIKE '%s' AND type= '%s' AND data='%s'" % (pattern, key, value)
+            else:
+                query = "SELECT handle from handles WHERE type= '%s' AND data LIKE '%s'" % (key, value)
 
-        list_handles = []
+            query_result = self.execute_query(query)
 
         for key in range(len(query_result)):
             list_handles.append(query_result[key]['handle'])
@@ -135,10 +135,10 @@ class DBHandleClient(HandleClient):
 
     def search_handle_multiple_keys(self, **args):
         '''
-        Search for handles containing the specified key with the specified
-        value.
+        Search for handles containing the specified key(s) with the specified
+        value(s).
 
-        :param **args: Several search fields and values can
+        :param args: Several search fields and values can
             be specified as key-value-pairs,
             e.g. CHECKSUM=123456, URL=www.foo.com
 
@@ -147,27 +147,37 @@ class DBHandleClient(HandleClient):
             may also contain more than one element.
         '''
 
-        query_result = []
+        list_handles = []
+        temp_list = []
 
         # Check if there is any key-value pairs to be searched.
         if len(args) == 0:
-            LOGGER.debug('search_handle: No key value pair was specified.')
-            msg = 'No search terms have been specified. Please specify' + \
-                  ' at least one key-value-pair.'
-            raise DBHandleKeyNotSpecifiedException(msg=msg)
+               LOGGER.debug('search_handle: No key value pair was specified.')
+               msg = 'No search terms have been specified. Please specify' + \
+                 ' at least one key-value-pair.'
+               raise DBHandleKeyNotSpecifiedException(msg=msg)
+
 
         for key, value in args.items():
-            query = "SELECT handle from handles WHERE type in ('%s') AND data in ('%s')" % (key, value)
-            query_result.append(self.execute_query(query))
-            if query_result is None:
-                break
 
-        return query_result
+            query = "SELECT handle from handles WHERE type LIKE '%s' AND data LIKE '%s'" % (key, value)
+            query_result = self.get_query_from_user(query)
+            if query_result is None:
+               break
+            for k in range(len(query_result)):
+                 if query_result[k]['handle'] in list_handles:
+                    temp_list.append(query_result[k]['handle'])
+
+                 list_handles.append(query_result[k]['handle'])
+        return temp_list
+
 
     def execute_query_customized(self, handle, key=None, query=None):
         '''
         Execute the customized SQL query.
 
+        :param key: Optional.
+        :param handle: Handle name
         :param query: the sql query to be performed
         :return: Query result as list of dictionaries
         '''
@@ -295,7 +305,7 @@ class DBHandleClient(HandleClient):
         :param url: The URL of the data entity to be referenced
         :param overwrite: Optional. If set to True, an existing handle record
             will be overwritten. Defaults to False.
-        :param **args: Mandatory key_value parameters for the admin of the Handle being created.
+        :param args: Mandatory key_value parameters for the admin of the Handle being created.
                Example:
 
                         admin_handle = 'prefix/suffix'.
@@ -321,7 +331,7 @@ class DBHandleClient(HandleClient):
         # default idx for url
         idx = 1
         # If already exists and can't be overwritten:
-        if overwrite == False:
+        if not overwrite:
 
             if handle_exists:
                 msg = 'Could not register handle'
@@ -435,7 +445,7 @@ class DBHandleClient(HandleClient):
 
         :param handle: the handle to extract the indexes from.
 
-        :return: List of indices
+        :return: list_idx: List of indices
         '''
 
         list_idx = []
@@ -472,7 +482,7 @@ class DBHandleClient(HandleClient):
         handle_records = self.execute_query(query)
         return handle_records
 
-    def retrieve_handle_record(self, handle):
+    def retrieve_handle_record_without_HS_values(self, handle):
         '''
         Retrieve a handle record from the Handle server database as a dict.
 
@@ -500,14 +510,15 @@ class DBHandleClient(HandleClient):
         update is identified by the handle and index.
         Modify entries (key-value pairs).
 
+
         :param handle: Handle whose record is to be modified
-        :param key: The key to be added/modified
         :param ttl: Optional. Integer value. If ttl should be set to a
             non-default value.
-        :param all other args: The user can specify several key-value-pairs.
+        :param kvpairs: The user can specify several key-value-pairs.
             These will be the handle value types and values that will be
             modified. The keys are the names or the handle value types (e.g.
             "URL"). The values are the new values to store in "data".
+        :param add_if_not_exists: Optional.
 
         :raises: :exc:`~pyhandle.dbhsexceptions.DBHandleNotFoundException`
         '''
@@ -575,7 +586,7 @@ class DBHandleClient(HandleClient):
         :param handle: The handle in which the HS-ADMIN value is added
         :param admin_handle: The administrator of the Handle (prefix/suffx)
         :param admin_handle_index: The index of the admin_handle
-        :param permission: The permissions of the administrator of the handle in form '101001010100'
+        :param perm: The permissions of the administrator of the handle in form '101001010100'
         '''
 
         index_length = 8
@@ -611,7 +622,7 @@ class DBHandleClient(HandleClient):
         Find an index not yet used in the handle record and not reserved for
             any (other) special type.
 
-        :param: handle: The handle in which indices will be allocated
+        :param handle: The handle in which indices will be allocated
         :param url: If True, an index for an URL entry is returned (1, unless
             it is already in use).
         :param hs_admin: If True, an index for HS_ADMIN is returned (100 or one
@@ -622,7 +633,7 @@ class DBHandleClient(HandleClient):
         start = 2
 
         # reserved indices:
-        reserved_for_url = set([1])
+        reserved_for_url = {1}
         reserved_for_admin = set(range(100, 200))
         prohibited_indices = reserved_for_url | reserved_for_admin
 
@@ -647,7 +658,7 @@ class DBHandleClient(HandleClient):
     def check_if_value_exists(self, handle, **kvpairs):
 
         self.handle = handle
-        handle_record = self.retrieve_handle_record(self.handle)
+        handle_record = self.retrieve_handle_record_without_HS_values(self.handle)
         handle_key = kvpairs['handle_key']
 
         value_exists = False
@@ -666,7 +677,7 @@ class DBHandleClient(HandleClient):
         :return: True if key exists
         '''
 
-        query_result = self.retrieve_handle_record(handle)
+        query_result = self.retrieve_handle_record_without_HS_values(handle)
         handle_keys = list(query_result.keys())
 
         if key in handle_keys:
@@ -744,6 +755,7 @@ class DBHandleClient(HandleClient):
     def connection_status(handle_db_connection):
         '''
         Check whether a connection to DB is open.
+
         :param handle_db_connection:
         :return: True if connection is open
         '''
@@ -756,12 +768,13 @@ class DBHandleClient(HandleClient):
 
         self._handle_db_connection.close()
 
-    def retrieve_handle_record_all(self, handle):
+    def retrieve_handle_record(self, handle):
         '''
         Retrieve all Handle record values including HS_ADMIN
         Extract HS_ADMIN value from the query result and converts it to Hex.
-        :param handle: The handle from which the HS_ADMIN value is retrieved.
-        :return: hsadmin_hex: hexadecimal value of HS_ADMIN.
+
+        :param handle: The handle from which the values are retrieved.
+        :return: handle_records: All values of the Handle including HS_ADMIN.
         '''
 
         scale = 16
@@ -770,7 +783,7 @@ class DBHandleClient(HandleClient):
 
         hsadmin = ''
 
-        handle_records = self.retrieve_handle_record(handle)
+        handle_records = self.retrieve_handle_record_without_HS_values(handle)
 
         handle_records_json = self.retrieve_handle_record_json(handle)
 
@@ -805,19 +818,9 @@ class DBHandleClient(HandleClient):
 
         return hs_admin_index
 
-    def build_hs_admin_values_from_hex(self, handle_hex):
-        '''
-        Build the string representation of the HS-ADMIN.
-        Example: 'HS_ADMIN': "{'handle': 'prefix/suffix', 'index': 200, 'permissions': '011111110011'}",
-        :param handle_hex: The value of the handle record in hex format
-        :return: hsadmin_dict: HS_ADMIN values in key-value format
-        '''
-        hsadmin = None
-
-        return hsadmin
-
     def get_permissions_from_hsadmin_hex(self, handle):
         '''
+
         :param handle: The handle for which the permissions are retrieved.
         :return: permission: Bit-like permissions
         '''
@@ -829,8 +832,9 @@ class DBHandleClient(HandleClient):
 
     def convert_permissions_to_binary(self, handle):
         '''
+        Get permissions in HEX form and convert them to binary.
 
-        :param handle:
+        :param handle: The Handle that contains the permissions
         :return: perm_bin
         '''
 

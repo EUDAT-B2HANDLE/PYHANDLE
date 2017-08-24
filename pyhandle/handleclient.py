@@ -8,10 +8,10 @@ import logging
 import pyhandle
 import requests
 
-from . import util
+from pyhandle.client.batchhandleclient import BatchHandleClient
 from pyhandle.client.dbhandleclient import DBHandleClient
 from pyhandle.client.resthandleclient import RESTHandleClient
-from pyhandle.client.batchhandleclient import BatchHandleClient
+from . import util
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(util.NullHandler())
@@ -19,12 +19,13 @@ REQUESTLOGGER = logging.getLogger('log_all_requests_of_testcases_to_file')
 REQUESTLOGGER.propagate = False
 REQUESTLOGGER.addHandler(util.NullHandler())
 
+
 class PyHandleClient(object):
     ''' PYHANDLE main client class '''
 
     HANDLE_CLIENTS = [DBHandleClient, RESTHandleClient, BatchHandleClient]
 
-    def __init__(self, client,  credentials=None, batch_file_path=None):
+    def __init__(self, client, credentials=None, batch_file_path=None):
         '''
         Initialize a REST or Db client.
 
@@ -51,7 +52,7 @@ class PyHandleClient(object):
         for client in self.HANDLE_CLIENTS:
             if client.check_client(self.client):
                 if self.client == 'db':
-                   return client(self.credentials)
+                    return client(self.credentials)
                 elif self.client == 'batch':
                     return client(batch_file_path=self.batch_file_path)
                 else:
@@ -61,7 +62,7 @@ class PyHandleClient(object):
         return self.handle_client.create_batch_file(overwrite)
 
     def instantiate_for_read_access(self, **config):
-        return self.handle_client.instantiate_for_read_access()
+        return self.handle_client.instantiate_for_read_access(config)
 
     def instantiate_with_credentials(self, credentials, **config):
         return self.handle_client.instantiate_with_credentials(credentials, **config)
@@ -73,16 +74,13 @@ class PyHandleClient(object):
     def instantiate_for_read_and_search(self, handle_server_url, reverselookup_username, reverselookup_password,
                                         **config):
         return self.handle_client.instantiate_for_read_and_search(handle_server_url, reverselookup_username,
-                                                                      reverselookup_password, **config)
-
-    def retrieve_handle_record(self, handle):
-        return self.handle_client.retrieve_handle_record(handle)
+                                                                  reverselookup_password, **config)
 
     def retrieve_handle_record_json(self, handle):
         return self.handle_client.retrieve_handle_record_json(handle)
 
-    def retrieve_handle_record_all(self, handle):
-        return self.handle_client.retrieve_handle_record_all(handle)
+    def retrieve_handle_record(self, handle):
+        return self.handle_client.retrieve_handle_record(handle)
 
     def get_value_from_handle(self, handle, key):
         return self.handle_client.get_value_from_handle(handle, key)
@@ -102,11 +100,14 @@ class PyHandleClient(object):
     def register_handle(self, handle, location, overwrite=False, **extratypes):
         return self.handle_client.register_handle(handle, location, overwrite, **extratypes)
 
-    def search_handle(self, **args):
-        return self.handle_client.search_handle(**args)
+    def search_handle(self, pattern=None, **args):
+        return self.handle_client.search_handle(pattern, **args)
+
+    def search_handle_multiple_keys(self, **args):
+        return self.handle_client.search_handle_multiple_keys(**args)
 
     def authenticate_seckey(self, user, password):
-       self.handle_client.authenticate_seckey(user, password)
+        self.handle_client.authenticate_seckey(user, password)
 
     def authenticate_pubkey(self, user, priv_key_path, pass_phrase=None):
         self.handle_client.authenticate_pubkey(user, priv_key_path, pass_phrase)

@@ -1,10 +1,10 @@
 class HandleClient(object):
     HANDLE_CLIENT = None
 
-    def retrieve_handle_record(self, handle):
+    def retrieve_handle_record_json(self, handle):
         raise NotImplementedError()
 
-    def retrieve_handle_record_json(self, handle):
+    def retrieve_handle_record(self, handle):
         raise NotImplementedError()
 
     def modify_handle_value(self, handle, ttl=None, add_if_not_exist=True, **kvpairs):
@@ -55,6 +55,13 @@ class HandleClient(object):
 
     def authenticate_pubkey(self, user, priv_key_path, passphrase=None):
         raise NotImplementedError()
+
+    def search_handle(self, pattern=None, **args):
+        raise NotImplementedError()
+
+    def search_handle_multiple_keys(self, **args):
+        raise NotImplementedError()
+
 
     @classmethod
     def check_client(cls, client):
