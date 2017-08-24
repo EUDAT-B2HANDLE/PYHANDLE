@@ -633,7 +633,7 @@ class DBHandleClient(HandleClient):
         start = 2
 
         # reserved indices:
-        reserved_for_url = {1}
+        reserved_for_url = set([1])
         reserved_for_admin = set(range(100, 200))
         prohibited_indices = reserved_for_url | reserved_for_admin
 
