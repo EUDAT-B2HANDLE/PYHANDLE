@@ -13,17 +13,20 @@ As [B2Handle](https://github.com/EUDAT-B2SAFE/B2HANDLE) was developed with a spe
 # Installation
 
 You can install the PyHandle library as follows:
- 1. host$ git clone https://github.com/EUDAT-B2SAFE/PYHANDLE.git 
- 1. host$ cd PYHANDLE/
- 1. host$ python setup.py install
+ 1. git clone https://github.com/EUDAT-B2SAFE/PYHANDLE.git
+ 1. cd PYHANDLE/
+ 1. python setup.py install
  
-As soon as the library is available on PyPi, you can install it via pip:
-* host$ pip install _pyhandle_
+The library is also available on PyPi and can be installed via pip:
+
+```bash
+ pip install _pyhandle_
+```
 
 # Building the documentation
 
-PyHandle uses [Sphinx](http://www.sphinx-doc.org) for documentation, requiring at least version 1.3. Sphinx and the 
-sphinx_rtd_theme can be installed via pip. To build HTML documentation locally, then run:
+For more details about the library you can build the documention using [Sphinx](http://www.sphinx-doc.org), requiring at least version 1.3. Sphinx and can be installed via pip. To build HTML documentation locally, then run:
+
 ```bash
 python setup.py build_sphinx
 ```
