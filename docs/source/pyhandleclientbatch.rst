@@ -52,13 +52,8 @@ Instantiation only selects the Handle client and set the path of the batch file.
    The absolute path should be given: /abc/xyz/batch_file_name. This path will be used for all operations that come after the instantiation.
 
 
-Batch operations
-================
-
-The following operations are written on the batch file. For the execution see `Executing the batch file`_
-
 Creating batch files
---------------------
+====================
 
 The next step after the instantiation is to create an empty batch file, which contains all the batch operations.
 The latter are *appended* to the created file. To create a batch file use the following code:
@@ -75,6 +70,13 @@ If *overwrite* is set to True the batch file is overwritten, otherwise an except
   client.create_batch_file(overwrite=True)
 
 Default of overwrite is False.
+
+Batch operations
+================
+
+The following operations are written on the batch file. For the execution see `Executing the batch file`_
+
+
 
 Authententicating to Handle server
 ----------------------------------

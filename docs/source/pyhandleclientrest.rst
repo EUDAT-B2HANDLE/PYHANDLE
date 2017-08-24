@@ -35,8 +35,8 @@ Then, use the client's methods to read, create and modify handles.
 
 Search functionality is not offered by the Handle System. For searching, you need access to a customized search servlet.
 
-Instantiation (REST)
-====================
+Instantiation
+=============
 
 When instantiating the REST client there are several constructors with differences in
 the permissions and thus possible actions on the Handle server.
@@ -92,6 +92,7 @@ The JSON file should look like this:
   .. code:: json
 
     {
+      "client":"rest",
       "baseuri": "https://my.handle.server",
       "private_key": "my_private_key.pem",
       "certificate_only": "my_certificate.pem"
