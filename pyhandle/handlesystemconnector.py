@@ -32,7 +32,7 @@ class HandleSystemConnector(object):
 
     def __init__(self, **args):
 
-        pyhandle.util.log_instantiation(LOGGER, 'HandleSystemConnector', args, ['password','reverselookup_password'])
+        pyhandle.util.log_instantiation(LOGGER, 'HandleSystemConnector', args, ['password', 'reverselookup_password'])
 
         # Possible arguments:
         optional_args = [
@@ -83,7 +83,6 @@ class HandleSystemConnector(object):
             self.__setup_for_writeaccess(args)
 
         LOGGER.debug('End of instantiation of the handle system connector.')
-
 
     # Helpers for init method:
 

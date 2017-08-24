@@ -1,20 +1,19 @@
 """Testing methods that need no server access."""
 
 import sys
+
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
     import unittest
 
-import json
-import pyhandle
 from pyhandle.client.resthandleclient import RESTHandleClient
 from pyhandle.handleexceptions import HandleSyntaxError
-from pyhandle.utilhandle import check_handle_syntax, check_handle_syntax_with_index, remove_index_from_handle, create_authentication_string
+from pyhandle.utilhandle import check_handle_syntax, check_handle_syntax_with_index, remove_index_from_handle, \
+    create_authentication_string
+
 
 class RESTHandleClientNoaccessTestCase(unittest.TestCase):
-
-
     def setUp(self):
         self.inst = RESTHandleClient()
 
@@ -27,19 +26,13 @@ class RESTHandleClientNoaccessTestCase(unittest.TestCase):
         """Test constructor without args: No exception raised."""
         inst = RESTHandleClient()
         self.assertIsInstance(inst, RESTHandleClient,
-            'Not a client instance!')
+                              'Not a client instance!')
 
     def test_constructor_with_url(self):
         """Test constructor with one arg (well-formatted server URL): No exception raised."""
         inst = RESTHandleClient('http://foo.bar')
         self.assertIsInstance(inst, RESTHandleClient,
-            'Not a client instance!')
-
-    def test_constructor_with_url(self):
-        """Test constructor with one arg (ill-formatted server URL): No exception raised."""
-        inst = RESTHandleClient('foo')
-        self.assertIsInstance(inst, RESTHandleClient,
-            'Not a client instance!')
+                              'Not a client instance!')
 
     def test_instantiate_for_read_access(self):
         """Testing if instantiating with default handle server works. """
@@ -57,7 +50,6 @@ class RESTHandleClientNoaccessTestCase(unittest.TestCase):
                 None, 'johndoe', 'passywordy')
 
     def test_instantiate_with_username_and_password_noindex(self):
-
         # Try to ceate client instance with username and password
 
         with self.assertRaises(HandleSyntaxError):
@@ -70,14 +62,14 @@ class RESTHandleClientNoaccessTestCase(unittest.TestCase):
         """Test PID generation without prefix."""
         uuid = self.inst.generate_PID_name()
         self.assertFalse('/' in uuid,
-            'There is a slash in the generated PID, even though no prefix was specified.')
+                         'There is a slash in the generated PID, even though no prefix was specified.')
 
     def test_generate_PID_name_with_prefix(self):
         """Test PID generation with prefix."""
         prefix = 'aprefix'
         uuid = self.inst.generate_PID_name(prefix)
-        self.assertTrue(prefix+'/' in uuid,
-            'The specified prefix is not present in the generated PID.')
+        self.assertTrue(prefix + '/' in uuid,
+                        'The specified prefix is not present in the generated PID.')
 
     # Handle syntax
 
@@ -109,7 +101,7 @@ class RESTHandleClientNoaccessTestCase(unittest.TestCase):
         """Test check handle syntax with index."""
         syntax_checked = check_handle_syntax("300:foo/bar")
         self.assertTrue(syntax_checked,
-            'The syntax of the handle is not index:prefix/suffix.')
+                        'The syntax of the handle is not index:prefix/suffix.')
 
     def test_check_handle_syntax_none(self):
         """Test check handle syntax where handle is None"""
@@ -140,23 +132,23 @@ class RESTHandleClientNoaccessTestCase(unittest.TestCase):
         handle_with_index = "300:foo/bar"
         syntax_checked = check_handle_syntax(handle_with_index)
         self.assertTrue(syntax_checked,
-            'Test precondition failed!')
+                        'Test precondition failed!')
         index, handle = remove_index_from_handle(handle_with_index)
         syntax_checked = check_handle_syntax(handle)
         self.assertTrue(syntax_checked,
-            'After removing the index, the syntax of the handle should '+\
-            'be prefix/suffix.')
+                        'After removing the index, the syntax of the handle should ' + \
+                        'be prefix/suffix.')
 
     def test_remove_index_noindex(self):
         handle_with_index = "foo/bar"
         syntax_checked = check_handle_syntax(handle_with_index)
         self.assertTrue(syntax_checked,
-            'Test precondition failed!')
+                        'Test precondition failed!')
         index, handle = remove_index_from_handle(handle_with_index)
         syntax_checked = check_handle_syntax(handle)
         self.assertTrue(syntax_checked,
-            'After removing the index, the syntax of the handle should '+\
-            'be prefix/suffix.')
+                        'After removing the index, the syntax of the handle should ' + \
+                        'be prefix/suffix.')
 
     def test_remove_index_toomany(self):
         handle_with_index = "100:100:foo/bar"
@@ -184,6 +176,4 @@ class RESTHandleClientNoaccessTestCase(unittest.TestCase):
         auth = create_authentication_string('100:user/name', 'password123')
         expected = 'MTAwJTNBdXNlci9uYW1lOnBhc3N3b3JkMTIz'
         self.assertEquals(expected, auth,
-            'Authentication string is: '+auth+', but should be: '+expected)
-
-    
+                          'Authentication string is: ' + auth + ', but should be: ' + expected)

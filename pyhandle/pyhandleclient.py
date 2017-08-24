@@ -1,8 +1,8 @@
-import requests
-
 class HandleClient(object):
-
     HANDLE_CLIENT = None
+
+    def retrieve_handle_record_json(self, handle):
+        raise NotImplementedError()
 
     def retrieve_handle_record(self, handle):
         raise NotImplementedError()
@@ -36,7 +36,32 @@ class HandleClient(object):
         raise NotImplementedError()
 
     def register_handle(self, handle, url, overwrite=False, **args):
-        raise  NotImplementedError()
+        raise NotImplementedError()
+
+    def add_admin_entry(self, handle, admin_handle, admin_handle_index, perm):
+        raise NotImplementedError()
+
+    def get_query_from_user(self, query):
+        raise NotImplementedError()
+
+    def convert_hs_admin_values_to_hex(self, handle):
+        raise NotImplementedError()
+
+    def create_batch_file(self, overwrite=False):
+        raise NotImplementedError()
+
+    def authenticate_seckey(self, user, password):
+        raise NotImplementedError()
+
+    def authenticate_pubkey(self, user, priv_key_path, passphrase=None):
+        raise NotImplementedError()
+
+    def search_handle(self, pattern=None, **args):
+        raise NotImplementedError()
+
+    def search_handle_multiple_keys(self, **args):
+        raise NotImplementedError()
+
 
     @classmethod
     def check_client(cls, client):
