@@ -20,7 +20,7 @@ You can install the PyHandle library as follows:
 The library is also available on PyPi and can be installed via pip:
 
 ```bash
- pip install pyhandle
+ pip install py_handle
 ```
 
 # Building the documentation
