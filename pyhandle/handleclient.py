@@ -79,11 +79,11 @@ class PyHandleClient(object):
     def retrieve_handle_record_json(self, handle):
         return self.handle_client.retrieve_handle_record_json(handle)
 
-    def retrieve_handle_record(self, handle):
-        return self.handle_client.retrieve_handle_record(handle)
+    def retrieve_handle_record(self, handle, handle_record_json=None):
+        return self.handle_client.retrieve_handle_record(handle, handle_record_json)
 
-    def get_value_from_handle(self, handle, key):
-        return self.handle_client.get_value_from_handle(handle, key)
+    def get_value_from_handle(self, handle, key, handle_record_json=None):
+        return self.handle_client.get_value_from_handle(handle, key, handle_record_json)
 
     def modify_handle_value(self, handle, **kvpairs):
         self.handle_client.modify_handle_value(handle, **kvpairs)
@@ -112,6 +112,9 @@ class PyHandleClient(object):
     def authenticate_pubkey(self, user, priv_key_path, pass_phrase=None):
         self.handle_client.authenticate_pubkey(user, priv_key_path, pass_phrase)
 
+    def authenticate_with_credentials(self, credentials, auth_type):
+        self.handle_client.authenticate_with_credentials(credentials, auth_type)
+
     def get_query_from_user(self, query):
         return self.handle_client.get_query_from_user(query)
 
@@ -120,6 +123,9 @@ class PyHandleClient(object):
 
     def check_if_handle_exists(self, handle):
         return self.handle_client.check_if_handle_exists(handle)
+
+    def __get_handle_record_if_necessary(self, handle, handlerecord_json):
+        return self.handle_client.__get_handle_record_if_necessary(handle, handlerecord_json)
 
     def pretty_print(self, record):
         return self.handle_client.pretty_print(record)
