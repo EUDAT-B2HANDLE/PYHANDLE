@@ -262,7 +262,7 @@ class BatchHandleClient(HandleClient):
         :param credentials: A credentials object, see separate class
             PIDClientCredentials.
         :param auth_type: Set authentication type to 'seckey' (username:password)
-        or to pubkey (privatekey | passphrase).
+            or to pubkey (privatekey | passphrase).
         '''
 
         if isinstance(credentials, PIDClientCredentials):

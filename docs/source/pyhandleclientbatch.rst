@@ -38,7 +38,7 @@ The Batch client is instantiated as follows:
    from pyhandle.handleclient import PyHandleClient
    client = PyHandleClient('batch')
 
-If no additional parameters are passed to *PyHandleClient*, a default batch file will be created at the home directory called *handle_batch*.
+If no additional parameters are passed to *PyHandleClient*, a default path for the batch file will be set */<homedirectory>/handle_batch*.
 In order to specify your own path add it as parameter:
 
 .. code:: python
@@ -46,7 +46,7 @@ In order to specify your own path add it as parameter:
    batch_file_path = '/abs/path'
    client = PyHandleClient('batch', batch_file_path)
 
-Instantiation only selects the Handle client and set the path of the batch file. The latter is created by the method :meth:`~pyhandle.client.batchhandlient.BatchHandleClient.create_batch_file`
+Instantiation only selects the Handle client and set the path of the batch file. The latter is created by the method :meth:`~pyhandle.client.batchhandlient.BatchHandleClient.create_batch_file`.
 
 .. important::
    The absolute path should be given: /abc/xyz/batch_file_name. This path will be used for all operations that come after the instantiation.
@@ -85,7 +85,7 @@ In order to administer Handles, you must have administrative rights.
 First line is the operation name: 'AUTHENTICATE'.
 There are two possibilities to authenticate to Handle server:
 
-* By SECKEY: Users must provide {username}:{password} as parameters.
+* By SECKEY (:meth:`~pyhandle.client.batchhandleclient.BatchHandleClient.authenticate_seckey`): Users must provide {username}:{password} as parameters.
   The *username* is the usual Handle identity {index}:{handle}.
 
 First line:
@@ -100,7 +100,7 @@ Second line:
 
   password
 
-* By PUBKEY: Users must provide a private key.
+* By PUBKEY (:meth:`~pyhandle.client.batchhandleclient.BatchHandleClient.authenticate_pubkey`): Users must provide a private key.
 
 First line:
 
@@ -127,6 +127,36 @@ Example of authentication with user name and password:
   username = 'index:prefix/suffix'
   password = 'passoword'
   client.authenticate_seckey(username, password)
+
+* From a credential file: it is also possible to set authentication credentials from a json file. By using the method :meth:`~pyhandle.client.batchhandleclient.BatchHandleClient.authenticate_with_credentials`
+
+Example:
+
+.. code:: python
+
+    from pyhandle.clientcredentials import PIDClientCredentials
+    cred = PIDClientCredentials.load_from_JSON('my_credentials.json')
+    client.authenticate_with_credentials(cred, auth_type='seckey')
+
+This will call the method :meth:`~pyhandle.client.batchhandleclient.BatchHandleClient.authenticate_seckey`
+
+The JSON file should look like this:
+
+  .. code:: json
+
+    {
+      "client":"batch",
+      "username": "username",
+      "password": "password",
+      "private_key": "path/to/private_key",
+      "passphrase": "passphrase"
+    }
+
+This json file contains all mandatory and optional arguments. Depending on the authentication type, the required arguments should be added to json file.
+
+.. important::
+   When the private key is encrypted, the 'passphrase' must be added to json file.
+
 
 Registering new Handles
 -----------------------
@@ -260,6 +290,7 @@ Batch file methods
 .. automethod:: pyhandle.client.batchhandleclient.BatchHandleClient.delete_handle_value
 .. automethod:: pyhandle.client.batchhandleclient.BatchHandleClient.authenticate_seckey
 .. automethod:: pyhandle.client.batchhandleclient.BatchHandleClient.authenticate_pubkey
+.. automethod:: pyhandle.client.batchhandleclient.BatchHandleClient.authenticate_with_credentials
 
 Helper methods
 ==============

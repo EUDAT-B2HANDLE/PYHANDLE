@@ -219,10 +219,14 @@ class Searcher(object):
         passed on to the reverse lookup servlet, possibly causing a
         :exc:`~pyhandle.handleexceptions.ReverseLookupException`.
 
+        You can define the allowed search keys by adding:
+            "allowed_search_keys": ["KEY1", "KEY2", ...],
+
         Example calls:
           * list_of_handles = search_handle('http://www.foo.com')
           * list_of_handles = search_handle('http://www.foo.com', CHECKSUM=99999)
           * list_of_handles = search_handle(URL='http://www.foo.com', CHECKSUM=99999)
+          * list_of_handles = search_handle()
 
         :param URL: Optional. The URL to search for (reverse lookup). [This is
             NOT the URL of the search servlet!]

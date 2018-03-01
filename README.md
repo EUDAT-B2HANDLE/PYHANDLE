@@ -23,6 +23,7 @@ The library is also available on PyPi and can be installed via pip:
  pip install py_handle
 ```
 
+For more information on the methods offered by the library, please consult the [technical documentation](http://eudat-b2safe.github.io/PYHANDLE).
 # Building the documentation
 
 For more details about the library you can build the documention using [Sphinx](http://www.sphinx-doc.org), requiring at least version 1.3. Sphinx and can be installed via pip. To build HTML documentation locally, then run:
