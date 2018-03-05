@@ -12,6 +12,8 @@ from os.path import expanduser
 
 from pyhandle.batchhsexceptions import BatchFileExistsException
 from pyhandle.pyhandleclient import HandleClient
+from pyhandle.clientcredentials import PIDClientCredentials
+
 from .. import util
 
 logging.basicConfig(level=logging.INFO)
@@ -30,10 +32,14 @@ class BatchHandleClient(HandleClient):
         '''
         Initialize the batch client and set the path for the batch file.
 
+        :param credentials: Optional. As json file in form {"user":"user", "password":"password"}
         :param args: Optional. This includes different parameters concerning the batch file, such as the PATH.
         '''
 
         LOGGER.debug('\n' + 60 * '*' + '\nInstantiation of BatchHandleClient\n' + 60 * '*')
+
+
+
 
         super(BatchHandleClient, self).__init__()
 
@@ -72,7 +78,7 @@ class BatchHandleClient(HandleClient):
                 if exc.args[0] == 17:
                     msg = 'Could not create batch file, already exists'
                     LOGGER.error(msg + ', as it already exists.')
-                    raise BatchFileExistsException(file=self._default_batch_file_path, msg=msg)
+                    raise BatchFileExistsException(file=self.get_batch_file_path(), msg=msg)
 
     def register_handle_batch(self, handle, location, hdl_admin_index, admin_handle, perm):
         '''
@@ -209,6 +215,7 @@ class BatchHandleClient(HandleClient):
             "index:prefix/suffix".
         :param password: This is the password stored as secret key in the
             actual Handle value the username points to.
+        :param credentials: Optional. When credentials are
         :raises: :exc:`~pyhandle.batchhsexceptions.BatchFileExistsException`.
 
         '''
@@ -235,7 +242,7 @@ class BatchHandleClient(HandleClient):
         LOGGER.debug("Authenticate with PUBKEY")
 
         if self.check_if_file_exists(self.get_batch_file_path()):
-            if passphrase is not None:
+            if passphrase:
                 with open(self.get_batch_file_path(), 'w+') as bfile:
                     bfile.write('AUTHENTICATE PUBKEY:' + user + '\n' + priv_key_path + '|' + passphrase)
 
@@ -246,6 +253,34 @@ class BatchHandleClient(HandleClient):
         else:
             msg = 'does not exists'
             raise BatchFileExistsException(file=self.get_batch_file_path(), msg=msg)
+
+
+    def authenticate_with_credentials(self, credentials, auth_type):
+        '''
+        Set the credentials for seckey and pubkey authentication.
+
+        :param credentials: A credentials object, see separate class
+            PIDClientCredentials.
+        :param auth_type: Set authentication type to 'seckey' (username:password)
+            or to pubkey (privatekey | passphrase).
+        '''
+
+        if isinstance(credentials, PIDClientCredentials):
+            self.credentials = credentials.get_all_args()
+        else:
+            self.credentials = credentials
+
+        self.username = credentials.get_username()
+        self.password = credentials.get_password()
+        self.private_key = credentials.get_path_to_private_key()
+        self.passphrase = credentials.get_key_passphrase()
+
+
+        if auth_type == "seckey":
+            self.authenticate_seckey(self.username, self.password)
+
+        if auth_type == "pubkey":
+            self.authenticate_pubkey(self.username, self.private_key, passphrase=self.passphrase)
 
     def get_all_args(self):
         return self.__all_args

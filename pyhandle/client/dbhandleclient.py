@@ -12,7 +12,6 @@ import sys
 import uuid
 import pymysql
 
-
 from pyhandle.clientcredentials import PIDClientCredentials
 from pyhandle.dbhsexceptions import DBHandleNotFoundException, DBHandleKeyNotFoundException, \
     DBHandleAlreadyExistsException, DBHandleKeyNotSpecifiedException
@@ -96,12 +95,14 @@ class DBHandleClient(HandleClient):
             print(">>>>>>>>>>>>>", code, message)
         return result
 
-    def search_handle(self, pattern=None, **args):
+    def search_handle(self, pattern=None, limit=None, offset=None, **args):
         '''
         Search for handles containing the specified key with the specified
-        value (one key-value).
+        value (one key-value). The number of record can be controlled by limit and offset.
 
-        :param pattern: Optional: This value can be set to do search depending on the handle name.
+        :param pattern: Optional. This value can be set to do search depending on the handle name.
+        :param limit: Optional. Limit the number of results returned in a SQL statement.
+        :param offset: Optional. Page number, first row to return. Initial raw is 0.
         :param args: e.g URL='www.example.com'
         :return: A list of all Handles (list of strings) that bear the given key with
             given value of given prefix or server. The list may be empty and
@@ -118,13 +119,62 @@ class DBHandleClient(HandleClient):
                   ' at least one key-value-pair.'
             raise DBHandleKeyNotSpecifiedException(msg=msg)
 
+        if limit:
+            if offset is None:
+                offset = 0
+            list_handles= self.__search_handle_limit(
+                pattern=pattern,
+                limit=limit,
+                offset=offset,
+                **args
+            )
+        else:
+           for key in args.keys():
+                key = key
+                value = args[key]
+                if pattern:
+                    query = "SELECT handle from handles WHERE handle LIKE '%s' AND type= '%s' AND data='%s'" % (pattern, key, value)
+                else:
+                    query = "SELECT handle from handles WHERE type= '%s' AND data LIKE '%s'" % (key, value)
+
+                query_result = self.execute_query(query)
+
+           for key in range(len(query_result)):
+                list_handles.append(query_result[key]['handle'])
+
+        return list_handles
+
+    def __search_handle_limit(self, pattern, limit, offset, **args):
+        '''
+        Search handles with limit and offset.
+
+        :param pattern: Optional. This value can be set to do search depending on the handle name.
+        :param limit:  Optional. Number of records to return from the SQL statement.
+        :param offset: Page number, first row to return. Initial raw is 0.
+        :param args: search items as key-value e.g URL='www.example.com'
+        :return: list_handles: A list of all Handles (list of strings) that bear the given key with
+            given value of given prefix or server. The list may be empty and
+            may also contain more than one element.
+        '''
+        query_result = []
+        list_handles = []
+
+        # Check if there is any key-value pairs to be searched.
+        if len(args) == 0:
+            LOGGER.debug('search_handle: No key value pair was specified.')
+            msg = 'No search terms have been specified. Please specify' + \
+                  ' at least one key-value-pair.'
+            raise DBHandleKeyNotSpecifiedException(msg=msg)
+
         for key in args.keys():
             key = key
             value = args[key]
             if pattern:
-                query = "SELECT handle from handles WHERE handle LIKE '%s' AND type= '%s' AND data='%s'" % (pattern, key, value)
+                query = "SELECT handle from handles WHERE handle LIKE '%s' AND type= '%s' AND data='%s' LIMIT %s" \
+                        " OFFSET %s" % (pattern, key, value, limit, offset)
             else:
-                query = "SELECT handle from handles WHERE type= '%s' AND data LIKE '%s'" % (key, value)
+                query = "SELECT handle from handles WHERE type= '%s' AND data LIKE '%s' LIMIT %s OFFSET %s" % (key,
+                value, limit, offset)
 
             query_result = self.execute_query(query)
 
@@ -133,6 +183,7 @@ class DBHandleClient(HandleClient):
 
         return list_handles
 
+    #TODO
     def search_handle_multiple_keys(self, **args):
         '''
         Search for handles containing the specified key(s) with the specified

@@ -11,7 +11,7 @@ import json
 import os
 import logging
 import pyhandle
-from pyhandle.handleexceptions import CredentialsFormatError, HandleSyntaxError
+from   pyhandle.handleexceptions import CredentialsFormatError, HandleSyntaxError
 import pyhandle.utilhandle as utilhandle
 import pyhandle.util as util
 
@@ -123,7 +123,8 @@ class PIDClientCredentials(object):
             'db_host',
             'db_user',
             'db_password',
-            'db_name'
+            'db_name',
+            'passphrase',
 
         ]
 
@@ -150,6 +151,7 @@ class PIDClientCredentials(object):
         self.__db_user = args['db_user']
         self.__db_password = args['db_password']
         self.__db_name = args['db_name']
+        self.__passphrase = args['passphrase']
 
 
         # All the other args collected as "additional config":
@@ -165,6 +167,13 @@ class PIDClientCredentials(object):
             elif self.__client == 'rest':
                 self.__check_if_enough_args_for_revlookup_auth(args)
                 self.__check_if_enough_args_for_hs_auth()
+            elif self.__client == 'batch':
+                if self.__private_key:
+                    self.__check_if_enough_args_for_hs_auth_batch_pubkey(args)
+                else:
+                    self.__check_if_enough_args_for_hs_auth_batch_seckey(args)
+
+
         else:
             msg = 'Client not provided or empty'
             raise CredentialsFormatError(msg=msg)
@@ -174,6 +183,37 @@ class PIDClientCredentials(object):
             return False
         return True
 
+    def __check_if_enough_args_for_hs_auth_batch_seckey(self, args):
+
+        batch_args_seckey = ['username', 'password']
+
+        empty_args = []
+
+        for k in batch_args_seckey:
+            if not args[k]:
+                empty_args.append(k)
+
+        if empty_args:
+            msg = '(%s) are missing or empty' % empty_args
+            raise CredentialsFormatError(msg=msg)
+
+    def __check_if_enough_args_for_hs_auth_batch_pubkey(self, args):
+
+        batch_args_pubkey = ['username', 'private_key']
+
+        empty_args = []
+
+        for k in batch_args_pubkey:
+            if not args[k]:
+                empty_args.append(k)
+
+        if not self.__passphrase:
+            if self.__passphrase is not None:
+                empty_args.append('passphrase')
+
+        if empty_args:
+            msg = '(%s) are missing or empty' % empty_args
+            raise CredentialsFormatError(msg=msg)
 
     def __check_if_enough_args_for_hs_auth_db(self, args):
 
@@ -227,21 +267,21 @@ class PIDClientCredentials(object):
             try:
                 self.__certificate_only = self.__get_path_and_check_file_existence(self.__certificate_only)
             except ValueError as e:
-                msg = '(certficate file): '+e.message
+                msg = '(certficate file): '+e.__str__()
                 raise CredentialsFormatError(msg=msg)
 
         if self.__certificate_and_key:
             try:
                 self.__certificate_and_key = self.__get_path_and_check_file_existence(self.__certificate_and_key)
             except ValueError as e:
-                msg = '(certficate and key file): '+e.message
+                msg = '(certficate and key file): '+e.__str__()
                 raise CredentialsFormatError(msg=msg)
 
         if self.__private_key:
             try:
                 self.__private_key = self.__get_path_and_check_file_existence(self.__private_key)
             except ValueError as e:
-                msg = '(private key file): '+e.message
+                msg = '(private key file): '+e.__str__()
                 raise CredentialsFormatError(msg=msg)
 
     def __get_path_and_check_file_existence(self, path):
@@ -380,3 +420,7 @@ class PIDClientCredentials(object):
     def get_db_name(self):
         # pylint: disable=missing-docstring
         return self.__db_name
+
+    def get_key_passphrase(self):
+        # pylint: disable=missing-docstring
+        return self.__passphrase

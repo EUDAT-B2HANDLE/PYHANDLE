@@ -1,7 +1,5 @@
 from __future__ import absolute_import
-
-import logging
-import requests
+import pyhandle
 import json
 import xml.etree.ElementTree as ET
 import uuid
@@ -10,8 +8,8 @@ import datetime
 import requests  # This import is needed for mocking in unit tests.
 
 from past.builtins import xrange
-from pyhandle.compatibility_helper import decoded_response, set_encoding_variable
-from pyhandle.pyhandleclient import HandleClient
+
+from .. pyhandleclient import HandleClient
 from .. import utilhandle
 from .. import hsresponses
 from .. import util
@@ -22,7 +20,7 @@ from ..handleexceptions import HandleAlreadyExistsException
 from ..handleexceptions import IllegalOperationException
 from ..handlesystemconnector import HandleSystemConnector
 from ..searcher import Searcher
-
+from .. compatibility_helper import decoded_response, set_encoding_variable
 
 # parameters for debugging
 # LOG_FILENAME = 'example.log'
@@ -32,7 +30,7 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(util.NullHandler())
 REQUESTLOGGER = logging.getLogger('log_all_requests_of_testcases_to_file')
 REQUESTLOGGER.propagate = False
-encoding_value = set_encoding_variable()
+
 
 
 
@@ -99,7 +97,8 @@ class RESTHandleClient(HandleClient):
 
         LOGGER.debug('\n' + 60 * '*' + '\nInstantiation of RESTHandleClient\n' + 60 * '*')
 
-        args['handle_server_url'] = handle_server_url
+        if (handle_server_url != None):
+            args['handle_server_url'] = handle_server_url
 
         # Args that the constructor understands:
         self.__handleowner = None
@@ -602,7 +601,7 @@ class RESTHandleClient(HandleClient):
             and suffix)
         :param location: The URL of the data entity to be referenced
         :param checksum: Optional. The checksum string.
-        :param extratypes: Optional. Additional key value pairs.
+        :param extratypes: Optional. Additional key value pairs such as: additional_URLs for 10320/loc
         :param additional_URLs: Optional. A list of URLs (as strings) to be
             added to the handle record as 10320/LOC entry.
         :param overwrite: Optional. If set to True, an existing handle record
