@@ -20,7 +20,7 @@ You can install the PyHandle library as follows:
 The library is also available on PyPi and can be installed via pip:
 
 ```bash
- pip install py_handle
+ pip install pyhandle
 ```
 
 For more information on the methods offered by the library, please consult the [technical documentation](http://eudat-b2safe.github.io/PYHANDLE).
