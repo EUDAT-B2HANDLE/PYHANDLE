@@ -19,6 +19,7 @@ order to instantiate the DB client.
 
 .. code:: python
 
+   from pyhandle.handleclient import PyHandleClient
    client = PyHandleClient('db', credentials)
 
 The credentials can loaded from a file or passed as a dictionary to the PyHandleClient
