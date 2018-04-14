@@ -24,6 +24,7 @@ user credentials to use etc. Several different instantiation methods are availab
 
   .. code:: python
 
+    from pyhandle.handleclient import PyHandleClient
     client = PyHandleClient('rest').instantiate_...(...)
 
 
@@ -60,6 +61,7 @@ Instantiation can be performed when specifying the client as follows:
 
 .. code:: python
 
+   from pyhandle.handleclient import PyHandleClient
    client = PyHandleClient('rest').instantiate_...()
 
 .. note::

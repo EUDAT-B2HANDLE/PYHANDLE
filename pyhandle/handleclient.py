@@ -62,7 +62,7 @@ class PyHandleClient(object):
         return self.handle_client.create_batch_file(overwrite)
 
     def instantiate_for_read_access(self, **config):
-        return self.handle_client.instantiate_for_read_access(config)
+        return self.handle_client.instantiate_for_read_access(**config)
 
     def instantiate_with_credentials(self, credentials, **config):
         return self.handle_client.instantiate_with_credentials(credentials, **config)
