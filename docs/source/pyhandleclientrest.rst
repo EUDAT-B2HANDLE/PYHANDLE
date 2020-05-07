@@ -86,6 +86,7 @@ Using client certificates, you need to provide paths to the file containing your
 
   .. code:: python
 
+    from pyhandle.clientcredentials import PIDClientCredentials
     cred = PIDClientCredentials.load_from_JSON('my_credentials.json')
     client = PyHandleClient('rest').instantiate_with_credentials(cred)
 
@@ -95,7 +96,7 @@ The JSON file should look like this:
 
     {
       "client":"rest",
-      "baseuri": "https://my.handle.server",
+      "handle_server_url": "https://my.handle.server",
       "private_key": "my_private_key.pem",
       "certificate_only": "my_certificate.pem"
     }
