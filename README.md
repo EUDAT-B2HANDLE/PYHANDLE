@@ -13,9 +13,9 @@ As [B2Handle](https://github.com/EUDAT-B2SAFE/B2HANDLE) was developed with a spe
 # Installation
 
 You can install the PyHandle library as follows:
- 1. git clone https://github.com/EUDAT-B2SAFE/PYHANDLE.git
- 1. cd PYHANDLE/
- 1. python setup.py install
+ 1. `git clone https://github.com/EUDAT-B2SAFE/PYHANDLE.git`
+ 1. `cd PYHANDLE/`
+ 1. `python setup.py install`
  
 The library is also available on PyPi and can be installed via pip:
 
