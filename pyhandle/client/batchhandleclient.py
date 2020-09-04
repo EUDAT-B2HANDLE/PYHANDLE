@@ -16,8 +16,6 @@ from pyhandle.clientcredentials import PIDClientCredentials
 
 from .. import util
 
-logging.basicConfig(level=logging.INFO)
-
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(util.NullHandler())
 
