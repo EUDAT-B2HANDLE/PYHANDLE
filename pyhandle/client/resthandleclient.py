@@ -596,6 +596,9 @@ class RESTHandleClient(HandleClient):
         Registers a new Handle with given name. If the handle already exists
         and overwrite is not set to True, the method will throw an
         exception.
+        Note: This is just a wrapper for register_handle_kv. It was made for
+        legacy reasons, as this library was created to replace an earlier
+        library that had a method with specifically this signature.
 
         :param handle: The full name of the handle to be registered (prefix
             and suffix)
@@ -613,11 +616,45 @@ class RESTHandleClient(HandleClient):
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
         :return: The handle name.
         '''
-        LOGGER.debug('register_handle...')
 
-        # additional_URLs is not used, was this deprecated?
+        if extratypes is None:
+            extratypes = {}
+
+        if not location is None:
+            extratypes["URL"] = location
+
+        if not checksum is None:
+            extratypes["CHECKSUM"] = checksum
+
         if additional_URLs is not None:
             raise NotImplementedError('No support for argument "additional_URLs"!')
+
+        return self.register_handle_kv(
+            handle,
+            overwrite,
+            **extratypes
+        )
+
+
+    def register_handle_kv(self, handle, overwrite=False, **kv_pairs):
+    '''
+        Registers a new Handle with given name. If the handle already exists
+        and overwrite is not set to True, the method will throw an
+        exception.
+
+        :param handle: The full name of the handle to be registered (prefix
+            and suffix)
+        :param extratypes: Optional, but highly recommended. The key value pairs
+            to be included in the record, e.g. URL, CHECKSUM, ...
+        :param overwrite: Optional. If set to True, an existing handle record
+            will be overwritten. Defaults to False.
+        :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
+            set to False.
+        :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
+        :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
+        :return: The handle name.
+        '''
+        LOGGER.debug('register_handle_kv...')
 
         # If already exists and can't be overwritten:
         if overwrite == False:
@@ -638,25 +675,13 @@ class RESTHandleClient(HandleClient):
         list_of_entries.append(adminentry)
 
         # Create other entries
-        entry_URL = self.__create_entry(
-            'URL',
-            location,
-            self.__make_another_index(list_of_entries, url=True)
-        )
-        list_of_entries.append(entry_URL)
-        if checksum is not None:
-            entryChecksum = self.__create_entry(
-                'CHECKSUM',
-                checksum,
-                self.__make_another_index(list_of_entries)
-            )
-            list_of_entries.append(entryChecksum)
-        if extratypes is not None:
-            for key, value in extratypes.items():
+        if kv_pairs is not None:
+            for key, value in kv_pairs.items():
+                is_url = True if key == 'URL' else False 
                 entry = self.__create_entry(
                     key,
                     value,
-                    self.__make_another_index(list_of_entries)
+                    self.__make_another_index(list_of_entries, is_url)
                 )
                 list_of_entries.append(entry)
         
