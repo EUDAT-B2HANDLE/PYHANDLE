@@ -371,10 +371,15 @@ class RESTHandleClient(HandleClient):
         LOGGER.debug('generate_and_register_handle...')
 
         handle = self.generate_PID_name(prefix)
-        handle = self.register_handle(
+
+        if not location is None:
+            extratypes["URL"] = location
+
+        if not checksum is None:
+            extratypes["CHECKSUM"] = checksum
+
+        handle = self.register_handle_kv(
             handle,
-            location,
-            checksum,
             overwrite=True,
             **extratypes
         )
@@ -637,7 +642,7 @@ class RESTHandleClient(HandleClient):
 
 
     def register_handle_kv(self, handle, overwrite=False, **kv_pairs):
-    '''
+        '''
         Registers a new Handle with given name. If the handle already exists
         and overwrite is not set to True, the method will throw an
         exception.
