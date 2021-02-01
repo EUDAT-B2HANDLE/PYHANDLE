@@ -603,7 +603,8 @@ class RESTHandleClient(HandleClient):
         :param checksum: Optional. The checksum string.
         :param extratypes: Optional. Additional key value pairs such as: additional_URLs for 10320/loc
         :param additional_URLs: Optional. A list of URLs (as strings) to be
-            added to the handle record as 10320/LOC entry.
+            added to the handle record as 10320/LOC entry. Note: This is currently
+            not implemented.
         :param overwrite: Optional. If set to True, an existing handle record
             will be overwritten. Defaults to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
@@ -613,6 +614,10 @@ class RESTHandleClient(HandleClient):
         :return: The handle name.
         '''
         LOGGER.debug('register_handle...')
+
+        # additional_URLs is not used, was this deprecated?
+        if additional_URLs is not None:
+            raise NotImplementedError('No support for argument "additional_URLs"!')
 
         # If already exists and can't be overwritten:
         if overwrite == False:
