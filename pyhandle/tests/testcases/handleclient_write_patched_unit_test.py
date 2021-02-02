@@ -13,7 +13,7 @@ from pyhandle.client.resthandleclient import RESTHandleClient
 from pyhandle.clientcredentials import PIDClientCredentials
 from pyhandle.handleexceptions import *
 from pyhandle.tests.mockresponses import MockResponse, MockSearchResponse
-from pyhandle.tests.utilities import failure_message, replace_timestamps, sort_lists
+from pyhandle.tests.utilities import failure_message, replace_timestamps, flattensort
 from pyhandle.utilhandle import check_handle_syntax
 
 class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
@@ -95,7 +95,9 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         # Compare with expected payload:
         expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}, {"index": 5, "type": "10320/LOC", "data": "<locations><location href=\"http://bar.bar\" id=\"0\" /><location href=\"http://foo.foo\" id=\"1\" /></locations>"}]}
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
+        self.assertIsNotNone(flattensort(passed_payload))
+        self.assertIsNotNone(flattensort(expected_payload))
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
             failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
 
     @mock.patch('pyhandle.handlesystemconnector.HandleSystemConnector.check_if_username_exists')
@@ -149,7 +151,9 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         # Compare with expected payload:
         expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": 300, "handle": "handle/owner", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}, {"index": 5, "type": "10320/LOC", "data": "<locations><location href=\"http://bar.bar\" id=\"0\" /><location href=\"http://foo.foo\" id=\"1\" /></locations>"}]}
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
+        self.assertIsNotNone(flattensort(passed_payload))
+        self.assertIsNotNone(flattensort(expected_payload))
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
             failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
 
     @mock.patch('pyhandle.handlesystemconnector.requests.Session.put')
@@ -209,9 +213,18 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         # Compare with expected payload:
         expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}, {"index": 5, "type": "10320/LOC", "data": "<locations><location href=\"http://bar.bar\" id=\"0\" /><location href=\"http://foo.foo\" id=\"1\" /></locations>"}]}
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
-            failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
 
+        # Visual comparison
+        #print('PASSED   : %s' % passed_payload)
+        #print('EXPECTED : %s' % expected_payload)
+        #print('PASSED   SORTED: %s' % flattensort(passed_payload))
+        #print('EXPECTED SORTED: %s' % flattensort(expected_payload))
+        #self.assertIsNotNone(None) # fail just to print the above
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
+            failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
+        self.assertIsNotNone(flattensort(passed_payload))
+        self.assertIsNotNone(flattensort(expected_payload))
+        
         # Check if requests.put received an authorization header:
         self.assertIn('Authorization', passed_headers,
             'Authorization header not passed: ' + str(passed_headers))
@@ -248,7 +261,9 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         # Compare with expected payload:
         expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}]}
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
+        self.assertIsNotNone(flattensort(passed_payload))
+        self.assertIsNotNone(flattensort(expected_payload))
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
             failure_message(expected=expected_payload, passed=passed_payload, methodname='generate_and_register_handle'))
 
     # modify_handle_value
@@ -382,7 +397,7 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
             }]
         }
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
             failure_message(expected=expected_payload,
                                  passed=passed_payload,
                                  methodname='modify_handle_value'))
@@ -469,7 +484,7 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         expected_payload = {"values": [{"index": 2, "type": "TEST100", "data": "new100"}, {"index": 2222, "ttl": 86400, "type": "TEST2", "data": "new2"}, {"index": 4, "ttl": 86400, "type": "TEST4", "data": "new4"}]}
         expected_payload.get('values', {})
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
             failure_message(expected=expected_payload,
                                  passed=passed_payload,
                                  methodname='modify_handle_value'))
@@ -510,7 +525,7 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         expected_payload = {'values': [{'index': 2, 'type': 'TEST100', 'data': 'new100'}, {'index': 2222, 'ttl': 86400, 'type': 'TEST2', 'data': 'new2'}, {'index': 4, 'ttl': 86400, 'type': 'TEST4', 'data': 'new4'}, {'index': 3, 'type': 'TEST101', 'data': 'new101'}]}
         expected_payload.get('values', {})
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
             failure_message(expected=expected_payload,
                                  passed=passed_payload,
                                  methodname='modify_handle_value'))
