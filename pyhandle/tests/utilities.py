@@ -61,16 +61,30 @@ def log_end_test_code():
     REQUESTLOGGER.info('---<')
 
 def sort_lists(jsonobject):
+    # TODO: The whole function does not sort anything, as "sorted" returns
+    # a new list instead of modifying the existing one. So the sorted version
+    # vanishes in neverland... nowhereland. And the function returns None.
+    # Which, when compared, is... None. Yay. All tests pass.
+    msg = 'This sort function returns false positive when comparing sorted test results.'
+    raise ValueError(msg)
 
     # Sort:
     if type(jsonobject) == type([]):
         sorted(jsonobject, key=lambda x:sorted(x.keys()))
-        
+        # Python 2.6.6:
+        # sorted(iterable, cmp=None, key=None, reverse=False) --> new sorted list
+        # Python 3.7.1:
+        # Return a new list containing all items from the iterable in ascending order.
+        # A custom key function can be supplied to customize the sort order, and the
+        # reverse flag can be set to request the result in descending order.
+
+
     # Recursion:
     if type(jsonobject) == type({'b':2}):
         for item in jsonobject.items():
             sort_lists(item)
 
     elif type(jsonobject) == type([2, 2]) or type(jsonobject) == type((2, 2)):
+        # TODO Isn't the first comparison bullshit, as lists are caught above?
         for item in jsonobject:
             sort_lists(item)
