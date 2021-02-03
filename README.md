@@ -32,9 +32,18 @@ For more details about the library you can build the documention using [Sphinx](
 python setup.py build_sphinx
 ```
 
+
+# Link to documentation
+
+
+Check out the documentation [here](https://eudat-b2safe.github.io/PYHANDLE/).
+
+(You can find the source here in this repository at [/docs/source/index.rst](./docs/source/index.rst)!)
+
+
 # License
 
-Copyright 2015-2017, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara
+Copyright 2015-2021, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara
 
    The PYHANDLE library is licensed under the Apache License,
    Version 2.0 (the "License"); you may not use this product except in 
@@ -50,7 +59,29 @@ Copyright 2015-2017, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara
    limitations under the License.
 
 
+# Some usage notes
 
+(to be migrated to documentation)
+
+
+* `register_handle_kv(handle, **kv-pairs)` allows to pass (additionally to the handle name) key-value pairs.
+
+* `register_handle_json(handle, list_of_entries, ...)` allow to pass JSON snippets instead of key-value pairs, so you can specify the indices. An entry looks like this: `{'index':index, 'type':entrytype, 'data':data}`. This is the format in which the changes are communicated to the handle server via its REST interface. An entry of type `HS_ADMIN` will be added if you do not provide one.
+
+* `register_handle(...)` allows to pass (additionally to the handle name) a mandatory URL, and optionally a CHECKSUM, and more types as key-value pairs. Old method, made for legacy reasons, as this library was created to replace an earlier library that had a method with specifically this signature.
+
+* `generate_and_register_handle(prefix, ...)` is a similar legacy method. Instead, just use `generate_PID_name(prefix)` to create a handle name and use one of the above. 
+
+
+# How to run the unit tests
+
+The simplest way (tested with python 3.7.1):
+
+```bash
+python setup.py test
+```
+
+Also look at `pyhandle/tests/README.md`.
 
 
 
