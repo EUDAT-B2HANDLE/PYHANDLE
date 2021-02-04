@@ -8,3 +8,11 @@ __version__ = "1.0.4"
 # (The first comment - empty or not - would be appended to
 # the package name, the next non-empty comment would be
 # printed as description).
+
+from . import clientcredentials
+from . import handleclient
+
+# Make sure that a single "import pyhandle" allows the use of
+# relevant submodules!
+# See 
+# https://github.com/psf/requests/blob/master/requests/__init__.py#L120
