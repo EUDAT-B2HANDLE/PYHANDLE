@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 import uuid
 import logging
 import datetime
+import copy
 import requests  # This import is needed for mocking in unit tests.
 
 from past.builtins import xrange
@@ -371,10 +372,15 @@ class RESTHandleClient(HandleClient):
         LOGGER.debug('generate_and_register_handle...')
 
         handle = self.generate_PID_name(prefix)
-        handle = self.register_handle(
+
+        if not location is None:
+            extratypes["URL"] = location
+
+        if not checksum is None:
+            extratypes["CHECKSUM"] = checksum
+
+        handle = self.register_handle_kv(
             handle,
-            location,
-            checksum,
             overwrite=True,
             **extratypes
         )
@@ -590,12 +596,49 @@ class RESTHandleClient(HandleClient):
         else:
             raise GenericHandleError(op=op, handle=handle, response=resp)
 
-    
+
+    def register_handle_json(self, handle, list_of_entries, overwrite=False):
+        '''
+        entry = {'index':index, 'type':entrytype, 'data':data}
+        # Optional 'ttl'
+        '''
+
+        # If already exists and can't be overwritten:
+        if overwrite == False:
+            handlerecord_json = self.retrieve_handle_record_json(handle)
+            if handlerecord_json is not None:
+                msg = 'Could not register handle'
+                LOGGER.error(msg + ', as it already exists.')
+                raise HandleAlreadyExistsException(handle=handle, msg=msg)
+
+        # So we don't modify the caller's list:
+        list_of_entries = copy.deepcopy(list_of_entries)
+
+        # Create admin entry
+        keys = []
+        for entry in list_of_entries:
+            keys.append(entry['type'])
+
+        if not 'HS_ADMIN' in keys:
+            adminentry = self.__create_admin_entry(
+                self.__handleowner,
+                self.__HS_ADMIN_permissions,
+                self.__make_another_index(list_of_entries, hs_admin=True),
+                handle
+            )
+            list_of_entries.append(adminentry)
+
+        # Create record itself and put to server:
+        return self.__handle_registering(handle, list_of_entries, overwrite)
+   
     def register_handle(self, handle, location, checksum=None, additional_URLs=None, overwrite=False, **extratypes):
         '''
         Registers a new Handle with given name. If the handle already exists
         and overwrite is not set to True, the method will throw an
         exception.
+        Note: This is just a wrapper for register_handle_kv. It was made for
+        legacy reasons, as this library was created to replace an earlier
+        library that had a method with specifically this signature.
 
         :param handle: The full name of the handle to be registered (prefix
             and suffix)
@@ -603,7 +646,8 @@ class RESTHandleClient(HandleClient):
         :param checksum: Optional. The checksum string.
         :param extratypes: Optional. Additional key value pairs such as: additional_URLs for 10320/loc
         :param additional_URLs: Optional. A list of URLs (as strings) to be
-            added to the handle record as 10320/LOC entry.
+            added to the handle record as 10320/LOC entry. Note: This is currently
+            not implemented.
         :param overwrite: Optional. If set to True, an existing handle record
             will be overwritten. Defaults to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
@@ -612,7 +656,44 @@ class RESTHandleClient(HandleClient):
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
         :return: The handle name.
         '''
-        LOGGER.debug('register_handle...')
+
+        if extratypes is None:
+            extratypes = {}
+
+        if not location is None:
+            extratypes["URL"] = location
+
+        if not checksum is None:
+            extratypes["CHECKSUM"] = checksum
+
+        if additional_URLs is not None:
+            raise NotImplementedError('No support for argument "additional_URLs"!')
+
+        return self.register_handle_kv(
+            handle,
+            overwrite,
+            **extratypes
+        )
+
+    def register_handle_kv(self, handle, overwrite=False, **kv_pairs):
+        '''
+        Registers a new Handle with given name. If the handle already exists
+        and overwrite is not set to True, the method will throw an
+        exception.
+
+        :param handle: The full name of the handle to be registered (prefix
+            and suffix)
+        :param extratypes: Optional, but highly recommended. The key value pairs
+            to be included in the record, e.g. URL, CHECKSUM, ...
+        :param overwrite: Optional. If set to True, an existing handle record
+            will be overwritten. Defaults to False.
+        :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
+            set to False.
+        :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
+        :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
+        :return: The handle name.
+        '''
+        LOGGER.debug('register_handle_kv...')
 
         # If already exists and can't be overwritten:
         if overwrite == False:
@@ -633,29 +714,20 @@ class RESTHandleClient(HandleClient):
         list_of_entries.append(adminentry)
 
         # Create other entries
-        entry_URL = self.__create_entry(
-            'URL',
-            location,
-            self.__make_another_index(list_of_entries, url=True)
-        )
-        list_of_entries.append(entry_URL)
-        if checksum is not None:
-            entryChecksum = self.__create_entry(
-                'CHECKSUM',
-                checksum,
-                self.__make_another_index(list_of_entries)
-            )
-            list_of_entries.append(entryChecksum)
-        if extratypes is not None:
-            for key, value in extratypes.items():
+        if kv_pairs is not None:
+            for key, value in kv_pairs.items():
+                is_url = True if key == 'URL' else False 
                 entry = self.__create_entry(
                     key,
                     value,
-                    self.__make_another_index(list_of_entries)
+                    self.__make_another_index(list_of_entries, is_url)
                 )
                 list_of_entries.append(entry)
         
-        # Create record itself and put to server
+        # Create record itself and put to server:
+        return self.__handle_registering(handle, list_of_entries, overwrite)
+
+    def __handle_registering(self, handle, list_of_entries, overwrite):
         op = 'registering handle'
         resp, put_payload = self.__send_handle_put_request(
             handle,
@@ -947,9 +1019,11 @@ class RESTHandleClient(HandleClient):
         # If the handle owner is specified, use it. Otherwise, use 200:0.NA/prefix
         # With the prefix taken from the handle that is being created, not from anywhere else.
         if handleowner is None:
-            adminindex = '200'
+            adminindex = '200' # TODO Why string, not integer?
             prefix = handle.split('/')[0]
             adminhandle = '0.NA/' + prefix
+            # TODO: Why is adminindex string, not integer? When I retrieve from
+            # HandleSystem API, the JSON has an int there.
         else:
             adminindex, adminhandle = utilhandle.remove_index_from_handle(handleowner)
 

@@ -17,7 +17,7 @@ def remove_index_from_handle(handle_with_index):
 
     :handle_with_index: The handle string with an index (e.g.
         500:prefix/suffix)
-    :return: index and handle as a tuple.
+    :return: index and handle as a tuple, where index is integer.
     '''
 
     split = handle_with_index.split(':')
