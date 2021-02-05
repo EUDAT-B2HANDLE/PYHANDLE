@@ -1,4 +1,4 @@
-__version__ = "1.0.4"
+__version__ = "1.0.5-dev"
 # Version 1.0.4 of 2021-02-04 including some pull requests from 2020.
 # The version number had been made 1.0.4 already in 2020, but
 # no release was done back then.
