@@ -86,9 +86,23 @@ python setup.py test
 
 (More info in the GitHub repository at [./pyhandle/tests/README.md](./pyhandle/tests/README.md)!)
 
-To quickly test different versions using docker:
+To quickly test different versions using docker (see [./pyhandle/tests/testdockers](./pyhandle/tests/testdockers)):
 
-There are Dockerfiles in [./pyhandle/tests/testdockers](./pyhandle/tests/testdockers), but they are not documented and fail.
+```
+today=`date +%m%d%Y`
+version="1.x.x" # pyhandle version, e.g. 1.0.4
+
+docker build -t temp_pyhandle:36_$version_$today -f pyhandle/tests/testdockers/Dockerfile36 . 
+docker run  -it temp_pyhandle:36_$version_$today python setup.py test
+
+docker build -t temp_pyhandle:37_$version_$today -f pyhandle/tests/testdockers/Dockerfile37 . 
+docker run  -it temp_pyhandle:37_$version_$today python setup.py test
+
+docker build -t temp_pyhandle:38_$version_$today -f pyhandle/tests/testdockers/Dockerfile38 . 
+docker run  -it temp_pyhandle:38_$version_$today python setup.py test
+```
+
+There are also Dockerfiles in [./pyhandle/tests/testdockers](./pyhandle/tests/testdockers), but they are not documented and fail.
 
 # TODO Fix these Dockerfiles eventually, or update to functioning versions.
 

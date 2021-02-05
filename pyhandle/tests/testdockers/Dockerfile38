@@ -1,0 +1,16 @@
+FROM python:3.8-slim
+RUN apt-get update
+
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+
+ADD ./ /opt/PYHANDLE
+WORKDIR /opt/PYHANDLE
+RUN python setup.py install
+
+# For running unit tests:
+#today=`date +%m%d%Y`
+#version="1.x.x" # pyhandle version, e.g. 1.0.4
+#docker build -t temp_pyhandle:38_$version_$today -f pyhandle/tests/testdockers/Dockerfile38 . 
+#docker run  -it temp_pyhandle:38_$version_$today python --version
+#docker run  -it temp_pyhandle:38_$version_$today python setup.py test
