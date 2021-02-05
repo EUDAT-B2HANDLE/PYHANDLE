@@ -16,3 +16,7 @@ COPY       docker-entrypoint.sh ./
 ENTRYPOINT ["./docker-entrypoint.sh"]
 
 CMD        ["coverage"]
+
+
+# TODO: Document build + usage of this Dockerfile.
+

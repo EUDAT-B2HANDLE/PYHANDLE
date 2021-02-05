@@ -13,3 +13,5 @@ ADD        . /opt/PYHANDLE
 WORKDIR    /opt/PYHANDLE
 
 RUN python setup.py install
+
+# TODO: Document usage of this Dockerfile.

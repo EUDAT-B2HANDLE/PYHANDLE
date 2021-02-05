@@ -86,5 +86,20 @@ python setup.py test
 
 (More info in the GitHub repository at [./pyhandle/tests/README.md](./pyhandle/tests/README.md)!)
 
+To quickly test different versions using docker:
+
+There are Dockerfiles in [./pyhandle/tests/testdockers](./pyhandle/tests/testdockers), but they are not documented and fail.
+
+# TODO Fix these Dockerfiles eventually, or update to functioning versions.
+
+```
+# build successful, but fails to run:
+docker build -t eudat-pyhandle:py3.5 -f Dockerfile-py3.5 .
+cd ./pyhandle/tests
+docker build -t temp:temp -f Dockerfile-py3.5 .
+docker run -it temp:temp
+
+# build fails:
+docker build -t eudat-pyhandle:py2.6 -f Dockerfile-python2.6 .
 
 
