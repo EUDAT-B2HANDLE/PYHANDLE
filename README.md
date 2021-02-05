@@ -117,3 +117,31 @@ docker run -it temp:temp
 docker build -t eudat-pyhandle:py2.6 -f Dockerfile-python2.6 .
 
 
+
+# Github contributions
+
+Devs:
+
+* Please make contributions based on the devel branch, then issue a PR to the devel branch.
+* Small contributions (e.g. typos, README, ...) can be pushed directly to devel if you have permissions.
+
+Owners:
+
+* Run unit tests on PR
+* Merged PR into devel
+* If/when changes are ready for a next release, bump the version number (no PR, but push directly to the repo)
+* Run unit tests again on this devel branch.
+* Merge devel into master (no PR, directly merge them **with --no-ff to keep history** and push to master)
+* Add "-dev" to the incremented version number on devel
+* Send release to pypi: 
+
+```
+virtualenv venv 
+source venv/bin/activate
+pip install pypandoc
+python setup.py sdist upload -r pypi
+
+# TODO: Deprecated, move to twine!
+```
+
+
