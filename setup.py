@@ -95,7 +95,7 @@ setup(name='pyhandle',
           'pymysql',
       ],
       tests_require=test_dependencies,
-      python_requires='>=3.6.*<=3.8',
+      python_requires='>=3.6.*<=3.10',
       cmdclass={'test': NoseTestCommand},
       include_package_data=True
 )
