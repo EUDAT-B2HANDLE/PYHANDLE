@@ -28,7 +28,6 @@ pipeline {
                         cobertura coberturaReportFile: '**/coverage.xml'
                     }
                 }
-                
                 stage ('Test python 3.5') {
                     agent {
                         dockerfile {
@@ -46,7 +45,8 @@ pipeline {
                         cobertura coberturaReportFile: '**/coverage.xml'
                     }
                 }
-        }
+            }
+       }
     }
     post {
         always {
