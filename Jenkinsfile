@@ -16,7 +16,7 @@ pipeline {
                         dockerfile {
                             filename "pyhandle/tests/Dockerfile"
                             dir "$PROJECT_DIR"
-                            additionalBuildArgs "-t eudat-b2handle"
+                            additionalBuildArgs "-t eudat-pyhandle"
                             args "-u root:root"
                         }
                     }
@@ -33,7 +33,7 @@ pipeline {
                         dockerfile {
                             filename "pyhandle/tests/Dockerfile-py3.5"
                             dir "$PROJECT_DIR"
-                            additionalBuildArgs "-t eudat-b2handle:py3.5"
+                            additionalBuildArgs "-t eudat-pyhandle:py3.5"
                             args "-u root:root"
                         }
                     }
