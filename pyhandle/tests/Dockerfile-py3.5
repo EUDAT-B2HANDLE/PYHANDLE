@@ -5,7 +5,8 @@ RUN        pip install \
            mock \
            coverage \
            nose && \
-           pip install -U "requests==2.23.0"
+           pip install -U "requests==2.23.0" && \
+           pip install -U pymysql
 
 ADD        . /opt/PYHANDLE
 RUN        cd /opt/PYHANDLE && \
