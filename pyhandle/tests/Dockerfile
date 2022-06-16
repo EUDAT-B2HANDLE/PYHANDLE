@@ -33,10 +33,17 @@ ADD        . /opt/PYHANDLE
 RUN        cd /opt/PYHANDLE && \
            python setup.py install
 
-#WORKDIR    /opt/PYHANDLE/pyhandle/tests
+WORKDIR    /opt/PYHANDLE/pyhandle/tests
 
-RUN        cd /opt/PYHANDLE && \
-           python setup.py test
+COPY       docker-entrypoint.sh ./
+
+ENTRYPOINT ["./docker-entrypoint.sh"]
+
+CMD ["coverage"]
+
+
+#RUN        cd /opt/PYHANDLE && \
+#           python setup.py test
 
 #ENTRYPOINT ["sh", "./docker-entrypoint.sh"]
 
