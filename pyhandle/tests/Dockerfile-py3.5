@@ -11,6 +11,6 @@ ADD        . /opt/PYHANDLE
 RUN        cd /opt/PYHANDLE && \
            python setup.py install
 
-WORKDIR    /opt/PYHANDLE/pyhandle/tests
+WORKDIR    /opt/PYHANDLE/b2handle/tests
 
 CMD ["./docker-entrypoint.sh", "coverage"]
