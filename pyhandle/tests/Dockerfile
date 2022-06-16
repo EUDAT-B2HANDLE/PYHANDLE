@@ -35,7 +35,11 @@ RUN        cd /opt/PYHANDLE && \
 
 WORKDIR    /opt/PYHANDLE/pyhandle/tests
 
-CMD ["./docker-entrypoint.sh", "coverage"]
+ENTRYPOINT ["sh", "./docker-entrypoint.sh"]
+
+CMD        ["coverage"]
+
+#CMD ["./docker-entrypoint.sh", "coverage"]
 
 # TODO: Document build + usage of this Dockerfile.
 
