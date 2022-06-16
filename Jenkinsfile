@@ -39,7 +39,7 @@ pipeline {
                     }
                     steps {
                         sh '''
-                            cd $WORKSPACE/$PROJECT_DIR/b2handle/tests
+                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
                             ./docker-entrypoint.sh coverage
                         '''
                         cobertura coberturaReportFile: '**/coverage.xml'
