@@ -1,34 +1,16 @@
 # vim:set ft=dockerfile:
-FROM       eudat-pyhandle:py3.5
+FROM       python:3.5
 
-# To build base image:
-#cd ../../
-#docker build -t eudat-pyhandle:py3.5 -f Dockerfile-py3.5 .
-
-# To build this:
-#cd pyhandle/tests
-#docker build -t temp:py3.5 -f Dockerfile-py3.5 .
-
-# It builds successfully, but fails to run:
-#docker run -it temp:py3.5
-
-
-RUN        pip3 install \
+RUN        pip install \
            mock \
            coverage \
-           nose
+           nose && \
+           pip install -U "requests==2.23.0"
 
-VOLUME     /opt/PYHANDLE/pyhandle/tests
+ADD        . /opt/PYHANDLE
+RUN        cd /opt/PYHANDLE && \
+           python setup.py install
 
 WORKDIR    /opt/PYHANDLE/pyhandle/tests
 
-COPY       docker-entrypoint.sh ./
-
-ENTRYPOINT ["./docker-entrypoint.sh"]
-
-CMD        ["coverage"]
-
-# TODO: Fix this Dockerfile.
-# TODO: Document usage of this Dockerfile.
-
-
+CMD ["./docker-entrypoint.sh", "coverage"]
