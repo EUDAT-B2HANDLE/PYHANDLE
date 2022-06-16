@@ -1,5 +1,6 @@
 # vim:set ft=dockerfile:
-FROM       eudat-pyhandle
+FROM       python:2.7.9
+
 
 RUN        easy_install pip
 RUN        pip install \
