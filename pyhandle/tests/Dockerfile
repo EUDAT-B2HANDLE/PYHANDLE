@@ -24,6 +24,9 @@ RUN        pip install \
 #ENTRYPOINT ["./docker-entrypoint.sh"]
 
 #CMD        ["coverage"]
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+
 ADD        . /opt/PYHANDLE
 RUN        cd /opt/PYHANDLE && \
            python setup.py install
