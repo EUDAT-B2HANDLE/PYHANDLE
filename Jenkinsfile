@@ -45,7 +45,7 @@ pipeline {
                         cobertura coberturaReportFile: '**/coverage.xml'
                     }
                 }
-                stage ('Test python 3.6) {
+                stage ('Test python 3.6') {
                     agent {
                         dockerfile {
                             filename "pyhandle/tests/Dockerfile-py3.6"
