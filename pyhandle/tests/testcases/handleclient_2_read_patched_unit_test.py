@@ -268,6 +268,7 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
         # Test variables
         testusername_inexistent = '100:john/doe'
         credentials = pyhandle.clientcredentials.PIDClientCredentials(
+            client='client',
             handle_server_url='some/url',
             username=testusername_inexistent,
             password='some_password')
@@ -290,6 +291,7 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
 
         # Test variables
         credentials = pyhandle.clientcredentials.PIDClientCredentials(
+            client='client',
             handle_server_url='some/url',
             username='100:my/testhandle',
             password='some_password_123')

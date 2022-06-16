@@ -13,7 +13,7 @@ from pyhandle.client.resthandleclient import RESTHandleClient
 from pyhandle.clientcredentials import PIDClientCredentials
 from pyhandle.handleexceptions import *
 from pyhandle.tests.mockresponses import MockResponse, MockSearchResponse
-from pyhandle.tests.utilities import failure_message, replace_timestamps, sort_lists
+from pyhandle.tests.utilities import failure_message, replace_timestamps, flattensort
 from pyhandle.utilhandle import check_handle_syntax
 
 class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
@@ -76,7 +76,7 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         testhandle = 'my/testhandle'
         testlocation = 'http://foo.bar'
         testchecksum = '123456'
-        additional_URLs = ['http://bar.bar', 'http://foo.foo']
+        additional_URLs = None
         handle_returned = self.inst.register_handle(testhandle,
                                                     location=testlocation,
                                                     checksum=testchecksum,
@@ -91,12 +91,195 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
 
         # Get the payload+headers passed to "requests.put"
         passed_payload, _ = self.get_payload_headers_from_mockresponse(putpatch)
-
+        
         # Compare with expected payload:
-        expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}, {"index": 5, "type": "10320/LOC", "data": "<locations><location href=\"http://bar.bar\" id=\"0\" /><location href=\"http://foo.foo\" id=\"1\" /></locations>"}]}
+        #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}, {"index": 5, "type": "10320/LOC", "data": "<locations><location href=\"http://bar.bar\" id=\"0\" /><location href=\"http://foo.foo\" id=\"1\" /></locations>"}]}
+        expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}]}
+        #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 4, "type": "CHECKSUM", "data": "123456"}, {"index": 2, "type": "FOO", "data": "foo"}, {"index": 3, "type": "BAR", "data": "bar"}]}
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
+        self.assertIsNotNone(flattensort(passed_payload))
+        self.assertIsNotNone(flattensort(expected_payload))
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
             failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
+    
+    @mock.patch('pyhandle.handlesystemconnector.requests.Session.put')
+    @mock.patch('pyhandle.handlesystemconnector.requests.Session.get')
+    def test_register_handle_kv(self, getpatch, putpatch):
+        """Test registering a new handle with various types of values."""
+
+        # Define the replacement for the patched GET method:
+        # The handle does not exist yet, so a response with 404
+        mock_response_get = MockResponse(notfound=True)
+        getpatch.return_value = mock_response_get
+
+        # Define the replacement for the patched requests.put method:
+        mock_response_put = MockResponse(wascreated=True)
+        putpatch.return_value = mock_response_put
+
+        # Run the code to be tested:
+        testhandle = 'my/testhandle'
+        handle_returned = self.inst.register_handle_kv(testhandle,
+                                                    URL='http://foo.bar',
+                                                    CHECKSUM='123456',
+                                                    FOO='foo',
+                                                    BAR='bar')
+
+
+        # Check if the PUT request was sent exactly once:
+        self.assertEqual(putpatch.call_count, 1,
+            'The method "requests.put" was not called once, but ' + str(putpatch.call_count) + ' times.')
+
+        # Get the payload+headers passed to "requests.put"
+        passed_payload, _ = self.get_payload_headers_from_mockresponse(putpatch)
+        
+        # Compare with expected payload:
+        expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}]}
+        #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 4, "type": "CHECKSUM", "data": "123456"}, {"index": 2, "type": "FOO", "data": "foo"}, {"index": 3, "type": "BAR", "data": "bar"}]}
+        replace_timestamps(expected_payload)
+        self.assertIsNotNone(flattensort(passed_payload))
+        self.assertIsNotNone(flattensort(expected_payload))
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
+            failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
+    
+    @mock.patch('pyhandle.handlesystemconnector.requests.Session.put')
+    @mock.patch('pyhandle.handlesystemconnector.requests.Session.get')
+    def test_register_handle_json(self, getpatch, putpatch):
+        """Test registering a new handle using JSON entries, where HS_ADMIN is not specified."""
+
+        # Define the replacement for the patched GET method:
+        # The handle does not exist yet, so a response with 404
+        mock_response_get = MockResponse(notfound=True)
+        getpatch.return_value = mock_response_get
+
+        # Define the replacement for the patched requests.put method:
+        mock_response_put = MockResponse(wascreated=True)
+        putpatch.return_value = mock_response_put
+
+        # Run the code to be tested:
+        testhandle = 'my/testhandle'
+        entries = [
+            {'index':1, 'type':'URL', 'data':'http://foo.bar'},
+            {'index':2, 'type':'CHECKSUM', 'data':'123456'},
+            {'index':3, 'type':'FOO', 'data':'foo'},
+            {'index':4, 'type':'BAR', 'data':'bar'}
+        ]
+
+        handle_returned = self.inst.register_handle_json(testhandle,
+                                                    entries)
+
+
+        # Check if the PUT request was sent exactly once:
+        self.assertEqual(putpatch.call_count, 1,
+            'The method "requests.put" was not called once, but ' + str(putpatch.call_count) + ' times.')
+
+        # Get the payload+headers passed to "requests.put"
+        passed_payload, _ = self.get_payload_headers_from_mockresponse(putpatch)
+        
+        # Compare with expected payload:
+        expected_payload = {"values": entries}
+        expected_payload["values"].append({
+                'index':100,
+                'type':'HS_ADMIN', 
+                'data': {
+                    'value':{
+                        'index':'200', # TODO Why string and not int?
+                        'handle':'0.NA/my',
+                        'permissions':'011111110011'
+                    },
+                    'format':'admin'
+                }
+            })
+        replace_timestamps(expected_payload)
+        self.assertIsNotNone(flattensort(passed_payload))
+        self.assertIsNotNone(flattensort(expected_payload))
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
+            failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
+
+    @mock.patch('pyhandle.handlesystemconnector.requests.Session.put')
+    @mock.patch('pyhandle.handlesystemconnector.requests.Session.get')
+    def test_register_handle_json_admin_given(self, getpatch, putpatch):
+        """Test registering a new handle using JSON entries, where HS_ADMIN is specified."""
+
+        # Define the replacement for the patched GET method:
+        # The handle does not exist yet, so a response with 404
+        mock_response_get = MockResponse(notfound=True)
+        getpatch.return_value = mock_response_get
+
+        # Define the replacement for the patched requests.put method:
+        mock_response_put = MockResponse(wascreated=True)
+        putpatch.return_value = mock_response_put
+
+        # Run the code to be tested:
+        testhandle = 'my/testhandle'
+        entries = [
+            {'index':1, 'type':'URL', 'data':'http://foo.bar'},
+            {'index':2, 'type':'CHECKSUM', 'data':'123456'},
+            {'index':3, 'type':'FOO', 'data':'foo'},
+            {'index':4, 'type':'BAR', 'data':'bar'},
+            {
+                'index':100,
+                'type':'HS_ADMIN', 
+                'data': {
+                    'value':{
+                        'index':222,
+                        'handle':'0.NA/myprefix',
+                        'permissions':'bluubb'
+                    },
+                    'format':'admin'
+                }
+            }
+        ]
+
+        handle_returned = self.inst.register_handle_json(testhandle,
+                                                    entries)
+
+
+        # Check if the PUT request was sent exactly once:
+        self.assertEqual(putpatch.call_count, 1,
+            'The method "requests.put" was not called once, but ' + str(putpatch.call_count) + ' times.')
+
+        # Get the payload+headers passed to "requests.put"
+        passed_payload, _ = self.get_payload_headers_from_mockresponse(putpatch)
+        
+        # Compare with expected payload:
+        #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}]}
+        #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 4, "type": "CHECKSUM", "data": "123456"}, {"index": 2, "type": "FOO", "data": "foo"}, {"index": 3, "type": "BAR", "data": "bar"}]}
+        #expected_payload = entries
+        expected_payload = {"values": entries}
+        replace_timestamps(expected_payload)
+        self.assertIsNotNone(flattensort(passed_payload))
+        self.assertIsNotNone(flattensort(expected_payload))
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
+            failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
+
+    @mock.patch('pyhandle.handlesystemconnector.requests.Session.put')
+    @mock.patch('pyhandle.handlesystemconnector.requests.Session.get')
+    def test_register_handle_additional_urls(self, getpatch, putpatch):
+        """Test registering a new handle with additional URLs, which is
+        not supported anymore."""
+
+        # Define the replacement for the patched GET method:
+        # The handle does not exist yet, so a response with 404
+        mock_response_get = MockResponse(notfound=True)
+        getpatch.return_value = mock_response_get
+
+        # Define the replacement for the patched requests.put method:
+        mock_response_put = MockResponse(wascreated=True)
+        putpatch.return_value = mock_response_put
+
+        # Run the code to be tested:
+        testhandle = 'my/testhandle'
+        testlocation = 'http://foo.bar'
+        testchecksum = '123456'
+        additional_URLs = ['http://bar.bar', 'http://foo.foo']
+        # Run code to be tested + check exception:
+        with self.assertRaises(NotImplementedError):
+            handle_returned = self.inst.register_handle(testhandle,
+                                                    location=testlocation,
+                                                    checksum=testchecksum,
+                                                    additional_URLs=additional_URLs,
+                                                    FOO='foo',
+                                                    BAR='bar')
 
     @mock.patch('pyhandle.handlesystemconnector.HandleSystemConnector.check_if_username_exists')
     @mock.patch('pyhandle.handlesystemconnector.requests.Session.put')
@@ -118,7 +301,8 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         username_check_patch.response_value = True
 
         # Make another connector, to add the handle owner:
-        cred = PIDClientCredentials(handle_server_url='http://handle.server',
+        cred = PIDClientCredentials(client='client',
+                                   handle_server_url='http://handle.server',
                                    username='999:user/name',
                                    password='apassword',
                                    prefix='myprefix',
@@ -129,7 +313,8 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         testhandle = 'my/testhandle'
         testlocation = 'http://foo.bar'
         testchecksum = '123456'
-        additional_URLs = ['http://bar.bar', 'http://foo.foo']
+        #additional_URLs = ['http://bar.bar', 'http://foo.foo']
+        additional_URLs = None
         handle_returned = newInst.register_handle(testhandle,
                                                   location=testlocation,
                                                   checksum=testchecksum,
@@ -146,9 +331,15 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         passed_payload, _ = self.get_payload_headers_from_mockresponse(putpatch)
 
         # Compare with expected payload:
-        expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": 300, "handle": "handle/owner", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}, {"index": 5, "type": "10320/LOC", "data": "<locations><location href=\"http://bar.bar\" id=\"0\" /><location href=\"http://foo.foo\" id=\"1\" /></locations>"}]}
+        # Previously contained 10320LOC field:
+        #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": 300, "handle": "handle/owner", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}, {"index": 5, "type": "10320/LOC", "data": "<locations><location href=\"http://bar.bar\" id=\"0\" /><location href=\"http://foo.foo\" id=\"1\" /></locations>"}]}
+        # Changed order/index:
+        expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": 300, "handle": "handle/owner", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}]}
+        #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": 300, "handle": "handle/owner", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 4, "type": "CHECKSUM", "data": "123456"}, {"index": 2, "type": "FOO", "data": "foo"}, {"index": 3, "type": "BAR", "data": "bar"}]}
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
+        self.assertIsNotNone(flattensort(passed_payload))
+        self.assertIsNotNone(flattensort(expected_payload))
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
             failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
 
     @mock.patch('pyhandle.handlesystemconnector.requests.Session.put')
@@ -189,7 +380,8 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         testlocation = 'http://foo.bar'
         testchecksum = '123456'
         overwrite = True
-        additional_URLs = ['http://bar.bar', 'http://foo.foo']
+        #additional_URLs = ['http://bar.bar', 'http://foo.foo']
+        additional_URLs = None
         handle_returned = self.inst.register_handle(testhandle,
                                                     location=testlocation,
                                                     checksum=testchecksum,
@@ -206,11 +398,24 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         passed_payload, passed_headers = self.get_payload_headers_from_mockresponse(putpatch)
 
         # Compare with expected payload:
-        expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}, {"index": 5, "type": "10320/LOC", "data": "<locations><location href=\"http://bar.bar\" id=\"0\" /><location href=\"http://foo.foo\" id=\"1\" /></locations>"}]}
+        # Previously contained 10320LOC:
+        #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}, {"index": 5, "type": "10320/LOC", "data": "<locations><location href=\"http://bar.bar\" id=\"0\" /><location href=\"http://foo.foo\" id=\"1\" /></locations>"}]}
+        expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}]}
+        # Different indizes:
+        #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 4, "type": "CHECKSUM", "data": "123456"}, {"index": 2, "type": "FOO", "data": "foo"}, {"index": 3, "type": "BAR", "data": "bar"}]}
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
-            failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
 
+        # Visual comparison
+        #print('PASSED   : %s' % passed_payload)
+        #print('EXPECTED : %s' % expected_payload)
+        #print('PASSED   SORTED: %s' % flattensort(passed_payload))
+        #print('EXPECTED SORTED: %s' % flattensort(expected_payload))
+        #self.assertIsNotNone(None) # fail just to print the above
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
+            failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
+        self.assertIsNotNone(flattensort(passed_payload))
+        self.assertIsNotNone(flattensort(expected_payload))
+        
         # Check if requests.put received an authorization header:
         self.assertIn('Authorization', passed_headers,
             'Authorization header not passed: ' + str(passed_headers))
@@ -247,7 +452,9 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         # Compare with expected payload:
         expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}]}
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
+        self.assertIsNotNone(flattensort(passed_payload))
+        self.assertIsNotNone(flattensort(expected_payload))
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
             failure_message(expected=expected_payload, passed=passed_payload, methodname='generate_and_register_handle'))
 
     # modify_handle_value
@@ -381,7 +588,7 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
             }]
         }
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
             failure_message(expected=expected_payload,
                                  passed=passed_payload,
                                  methodname='modify_handle_value'))
@@ -468,7 +675,7 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         expected_payload = {"values": [{"index": 2, "type": "TEST100", "data": "new100"}, {"index": 2222, "ttl": 86400, "type": "TEST2", "data": "new2"}, {"index": 4, "ttl": 86400, "type": "TEST4", "data": "new4"}]}
         expected_payload.get('values', {})
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
             failure_message(expected=expected_payload,
                                  passed=passed_payload,
                                  methodname='modify_handle_value'))
@@ -509,7 +716,7 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         expected_payload = {'values': [{'index': 2, 'type': 'TEST100', 'data': 'new100'}, {'index': 2222, 'ttl': 86400, 'type': 'TEST2', 'data': 'new2'}, {'index': 4, 'ttl': 86400, 'type': 'TEST4', 'data': 'new4'}, {'index': 3, 'type': 'TEST101', 'data': 'new101'}]}
         expected_payload.get('values', {})
         replace_timestamps(expected_payload)
-        self.assertEqual(sort_lists(passed_payload), sort_lists(expected_payload),
+        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
             failure_message(expected=expected_payload,
                                  passed=passed_payload,
                                  methodname='modify_handle_value'))
@@ -737,7 +944,8 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         """
 
         # Define the replacement for the patched GET method:
-        cont = {"responseCode":1, "handle":"not/me", "values":[{"index":1, "type":"URL", "data":{"format":"string", "value":"www.url.foo"}, "ttl":86400, "timestamp":"2015-09-30T15:54:30Z"}, {"index":2, "type":"10320/LOC", "data":{"format":"string", "value":"<locations><location href = 'http://first.foo' /><location href = 'http://second.foo' /></locations> "}, "ttl":86400, "timestamp":"2015-09-30T15:54:30Z"}]}
+        #cont = {"responseCode":1, "handle":"not/me", "values":[{"index":1, "type":"URL", "data":{"format":"string", "value":"www.url.foo"}, "ttl":86400, "timestamp":"2015-09-30T15:54:30Z"}, {"index":2, "type":"10320/LOC", "data":{"format":"string", "value":"<locations><location href = 'http://first.foo' /><location href = 'http://second.foo' /></locations> "}, "ttl":86400, "timestamp":"2015-09-30T15:54:30Z"}]}
+        cont = {"responseCode":1, "handle":"not/me", "values":[{"index":1, "type":"URL", "data":{"format":"string", "value":"www.url.foo"}, "ttl":86400, "timestamp":"2015-09-30T15:54:30Z"}]}
         mock_response_get = MockResponse(status_code=200, content=json.dumps(cont))
         getpatch.return_value = mock_response_get
 

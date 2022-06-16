@@ -11,10 +11,9 @@ import json
 import os
 import logging
 import pyhandle
-from pyhandle.handleexceptions import CredentialsFormatError, HandleSyntaxError
+from   pyhandle.handleexceptions import CredentialsFormatError, HandleSyntaxError
 import pyhandle.utilhandle as utilhandle
 import pyhandle.util as util
-
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(util.NullHandler())
@@ -75,6 +74,7 @@ class PIDClientCredentials(object):
         initialize the client, these key-value pairs are passed on
         to the client constructor.
 
+        :param client: Client object to the HS ('rest' or 'db')
         :param handle_server_url: Optional. The URL of the Handle System
             server to read from. Defaults to 'https://hdl.handle.net'
         :param username: Optional. This must be a handle value reference in
@@ -107,6 +107,7 @@ class PIDClientCredentials(object):
 
         # Possible arguments:
         useful_args = [
+            'client',
             'handle_server_url',
             'username',
             'password',
@@ -118,14 +119,22 @@ class PIDClientCredentials(object):
             'reverselookup_password',
             'reverselookup_username',
             'reverselookup_baseuri',
-            'credentials_filename'
+            'credentials_filename',
+            'db_host',
+            'db_user',
+            'db_password',
+            'db_name',
+            'passphrase',
+
         ]
+
         util.add_missing_optional_args_with_value_none(args, useful_args)
 
         # Store args
         self.__all_args = args
 
         # Args that the constructor understands:
+        self.__client = args['client']
         self.__handle_server_url = args['handle_server_url']
         self.__username = args['username']
         self.__password = args['password']
@@ -138,6 +147,12 @@ class PIDClientCredentials(object):
         self.__reverselookup_username = args['reverselookup_username']
         self.__reverselookup_baseuri = args['reverselookup_baseuri']
         self.__credentials_filename = args['credentials_filename']
+        self.__db_host = args['db_host']
+        self.__db_user = args['db_user']
+        self.__db_password = args['db_password']
+        self.__db_name = args['db_name']
+        self.__passphrase = args['passphrase']
+
 
         # All the other args collected as "additional config":
         self.__additional_config = self.__collect_additional_arguments(args, useful_args)
@@ -145,8 +160,76 @@ class PIDClientCredentials(object):
         # Some checks:
         self.__check_handle_syntax()
         self.__check_file_existence()
-        self.__check_if_enough_args_for_revlookup_auth(args)
-        self.__check_if_enough_args_for_hs_auth()
+
+        if self.__check_client_existence():
+            if self.__client == 'db':
+                self.__check_if_enough_args_for_hs_auth_db(args)
+            elif self.__client == 'rest':
+                self.__check_if_enough_args_for_revlookup_auth(args)
+                self.__check_if_enough_args_for_hs_auth()
+            elif self.__client == 'batch':
+                if self.__private_key:
+                    self.__check_if_enough_args_for_hs_auth_batch_pubkey(args)
+                else:
+                    self.__check_if_enough_args_for_hs_auth_batch_seckey(args)
+
+
+        else:
+            msg = 'Client not provided or empty'
+            raise CredentialsFormatError(msg=msg)
+
+    def __check_client_existence(self):
+        if not self.__client:
+            return False
+        return True
+
+    def __check_if_enough_args_for_hs_auth_batch_seckey(self, args):
+
+        batch_args_seckey = ['username', 'password']
+
+        empty_args = []
+
+        for k in batch_args_seckey:
+            if not args[k]:
+                empty_args.append(k)
+
+        if empty_args:
+            msg = '(%s) are missing or empty' % empty_args
+            raise CredentialsFormatError(msg=msg)
+
+    def __check_if_enough_args_for_hs_auth_batch_pubkey(self, args):
+
+        batch_args_pubkey = ['username', 'private_key']
+
+        empty_args = []
+
+        for k in batch_args_pubkey:
+            if not args[k]:
+                empty_args.append(k)
+
+        if not self.__passphrase:
+            if self.__passphrase is not None:
+                empty_args.append('passphrase')
+
+        if empty_args:
+            msg = '(%s) are missing or empty' % empty_args
+            raise CredentialsFormatError(msg=msg)
+
+    def __check_if_enough_args_for_hs_auth_db(self, args):
+
+        db_args = ['db_host', 'db_user', 'db_password', 'db_name']
+
+        empty_args = []
+
+        for k in db_args:
+            if not args[k]:
+                empty_args.append(k)
+
+        if empty_args:
+            msg = '(%s) are missing or empty' % empty_args
+            raise CredentialsFormatError(msg=msg)
+
+
 
     def __collect_additional_arguments(self, args, used_args):
         temp_additional_config = {}
@@ -184,21 +267,21 @@ class PIDClientCredentials(object):
             try:
                 self.__certificate_only = self.__get_path_and_check_file_existence(self.__certificate_only)
             except ValueError as e:
-                msg = '(certficate file): '+e.message
+                msg = '(certficate file): '+e.__str__()
                 raise CredentialsFormatError(msg=msg)
 
         if self.__certificate_and_key:
             try:
                 self.__certificate_and_key = self.__get_path_and_check_file_existence(self.__certificate_and_key)
             except ValueError as e:
-                msg = '(certficate and key file): '+e.message
+                msg = '(certficate and key file): '+e.__str__()
                 raise CredentialsFormatError(msg=msg)
 
         if self.__private_key:
             try:
                 self.__private_key = self.__get_path_and_check_file_existence(self.__private_key)
             except ValueError as e:
-                msg = '(private key file): '+e.message
+                msg = '(private key file): '+e.__str__()
                 raise CredentialsFormatError(msg=msg)
 
     def __get_path_and_check_file_existence(self, path):
@@ -222,6 +305,10 @@ class PIDClientCredentials(object):
 
         # Which authentication method?
         authentication_method = None
+
+        # DB authentication
+        if self.__db_host and self.__db_user and self.__db_password and self.__db_name:
+            authentication_method = 'db_auth'
 
         # Username and Password
         if self.__username and self.__password:
@@ -254,12 +341,17 @@ class PIDClientCredentials(object):
                 if self.__reverselookup is None:
                     msg += 'Reverse lookup credentials not checked yet.'
                 elif self.__reverselookup is False:
-                    msg += 'Insufficient credentials for searching.'
+                     msg += 'Insufficient credentials for searching.'
+
                 raise CredentialsFormatError(msg=msg)
 
     def get_all_args(self):
         # pylint: disable=missing-docstring
         return self.__all_args
+
+    def get_client(self):
+        # pylint: disable=missing-docstring
+        return self.__client
 
     def get_username(self):
         # pylint: disable=missing-docstring
@@ -312,3 +404,23 @@ class PIDClientCredentials(object):
     def get_reverselookup_baseuri(self):
         # pylint: disable=missing-docstring
         return self.__reverselookup_baseuri
+
+    def get_db_host(self):
+        # pylint: disable=missing-docstring
+        return self.__db_host
+
+    def get_db_user(self):
+        # pylint: disable=missing-docstring
+        return self.__db_user
+
+    def get_db_password(self):
+        # pylint: disable=missing-docstring
+        return self.__db_password
+
+    def get_db_name(self):
+        # pylint: disable=missing-docstring
+        return self.__db_name
+
+    def get_key_passphrase(self):
+        # pylint: disable=missing-docstring
+        return self.__passphrase
