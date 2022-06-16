@@ -16,16 +16,21 @@ RUN        pip install \
            coverage \
            nose
 
-VOLUME     /opt/PYHANDLE/pyhandle/tests
+#VOLUME     /opt/PYHANDLE/pyhandle/tests
+#WORKDIR    /opt/PYHANDLE/pyhandle/tests
+
+#COPY       docker-entrypoint.sh ./
+
+#ENTRYPOINT ["./docker-entrypoint.sh"]
+
+#CMD        ["coverage"]
+ADD        . /opt/PYHANDLE
+RUN        cd /opt/PYHANDLE && \
+           python setup.py install
 
 WORKDIR    /opt/PYHANDLE/pyhandle/tests
 
-COPY       docker-entrypoint.sh ./
-
-ENTRYPOINT ["./docker-entrypoint.sh"]
-
-CMD        ["coverage"]
-
+CMD ["./docker-entrypoint.sh", "coverage"]
 
 # TODO: Document build + usage of this Dockerfile.
 
