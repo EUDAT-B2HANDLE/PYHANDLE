@@ -35,7 +35,8 @@ RUN        cd /opt/PYHANDLE && \
 
 #WORKDIR    /opt/PYHANDLE/pyhandle/tests
 
-RUN        python setup.py test
+RUN        cd /opt/PYHANDLE && \
+           python setup.py test
 
 #ENTRYPOINT ["sh", "./docker-entrypoint.sh"]
 
