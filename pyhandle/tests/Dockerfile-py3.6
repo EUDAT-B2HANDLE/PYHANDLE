@@ -13,5 +13,6 @@ RUN        cd /opt/PYHANDLE && \
            python setup.py install
 
 WORKDIR    /opt/PYHANDLE/pyhandle/tests
+RUN chmod 755 /opt/PYHANDLE/pyhandle/tests/docker-entrypoint.sh
 
 CMD ["./docker-entrypoint.sh", "coverage"]
