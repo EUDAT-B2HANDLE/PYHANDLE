@@ -34,12 +34,11 @@ RUN        cd /opt/PYHANDLE && \
            python setup.py install
 
 WORKDIR    /opt/PYHANDLE/pyhandle/tests
+CMD ["./docker-entrypoint.sh", "coverage"]
 
-COPY       docker-entrypoint.sh ./
-
-ENTRYPOINT ["./docker-entrypoint.sh"]
-
-CMD ["coverage"]
+#COPY       docker-entrypoint.sh ./
+#ENTRYPOINT ["./docker-entrypoint.sh"]
+#CMD ["coverage"]
 
 
 #RUN        cd /opt/PYHANDLE && \
@@ -49,7 +48,6 @@ CMD ["coverage"]
 
 #CMD        ["coverage"]
 
-#CMD ["./docker-entrypoint.sh", "coverage"]
 
 # TODO: Document build + usage of this Dockerfile.
 
