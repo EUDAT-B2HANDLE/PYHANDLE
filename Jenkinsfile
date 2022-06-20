@@ -7,6 +7,7 @@ pipeline {
         PROJECT_DIR="PYHANDLE"
         GH_USER = 'newgrnetci'
         GH_EMAIL = '<argo@grnet.gr>'
+        
     }
     stages {
         stage ('Run tests for each python version') {
