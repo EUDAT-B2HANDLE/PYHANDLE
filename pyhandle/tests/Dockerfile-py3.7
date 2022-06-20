@@ -6,10 +6,10 @@ RUN        pip install \
            coverage \
            nose
 
-ADD        . /opt/B2HANDLE
-RUN        cd /opt/B2HANDLE && \
+ADD        . /opt/PYHANDLE
+RUN        cd /opt/PYHANDLE && \
            python setup.py install
 
-WORKDIR    /opt/B2HANDLE/b2handle/tests
+WORKDIR    /opt/PYHANDLE/pyhandle/tests
 
 CMD ["./docker-entrypoint.sh", "coverage"]
