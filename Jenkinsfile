@@ -45,6 +45,23 @@ pipeline {
                         cobertura coberturaReportFile: '**/coverage.xml'
                     }
                 }
+                stage ('Test python 3.6') {
+                    agent {
+                        dockerfile {
+                            filename "pyhandle/tests/Dockerfile-py3.6"
+                            dir "$PROJECT_DIR"
+                            additionalBuildArgs "-t eudat-pyhandle:py3.6"
+                            args "-u root:root"
+                        }
+                    }
+                    steps {
+                        sh '''
+                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
+                            ./docker-entrypoint.sh coverage
+                        '''
+                        cobertura coberturaReportFile: '**/coverage.xml'
+                    }
+                }
             }
        }
     }
