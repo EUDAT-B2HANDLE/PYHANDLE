@@ -746,16 +746,20 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         
         # Compare with expected payload:
         
-        if (sys.version_info.major == 3 and sys.version_info.minor == 5):
-            expected_payload = {"values": [{"data": "new100", "index": 2, "type": "TEST100"}, {"data": "new2", "index": 2222, "ttl": 86400, "type": "TEST2"}, {"data": "new4", "index": 4, "ttl": 86400, "type": "TEST4"}, {"data": "new101", "index": 3, "type": "TEST101"}]}    
-        elif (sys.version_info.major == 3 and sys.version_info.minor > 5):
+        if (sys.version_info.major == 3 and sys.version_info.minor > 5):
             expected_payload = {'values': [{'data': 'new100', 'index': 2, 'type': 'TEST100' }, {'data': 'new2', 'ttl': 86400, 'index': 2222, 'type': 'TEST2'}, {'data': 'new4', 'ttl': 86400, 'index': 4, 'type': 'TEST4'}, {'data': 'new101', 'index': 3, 'type': 'TEST101'}]}
-        else: 
+            expected_payload.get('values', {})
+            replace_timestamps(expected_payload)
+            self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
+                failure_message(expected=expected_payload,
+                                 passed=passed_payload,
+                                 methodname='modify_handle_value'))
+        elif (sys.version_info.major == 2 and sys.version_info.minor > 6):
             expected_payload = {'values': [{'index': 2, 'type': 'TEST100', 'data': 'new100'}, {'index': 2222, 'ttl': 86400, 'type': 'TEST2', 'data': 'new2'}, {'index': 4, 'ttl': 86400, 'type': 'TEST4', 'data': 'new4'}, {'index': 3, 'type': 'TEST101', 'data': 'new101'}]}
-        expected_payload.get('values', {})
-        replace_timestamps(expected_payload)
-        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
-            failure_message(expected=expected_payload,
+            expected_payload.get('values', {})
+            replace_timestamps(expected_payload)
+            self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
+                failure_message(expected=expected_payload,
                                  passed=passed_payload,
                                  methodname='modify_handle_value'))
 
