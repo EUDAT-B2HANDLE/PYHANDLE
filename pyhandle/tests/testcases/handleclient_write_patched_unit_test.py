@@ -36,6 +36,7 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
 
     @mock.patch('pyhandle.handlesystemconnector.HandleSystemConnector.check_if_username_exists')
     def setUp(self, username_check_patch):
+        self.maxDiff = None
 
         # Define replacement for the patched check for username existence:
         username_check_patch = mock.Mock()
