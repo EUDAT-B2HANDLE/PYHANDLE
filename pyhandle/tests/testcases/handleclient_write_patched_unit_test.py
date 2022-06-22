@@ -98,8 +98,8 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         
         #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 4, "type": "CHECKSUM", "data": "123456"}, {"index": 2, "type": "FOO", "data": "foo"}, {"index": 3, "type": "BAR", "data": "bar"}]}
         
-        if (sys.version_info.major == 3 and sys.version_info.minor == 9):
-            expected_payload = {'values': [{'type': 'HS_ADMIN', 'index': 100, 'data': {'value': {'permissions': '011111110011', 'index': '200', 'handle': '0.NA/my'}, 'format': 'admin'}}, {'type': 'BAR', 'index': 2, 'data': 'bar'}, {'type': 'URL', 'index': 1, 'data': 'http://foo.bar'}, {'type': 'FOO', 'index': 3, 'data': 'foo'}, {'type': 'CHECKSUM', 'index': 4, 'data': '123456'}]}
+        if (sys.version_info.major == 3 and sys.version_info.minor >= 6):
+            expected_payload ={"values": [{"data": {"value": {"handle": "0.NA/my", "permissions": "011111110011", "index": "200"}, "format": "admin"}, "type": "HS_ADMIN", "index": 100}, { "data": "http://foo.bar", "type": "URL", "index": 1}, {"data": "123456", "type": "CHECKSUM", "index": 2}, { "data": "foo", "type": "FOO", "index": 3}, {"data": "bar", "type": "BAR", "index": 4}]}
         else:
              expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}]}
                 
@@ -108,6 +108,23 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         self.assertIsNotNone(flattensort(expected_payload))
         self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
             failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
+    
+    AssertionError: '{"va[27 chars]dex":4,"type":"CHECKSUM"},{"data":"bar","index[232 chars]"}]}' != '{"va[27 chars]dex":2,"type":"CHECKSUM"},{"data":"bar","index[232 chars]"}]}'
+
+- {"values":[{"data":"123456","index":4,"type":"CHECKSUM"},{"data":"bar","index":3,"type":"BAR"},{"data":"foo","index":2,"type":"FOO"},{"data":"http://foo.bar","index":1,"type":"URL"},{"data":{"format":"admin","value":{"handle":"0.NA/my","index":"200","permissions":"011111110011"}},"index":100,"type":"HS_ADMIN"}]}
+
+?                                     ^                                          ^                                     ^
+
++ {"values":[{"data":"123456","index":2,"type":"CHECKSUM"},{"data":"bar","index":4,"type":"BAR"},{"data":"foo","index":3,"type":"FOO"},{"data":"http://foo.bar","index":1,"type":"URL"},{"data":{"format":"admin","value":{"handle":"0.NA/my","index":"200","permissions":"011111110011"}},"index":100,"type":"HS_ADMIN"}]}
+
+?                                     ^                                          ^                                     ^
+
+ : The PUT request payload that the method "register_handle" assembled differs from the expected. This does not necessarily mean that it is wrong, it might just be a different way to talking to the Handle Server. Please run an integration test to check this and update the exptected PUT request accordingly.
+
+Created:  {'values': [{'data': {'value': {'handle': '0.NA/my', 'permissions': '011111110011', 'index': '200'}, 'format': 'admin'}, 'type': 'HS_ADMIN', 'index': 100}, {'data': 'http://foo.bar', 'type': 'URL', 'index': 1}, {'data': 'foo', 'type': 'FOO', 'index': 2}, {'data': 'bar', 'type': 'BAR', 'index': 3}, {'data': '123456', 'type': 'CHECKSUM', 'index': 4}]}
+
+
+    
     
     @mock.patch('pyhandle.handlesystemconnector.requests.Session.put')
     @mock.patch('pyhandle.handlesystemconnector.requests.Session.get')
