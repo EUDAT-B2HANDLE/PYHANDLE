@@ -98,9 +98,7 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         
         #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 4, "type": "CHECKSUM", "data": "123456"}, {"index": 2, "type": "FOO", "data": "foo"}, {"index": 3, "type": "BAR", "data": "bar"}]}
         
-        if (sys.version_info.major == 3 and sys.version_info.minor == 5):
-            expected_payload = {"values": [{"index": 100, "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}, "type": "HS_ADMIN"}, {"index": 2, "data": "bar", "type": "BAR"}, {"index": 3, "data": "123456", "type": "CHECKSUM"}, {"index": 4, "data": "foo", "type": "FOO"}, {"index": 1, "data": "http://foo.bar", "type": "URL"}]}
-        elif (sys.version_info.major == 3 and sys.version_info.minor > 5):
+        if (sys.version_info.major == 3 and sys.version_info.minor > 5):
             expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 2, "type": "FOO", "data": "foo"}, {"index": 3, "type": "BAR", "data": "bar"}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 4, "type": "CHECKSUM", "data": "123456"}]}
         else:
              expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}]}
