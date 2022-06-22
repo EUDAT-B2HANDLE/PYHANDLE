@@ -10,6 +10,7 @@ As [B2Handle](https://github.com/EUDAT-B2SAFE/B2HANDLE) was developed with a spe
 
 
 
+
 # Installation
 
 You can install the PyHandle library as follows:
@@ -42,7 +43,6 @@ python setup.py build_sphinx
 Check out the documentation [here](https://eudat-b2safe.github.io/PYHANDLE/).
 
 (You can find the source in the GitHub repository at [/docs/source/index.rst](./docs/source/index.rst)!)
-
 
 # License
 
