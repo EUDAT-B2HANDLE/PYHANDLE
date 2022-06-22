@@ -7,6 +7,7 @@ pipeline {
         PROJECT_DIR="PYHANDLE"
         GH_USER = 'newgrnetci'
         GH_EMAIL = '<argo@grnet.gr>'
+        
     }
     stages {
         stage ('Run tests for each python version') {
@@ -34,6 +35,40 @@ pipeline {
                             filename "pyhandle/tests/Dockerfile-py3.5"
                             dir "$PROJECT_DIR"
                             additionalBuildArgs "-t eudat-pyhandle:py3.5"
+                            args "-u root:root"
+                        }
+                    }
+                    steps {
+                        sh '''
+                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
+                            ./docker-entrypoint.sh coverage
+                        '''
+                        cobertura coberturaReportFile: '**/coverage.xml'
+                    }
+                }
+                stage ('Test python 3.6') {
+                    agent {
+                        dockerfile {
+                            filename "pyhandle/tests/Dockerfile-py3.6"
+                            dir "$PROJECT_DIR"
+                            additionalBuildArgs "-t eudat-pyhandle:py3.6"
+                            args "-u root:root"
+                        }
+                    }
+                    steps {
+                        sh '''
+                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
+                            ./docker-entrypoint.sh coverage
+                        '''
+                        cobertura coberturaReportFile: '**/coverage.xml'
+                    }
+                }
+                stage ('Test python 3.7') {
+                    agent {
+                        dockerfile {
+                            filename "pyhandle/tests/Dockerfile-py3.7"
+                            dir "$PROJECT_DIR"
+                            additionalBuildArgs "-t eudat-pyhandle:py3.7"
                             args "-u root:root"
                         }
                     }
