@@ -1,0 +1,17 @@
+# vim:set ft=dockerfile:
+FROM       python:3.6
+
+RUN        pip install \
+           mock \
+           coverage \
+           nose && \
+           pip install -U "requests==2.23.0" && \
+           pip install -U pymysql
+
+ADD        . /opt/PYHANDLE
+RUN        cd /opt/PYHANDLE && \
+           python setup.py install
+
+WORKDIR    /opt/PYHANDLE/pyhandle/tests
+
+CMD ["./docker-entrypoint.sh", "coverage"]
