@@ -98,8 +98,10 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         
         #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 4, "type": "CHECKSUM", "data": "123456"}, {"index": 2, "type": "FOO", "data": "foo"}, {"index": 3, "type": "BAR", "data": "bar"}]}
         
-        if (sys.version_info.major == 3 and sys.version_info.minor >= 6):
-            expected_payload ={"values": [{"data": {"value": {"handle": "0.NA/my", "permissions": "011111110011", "index": "200"}, "format": "admin"}, "type": "HS_ADMIN", "index": 100}, { "data": "http://foo.bar", "type": "URL", "index": 1}, {"data": "123456", "type": "CHECKSUM", "index": 2}, { "data": "foo", "type": "FOO", "index": 3}, {"data": "bar", "type": "BAR", "index": 4}]}
+        if (sys.version_info.major == 3 and sys.version_info.minor == 5):
+            expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}]}
+        elif (sys.version_info.major == 3 and sys.version_info.minor > 6):
+            expected_payload = {"values": [{"data": {"value": {"handle": "0.NA/my", "permissions": "011111110011", "index": "200"}, "format": "admin"}, "type": "HS_ADMIN", "index": 100}, {"data": "http://foo.bar", "type": "URL", "index": 1}, {"data": "123456", "type": "CHECKSUM", "index": 2}, {"data": "foo", "type": "FOO", "index": 3}, {"data": "bar", "type": "BAR", "index": 4}]}
         else:
              expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}]}
                 
