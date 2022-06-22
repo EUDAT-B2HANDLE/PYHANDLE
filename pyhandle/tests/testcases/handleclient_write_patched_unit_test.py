@@ -694,6 +694,8 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
 
         # Define the replacement for the patched GET method:
         cont = {"responseCode":1, "handle":"my/testhandle", "values":[{"index":111, "type": "TEST1", "data":{"format":"string", "value":"val1"}, "ttl":86400, "timestamp":"2015-09-29T15:51:08Z"}, {"index":2222, "type": "TEST2", "data":{"format":"string", "value":"val2"}, "ttl":86400, "timestamp":"2015-09-29T15:51:08Z"}, {"index":333, "type": "TEST3", "data":{"format":"string", "value":"val3"}, "ttl":86400, "timestamp":"2015-09-29T15:51:08Z"}, {"index":4, "type": "TEST4", "data":{"format":"string", "value":"val4"}, "ttl":86400, "timestamp":"2015-09-29T15:51:08Z"}]}
+            
+            
         mock_response_get = MockResponse(status_code=200, content=json.dumps(cont))
         getpatch.return_value = mock_response_get
 
@@ -719,7 +721,10 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         passed_payload, _ = self.get_payload_headers_from_mockresponse(putpatch)
         
         # Compare with expected payload:
-        expected_payload = {'values': [{'index': 2, 'type': 'TEST100', 'data': 'new100'}, {'index': 2222, 'ttl': 86400, 'type': 'TEST2', 'data': 'new2'}, {'index': 4, 'ttl': 86400, 'type': 'TEST4', 'data': 'new4'}, {'index': 3, 'type': 'TEST101', 'data': 'new101'}]}
+        if (sys.version_info.major == 3 and sys.version_info.minor > 6):
+            expected_payload = {'values': [{'data': 'new100', 'index': 2, 'type': 'TEST100' }, {'data': 'new2', 'ttl': 86400, 'index': 2222, 'type': 'TEST2'}, {'data': 'new4', 'ttl': 86400, 'index': 4, 'type': 'TEST4'}, {'data': 'new101', 'index': 3, 'type': 'TEST101'}]}
+        else: 
+            expected_payload = {'values': [{'index': 2, 'type': 'TEST100', 'data': 'new100'}, {'index': 2222, 'ttl': 86400, 'type': 'TEST2', 'data': 'new2'}, {'index': 4, 'ttl': 86400, 'type': 'TEST4', 'data': 'new4'}, {'index': 3, 'type': 'TEST101', 'data': 'new101'}]}
         expected_payload.get('values', {})
         replace_timestamps(expected_payload)
         self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
