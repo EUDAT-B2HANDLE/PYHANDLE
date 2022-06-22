@@ -98,16 +98,20 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         
         #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 4, "type": "CHECKSUM", "data": "123456"}, {"index": 2, "type": "FOO", "data": "foo"}, {"index": 3, "type": "BAR", "data": "bar"}]}
         
-        if (sys.version_info.major == 3 and sys.version_info.minor >= 5):
+        if (sys.version_info.major == 3 and sys.version_info.minor > 5):
             expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 2, "type": "FOO", "data": "foo"}, {"index": 3, "type": "BAR", "data": "bar"}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 4, "type": "CHECKSUM", "data": "123456"}]}
-        else:
-             expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}]}
-                
-        replace_timestamps(expected_payload)
-        self.assertIsNotNone(flattensort(passed_payload))
-        self.assertIsNotNone(flattensort(expected_payload))
-        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
-            failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
+            replace_timestamps(expected_payload)
+            self.assertIsNotNone(flattensort(passed_payload))
+            self.assertIsNotNone(flattensort(expected_payload))
+            self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
+                failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
+        elif (sys.version_info.major == 2 and sys.version_info.minor > 6):
+            expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}]}
+            replace_timestamps(expected_payload)
+            self.assertIsNotNone(flattensort(passed_payload))
+            self.assertIsNotNone(flattensort(expected_payload))
+            self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
+                failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
     
     @mock.patch('pyhandle.handlesystemconnector.requests.Session.put')
     @mock.patch('pyhandle.handlesystemconnector.requests.Session.get')
@@ -351,7 +355,7 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
             self.assertIsNotNone(flattensort(expected_payload))
             self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
                 failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
-        elif (sys.version_info.major == 2 and sys.version_info.minor > 7):
+        elif (sys.version_info.major == 2 and sys.version_info.minor >= 7):
             expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": 300, "handle": "handle/owner", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}]}
             replace_timestamps(expected_payload)
             self.assertIsNotNone(flattensort(passed_payload))
@@ -425,30 +429,26 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         # Different indizes:
         #expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 4, "type": "CHECKSUM", "data": "123456"}, {"index": 2, "type": "FOO", "data": "foo"}, {"index": 3, "type": "BAR", "data": "bar"}]}
 
-        if (sys.version_info.major == 3 and sys.version_info.minor == 5):
-            expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 2, "type": "BAR", "data": "bar"}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 3, "type": "CHECKSUM", "data": "123456"}, {"index": 4, "type": "FOO", "data": "foo"}]}
-        elif (sys.version_info.major == 3 and sys.version_info.minor > 5):
+        if (sys.version_info.major == 3 and sys.version_info.minor > 5):
             expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 2, "type": "FOO", "data": "foo"}, {"index": 3, "type": "BAR", "data": "bar"}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 4, "type": "CHECKSUM", "data": "123456"}]}
-        else: 
+            replace_timestamps(expected_payload)
+            self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
+                failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
+            self.assertIsNotNone(flattensort(passed_payload))
+            self.assertIsNotNone(flattensort(expected_payload))
+            # Check if requests.put received an authorization header:
+            self.assertIn('Authorization', passed_headers,
+                'Authorization header not passed: ' + str(passed_headers))
+        elif (sys.version_info.major == 2 and sys.version_info.minor > 6):
             expected_payload = {"values": [{"index": 100, "type": "HS_ADMIN", "data": {"value": {"index": "200", "handle": "0.NA/my", "permissions": "011111110011"}, "format": "admin"}}, {"index": 1, "type": "URL", "data": "http://foo.bar"}, {"index": 2, "type": "CHECKSUM", "data": "123456"}, {"index": 3, "type": "FOO", "data": "foo"}, {"index": 4, "type": "BAR", "data": "bar"}]}
-
-        replace_timestamps(expected_payload)
-        
-        
-        # Visual comparison
-        #print('PASSED   : %s' % passed_payload)
-        #print('EXPECTED : %s' % expected_payload)
-        #print('PASSED   SORTED: %s' % flattensort(passed_payload))
-        #print('EXPECTED SORTED: %s' % flattensort(expected_payload))
-        #self.assertIsNotNone(None) # fail just to print the above
-        self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
-            failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
-        self.assertIsNotNone(flattensort(passed_payload))
-        self.assertIsNotNone(flattensort(expected_payload))
-        
-        # Check if requests.put received an authorization header:
-        self.assertIn('Authorization', passed_headers,
-            'Authorization header not passed: ' + str(passed_headers))
+            replace_timestamps(expected_payload)
+            self.assertEqual(flattensort(passed_payload), flattensort(expected_payload),
+                failure_message(expected=expected_payload, passed=passed_payload, methodname='register_handle'))
+            self.assertIsNotNone(flattensort(passed_payload))
+            self.assertIsNotNone(flattensort(expected_payload))
+            # Check if requests.put received an authorization header:
+            self.assertIn('Authorization', passed_headers,
+                'Authorization header not passed: ' + str(passed_headers))
 
     # generate_and_register_handle
 
