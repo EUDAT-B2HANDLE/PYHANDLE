@@ -99,8 +99,12 @@ def check_handle_syntax_with_index(string, base_already_checked=False):
     try:
         int(arr[0])
     except ValueError:
-        msg = 'Index is not an integer'
-        raise handleexceptions.HandleSyntaxError(msg=msg, handle=string, expected_syntax=expected)
+        if arr[0] == 'hdl:':
+            msg = 'Handle string starts with "hdl:", not with an index.'
+            raise handleexceptions.HandleSyntaxError(msg=msg, handle=string, expected_syntax=expected)
+        else:
+            msg = 'Index is not an integer'
+            raise handleexceptions.HandleSyntaxError(msg=msg, handle=string, expected_syntax=expected)
 
     if not base_already_checked:
         check_handle_syntax(string)
