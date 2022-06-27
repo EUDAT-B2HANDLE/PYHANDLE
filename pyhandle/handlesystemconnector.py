@@ -194,7 +194,7 @@ class HandleSystemConnector(object):
                 msg += 'The certificate file was not found at the specified path: '+self.__certificate_only
             if not os.path.isfile(self.__private_key):
                 msg += 'The private key file was not found at the specified path: '+self.__private_key
-            if msg is not '':
+            if msg != '':
                 raise CredentialsFormatError(msg=msg)
 
     def __which_authentication_method(self):
@@ -495,11 +495,11 @@ class HandleSystemConnector(object):
         accept = 'application/json'
         content_type = 'application/json'
 
-        if action is 'GET':
+        if action == 'GET':
             header['Accept'] = accept
 
 
-        elif action is 'PUT' or action is 'DELETE':
+        elif action == 'PUT' or action == 'DELETE':
 
             if self.__authentication_method == self.__auth_methods['cert']:
                 header['Authorization'] = 'Handle clientCert="true"'
@@ -507,7 +507,7 @@ class HandleSystemConnector(object):
             elif self.__authentication_method == self.__auth_methods['user_pw']:
                 header['Authorization'] = 'Basic ' + self.__basic_authentication_string
 
-            if action is 'PUT':
+            if action == 'PUT':
                 header['Content-Type'] = content_type
 
 
