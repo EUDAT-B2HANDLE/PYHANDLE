@@ -28,6 +28,21 @@ The library is also available on PyPi and can be installed via pip:
 ```
 
 For more information on the methods offered by the library, please consult the [technical documentation](http://eudat-b2safe.github.io/PYHANDLE/).
+
+## Instantiate:
+
+One of the core steps is to instantiate the file with the needed credentials. 
+A guide on how to use them is the following: 
+
+```
+credentials_file = './credentials/creds.json'
+# Path must be relative to current working dir
+# JSON file must contain absolute paths, or paths relative to the creds.json file!!
+creds = pyhandle.clientcredentials.PIDClientCredentials.load_from_JSON(credentials_file)
+client = pyhandle.handleclient.PyHandleClient('rest').instantiate_with_credentials(
+        creds, HTTPS_verify=https_verify)
+```
+
 # Building the documentation
 
 For more details about the library you can build the documention using [Sphinx](http://www.sphinx-doc.org), requiring at least version 1.3. Sphinx and can be installed via pip. To build HTML documentation locally, then run:
