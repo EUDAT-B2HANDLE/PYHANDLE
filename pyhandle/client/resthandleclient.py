@@ -555,6 +555,7 @@ class RESTHandleClient(HandleClient):
             resp = self.__send_handle_delete_request(handle, indices=indices, op=op)
             if hsresponses.handle_success(resp):
                 LOGGER.debug("delete_handle_value: Deleted handle values " + str(keys) + "of handle " + handle)
+                return handle
             elif hsresponses.values_not_found(resp):
                 pass
             else:
@@ -564,7 +565,7 @@ class RESTHandleClient(HandleClient):
                     response=resp
                 )
                 
-        return handle
+    
 
     def delete_handle(self, handle, *other):
         '''Delete the handle and its handle record. If the Handle is not found, an Exception is raised.
@@ -572,6 +573,7 @@ class RESTHandleClient(HandleClient):
         :param handle: Handle to be deleted.
         :param other: Deprecated. This only exists to catch wrong method usage
             by users who are used to delete handle VALUES with the method.
+        :return: The deleted handle.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
         :raises: :exc:`~pyhandle.handleexceptions.HandleNotFoundException`
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
@@ -594,6 +596,7 @@ class RESTHandleClient(HandleClient):
         resp = self.__send_handle_delete_request(handle, op=op)
         if hsresponses.handle_success(resp):
             LOGGER.info('Handle ' + handle + ' deleted.')
+            return handle
         elif hsresponses.handle_not_found(resp):
             msg = ('delete_handle: Handle ' + handle + ' did not exist, '
                    'so it could not be deleted.')
