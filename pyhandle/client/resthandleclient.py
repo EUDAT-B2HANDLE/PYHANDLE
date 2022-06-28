@@ -500,7 +500,7 @@ class RESTHandleClient(HandleClient):
                     payload=put_payload
                 )
                 
-        return handle
+        return json.loads(decoded_response(resp))['handle']
 
     def delete_handle_value(self, handle, key):
         '''
@@ -555,7 +555,8 @@ class RESTHandleClient(HandleClient):
             resp = self.__send_handle_delete_request(handle, indices=indices, op=op)
             if hsresponses.handle_success(resp):
                 LOGGER.debug("delete_handle_value: Deleted handle values " + str(keys) + "of handle " + handle)
-                return handle
+                return json.loads(decoded_response(resp))['handle']
+
             elif hsresponses.values_not_found(resp):
                 pass
             else:
@@ -596,7 +597,7 @@ class RESTHandleClient(HandleClient):
         resp = self.__send_handle_delete_request(handle, op=op)
         if hsresponses.handle_success(resp):
             LOGGER.info('Handle ' + handle + ' deleted.')
-            return handle
+            return json.loads(decoded_response(resp))['handle']
         elif hsresponses.handle_not_found(resp):
             msg = ('delete_handle: Handle ' + handle + ' did not exist, '
                    'so it could not be deleted.')
