@@ -270,7 +270,8 @@ class RESTHandleClient(HandleClient):
         elif hsresponses.does_handle_exist(response):
          
             handlerecord_json = json.loads(response_content)
-            if not handlerecord_json['handle'] == handle:
+
+            if not handlerecord_json['handle'] == handle.lstrip('hdl:').lstrip('doi:'):
                 raise GenericHandleError(
                     operation='retrieving handle record',
                     handle=handle,

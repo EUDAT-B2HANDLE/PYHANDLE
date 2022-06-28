@@ -261,7 +261,6 @@ class HandleSystemConnector(object):
         :return: The server's response.
         '''
 
-
         # Assemble required info:
         url = self.make_handle_URL(handle, indices)
         LOGGER.debug('GET Request to '+url)
@@ -295,7 +294,6 @@ class HandleSystemConnector(object):
             return True
         else:
             return False
-
 
     def send_handle_put_request(self, **args):
         '''
@@ -536,6 +534,12 @@ class HandleSystemConnector(object):
         '''
         LOGGER.debug('make_handle_URL...')
         separator = '?'
+
+        # Handle Server does not accept REST API requests with "hdl:" nor "doi:",
+        # it interprets them as part of the prefix.
+        # It will respond with HTTP Status Code 400 and Response: {"responseCode":301,
+        # "message":"That prefix doesn't live here","handle":"hdl:21.14106/TESTTESTTEST"}
+        handle = handle.lstrip('hdl:').lstrip('doi:')
 
         if other_url is not None:
             url = other_url
