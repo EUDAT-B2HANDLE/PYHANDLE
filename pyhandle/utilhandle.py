@@ -64,13 +64,11 @@ def check_handle_syntax(string):
 
     if ':' in string:
         if string.startswith('hdl:'): # Fixing https://github.com/EUDAT-B2HANDLE/PYHANDLE/issues/49
-            # TODO: Note: What about DOIs?
             # TODO: Note of caution: Handle Server won't accept REST API calls with hdl: prepended.
             return True
-        else:
-            check_handle_syntax_with_index(string, base_already_checked=True)
-            # TODO: Actually this is not a handle, but refers to a field inside a handle record, so
-            # to be strict, we should not accept this.
+        elif string.startswith('doi:'):
+            # TODO: Note of caution: Handle Server won't accept REST API calls with doi: prepended.
+            return True
 
     return True
 
