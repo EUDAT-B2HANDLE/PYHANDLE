@@ -30,13 +30,15 @@ class MockResponse(object):
     which has a specific combination of HTTP status code, handle
     response code and content.
     '''
-    def __init__(self, status_code=None, content=None, request=None, success=False, notfound=False, empty=False, wascreated=False):
+    def __init__(self, handle=None, status_code=None, content=None, request=None, success=False, notfound=False, empty=False, wascreated=False):
 
         self.content = None
         self.status_code = None
         self.request = None
 
         # Some predefined cases:
+        if handle is not None and (handle.startswith('hdl:') or handle.startswith('doi:')):
+            self.status_code = 400
         if success:
             self.status_code = 200
             self.content = '{"responseCode":1, "handle":"my/testhandle"}'
