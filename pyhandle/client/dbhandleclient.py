@@ -294,7 +294,7 @@ class DBHandleClient(HandleClient):
         query_result_as_dict = query_result_as_dict['count(*)']
         LOGGER.debug('Query result %s', query_result_as_dict)
 
-        if query_result_as_dict is not 0:
+        if query_result_as_dict != 0:
             return True
         else:
             return False
