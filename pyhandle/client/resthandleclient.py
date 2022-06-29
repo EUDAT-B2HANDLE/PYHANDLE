@@ -500,7 +500,7 @@ class RESTHandleClient(HandleClient):
                     payload=put_payload
                 )
                 
-        return handle
+        return json.loads(decoded_response(resp))['handle']
 
     def delete_handle_value(self, handle, key):
         '''
@@ -553,9 +553,11 @@ class RESTHandleClient(HandleClient):
             # delete and process response:
             op = 'deleting "' + str(keys) + '"'
             resp = self.__send_handle_delete_request(handle, indices=indices, op=op)
+
             if hsresponses.handle_success(resp):
                 LOGGER.debug("delete_handle_value: Deleted handle values " + str(keys) + "of handle " + handle)
-                return handle
+                return json.loads(decoded_response(resp))['handle']
+
             elif hsresponses.values_not_found(resp):
                 pass
             else:
@@ -564,8 +566,6 @@ class RESTHandleClient(HandleClient):
                     handle=handle,
                     response=resp
                 )
-                
-    
 
     def delete_handle(self, handle, *other):
         '''Delete the handle and its handle record. If the Handle is not found, an Exception is raised.
@@ -594,17 +594,20 @@ class RESTHandleClient(HandleClient):
 
         op = 'deleting handle'
         resp = self.__send_handle_delete_request(handle, op=op)
+        handle = json.loads(decoded_response(resp))['handle']
+
         if hsresponses.handle_success(resp):
+            # Response: {'handle': '21.14106/TESTTESTTEST', 'responseCode': 1}   with HTTP 200
             LOGGER.info('Handle ' + handle + ' deleted.')
             return handle
         elif hsresponses.handle_not_found(resp):
+            # Response: {'handle': '21.14106/TESTTESTTEST', 'responseCode': 100} with HTTP 404
             msg = ('delete_handle: Handle ' + handle + ' did not exist, '
                    'so it could not be deleted.')
             LOGGER.debug(msg)
             raise HandleNotFoundException(msg=msg, handle=handle, response=resp)
         else:
             raise GenericHandleError(op=op, handle=handle, response=resp)
-
 
     def register_handle_json(self, handle, list_of_entries, overwrite=False):
         '''
