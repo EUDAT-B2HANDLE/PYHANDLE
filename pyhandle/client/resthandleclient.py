@@ -246,7 +246,7 @@ class RESTHandleClient(HandleClient):
 
     # Methods with read access to Handle Server:
 
-    def retrieve_handle_record_json(self, handle):
+    def retrieve_handle_record_json(self, handle, auth=False, **options):
         '''
         Retrieve a handle record from the Handle server as a complete nested
         dict (including index, ttl, timestamp, ...) for later use.
@@ -262,7 +262,16 @@ class RESTHandleClient(HandleClient):
         LOGGER.debug('retrieve_handle_record_json...')
 
         utilhandle.check_handle_syntax(handle)
-        response = self.__send_handle_get_request(handle)
+
+        # Add url parameters (see Tech Manual)
+        if auth == True:
+            options['auth'] = 'true'
+        
+        if len(options)>0:
+            response = self.__send_handle_get_request(handle, **options)
+        else:
+            response = self.__send_handle_get_request(handle)
+        
         response_content = decoded_response(response)
                     
         if hsresponses.handle_not_found(response):
@@ -288,8 +297,7 @@ class RESTHandleClient(HandleClient):
                 response=response
             )
            
-        
-    def retrieve_handle_record(self, handle, handlerecord_json=None):
+    def retrieve_handle_record(self, handle, handlerecord_json=None, auth=False, **options):
         '''
         Retrieve a handle record from the Handle server as a dict. If there
         is several entries of the same type, only the first one is
@@ -386,7 +394,7 @@ class RESTHandleClient(HandleClient):
         )
         return handle
 
-    def modify_handle_value(self, handle, ttl=None, add_if_not_exist=True, **kvpairs):
+    def modify_handle_value(self, handle, ttl=None, add_if_not_exist=True, auth=False, **kvpairs):
         '''
         Modify entries (key-value-pairs) in a handle record. If the key
         does not exist yet, it is created.
@@ -412,7 +420,9 @@ class RESTHandleClient(HandleClient):
         LOGGER.debug('modify_handle_value...')
 
         # Read handle record:
-        handlerecord_json = self.retrieve_handle_record_json(handle)
+        handlerecord_json = self.retrieve_handle_record_json(handle, auth)
+        # TODO: Do we need to enable passing more options here? That would be 
+        # difficult, as it clashes with the **kvpairs...
         if handlerecord_json is None:
             msg = 'Cannot modify unexisting handle'
             raise HandleNotFoundException(handle=handle, msg=msg)
@@ -517,7 +527,8 @@ class RESTHandleClient(HandleClient):
         LOGGER.debug('delete_handle_value...')
 
         # read handle record:
-        handlerecord_json = self.retrieve_handle_record_json(handle)
+        auth = True
+        handlerecord_json = self.retrieve_handle_record_json(handle, auth)
         if handlerecord_json is None:
             msg = 'Cannot modify unexisting handle'
             raise HandleNotFoundException(handle=handle, msg=msg)
@@ -913,23 +924,23 @@ class RESTHandleClient(HandleClient):
         )
         return resp, payload
 
-    def __send_handle_get_request(self, handle, indices=None):
+    def __send_handle_get_request(self, handle, indices=None, **options):
         '''
         Send a HTTP GET request to the handle server to read either an entire
             handle or to some specified values from a handle record, using the
             requests module.
 
         :param handle: The handle.
-        :param indices: Optional. A list of indices to delete. Defaults to
-            None (i.e. the entire handle is deleted.). The list can contain
+        :param indices: Optional. A list of indices to retrieve. Defaults to
+            None (i.e. the entire handle is retrieved.). The list can contain
             integers or strings.
         :return: The server's response.
         '''
 
-        resp = self.__handlesystemconnector.send_handle_get_request(handle, indices)
+        resp = self.__handlesystemconnector.send_handle_get_request(handle, indices, options)
         return resp
 
-    def __get_handle_record_if_necessary(self, handle, handlerecord_json):
+    def __get_handle_record_if_necessary(self, handle, handlerecord_json): #WIP
         '''
         Returns the handle record if it is None or if its handle is not the
             same as the specified handle.

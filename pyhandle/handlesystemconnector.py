@@ -248,7 +248,7 @@ class HandleSystemConnector(object):
 
     # API methods:
 
-    def send_handle_get_request(self, handle, indices=None):
+    def send_handle_get_request(self, handle, indices=None, options={}):
         '''
         Send a HTTP GET request to the handle server to read either an entire
             handle or to some specified values from a handle record, using the
@@ -263,7 +263,7 @@ class HandleSystemConnector(object):
 
 
         # Assemble required info:
-        url = self.make_handle_URL(handle, indices)
+        url = self.make_handle_URL(handle, indices, **options)
         LOGGER.debug('GET Request to '+url)
         head = self.__get_headers('GET')
         veri = self.__HTTPS_verify
@@ -515,7 +515,7 @@ class HandleSystemConnector(object):
             LOGGER.debug('__getHeader: ACTION is unknown ('+action+')')
         return header
 
-    def make_handle_URL(self, handle, indices=None, overwrite=None, other_url=None):
+    def make_handle_URL(self, handle, indices=None, overwrite=None, other_url=None, **options):
         '''
         Create the URL for a HTTP request (URL + query string) to request
         a specific handle from the Handle Server.
@@ -556,6 +556,12 @@ class HandleSystemConnector(object):
                 url = url+separator+'overwrite=true'
             else:
                 url = url+separator+'overwrite=false'
+                separator = '&'
+
+        if len(options) > 0:
+            for k,v in options.items():
+                url = url+separator+k+'='+v
+                separator = '&'
 
         return url
 
