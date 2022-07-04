@@ -255,8 +255,8 @@ class HandleSystemConnector(object):
             requests module.
 
         :param handle: The handle.
-        :param indices: Optional. A list of indices to delete. Defaults to
-            None (i.e. the entire handle is deleted.). The list can contain
+        :param indices: Optional. A list of indices to retrieve. Defaults to
+            None (i.e. the entire handle is retrieved.). The list can contain
             integers or strings.
         :return: The server's response.
         '''
@@ -545,15 +545,18 @@ class HandleSystemConnector(object):
         url = url.strip('/')+'/'+ handle
 
         if indices is None:
-            indices = []
-        if len(indices) > 0:
+            pass
+        elif len(indices) > 0:
             for index in indices:
+                # TODO: It might be possible to replace this by "?index=various", see Tech Manual.
+                # But be careful, "various" only works with PUT, not with DELETE or GET.
                 url = url+separator+'index='+str(index)
                 separator = '&'
 
         if overwrite is not None:
             if overwrite:
                 url = url+separator+'overwrite=true'
+                separator = '&'
             else:
                 url = url+separator+'overwrite=false'
                 separator = '&'
