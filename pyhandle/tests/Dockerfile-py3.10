@@ -3,6 +3,7 @@ FROM       python:3.10
 
 RUN        pip install \
            mock \
+           pytest \
            coverage \
            nose && \
            pip install -U "requests==2.23.0" && \
