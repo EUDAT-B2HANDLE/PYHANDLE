@@ -2,10 +2,8 @@
 FROM       python:3.10
 
 RUN        pip install \
-           mock \
            pytest \
-           coverage \
-           nose && \
+           pytest-cov \
            pip install -U "requests==2.23.0" && \
            pip install -U pymysql
 
