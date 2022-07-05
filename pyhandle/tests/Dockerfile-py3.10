@@ -2,6 +2,7 @@
 FROM       python:3.10
 
 RUN        pip install \
+           mock \
            pytest \
            pytest-cov \
            pip install -U "requests==2.23.0" && \
