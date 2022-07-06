@@ -410,9 +410,10 @@ class RESTHandleClient(HandleClient):
         if not checksum is None:
             extratypes["CHECKSUM"] = checksum
 
+        overwrite = True
         handle = self.register_handle_kv(
             handle,
-            overwrite=True,
+            overwrite,
             auth,
             **extratypes
         )
