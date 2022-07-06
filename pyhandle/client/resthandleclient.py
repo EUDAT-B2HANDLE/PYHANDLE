@@ -452,7 +452,7 @@ class RESTHandleClient(HandleClient):
         if handlerecord_json is None:
             msg = 'Cannot modify unexisting handle'
             raise HandleNotFoundException(handle=handle, msg=msg)
-        list_of_entries = handlerecord_json['values']
+        list_of_existing_entries = handlerecord_json['values']
 
         # HS_ADMIN
         if 'HS_ADMIN' in kvpairs.keys() and not self.__modify_HS_ADMIN:
@@ -463,22 +463,33 @@ class RESTHandleClient(HandleClient):
                 handle=handle
             )
 
-        nothingchanged = True
+
+        # All the new entries will be in this list, which will be sent to
+        # the Handle Server as payload.
         new_list_of_entries = []
-        list_of_old_and_new_entries = list_of_entries[:]
-        keys = kvpairs.keys()
+
+        # Existing and new/modified entries will be in this list, which is
+        # used/needed for making up new indexes for new entries.
+        # I guess we don't just use the existing list because we iterate through it.
+        list_of_old_and_new_entries = list_of_existing_entries[:]
+
+        # Iterate over all kv pairs that are to be modified/added:
+        nothingchanged = True
         for key, newval in kvpairs.items():
-            # Change existing entry:
+            
+            # Check if that key already exists in the record:
             changed = False
-            for i in xrange(len(list_of_entries)):
-                if list_of_entries[i]['type'] == key:
+            for i in xrange(len(list_of_existing_entries)):
+                if list_of_existing_entries[i]['type'] == key:
+
+                    # If it does, modify it:
                     if not changed:
-                        list_of_entries[i]['data'] = newval
-                        list_of_entries[i].pop('timestamp')  # will be ignored anyway
+                        list_of_existing_entries[i]['data'] = newval
+                        list_of_existing_entries[i].pop('timestamp')  # will be ignored anyway
                         if key == 'HS_ADMIN':
                             newval['permissions'] = self.__HS_ADMIN_permissions
-                            list_of_entries[i].pop('timestamp')  # will be ignored anyway
-                            list_of_entries[i]['data'] = {
+                            list_of_existing_entries[i].pop('timestamp')  # will be ignored anyway
+                            list_of_existing_entries[i]['data'] = {
                                 'format':'admin',
                                 'value':newval
                             }
@@ -486,8 +497,8 @@ class RESTHandleClient(HandleClient):
                                 ' "HS_ADMIN" of handle ' + handle)
                         changed = True
                         nothingchanged = False
-                        new_list_of_entries.append(list_of_entries[i])
-                        list_of_old_and_new_entries.append(list_of_entries[i])
+                        new_list_of_entries.append(list_of_existing_entries[i])
+                        list_of_old_and_new_entries.append(list_of_existing_entries[i])
                     else:
                         msg = 'There is several entries of type "' + key + '".' + \
                             ' This can lead to unexpected behaviour.' + \
