@@ -418,6 +418,25 @@ class RESTHandleClient(HandleClient):
         )
         return handle
 
+
+    def modify_or_add_handle_value(self, handle, ttl=None, **kvpairs):
+        add_if_not_exist = True
+        overwrite = True
+        return self.__handle_modification(handle, ttl, add_if_not_exist, overwrite, **kvpairs)
+
+
+    def modify_handle_value_not_add(self, handle, ttl=None, **kvpairs):
+        add_if_not_exist = False
+        overwrite = True
+        return self.__handle_modification(handle, ttl, add_if_not_exist, overwrite, **kvpairs)
+
+
+    def add_handle_value(self, handle, ttl=None, **kvpairs):
+        add_if_not_exist = True
+        overwrite = False
+        return self.__handle_modification(handle, ttl, add_if_not_exist, overwrite, **kvpairs)
+
+
     def modify_handle_value(self, handle, ttl=None, add_if_not_exist=True, **kvpairs):
         '''
         Modify entries (key-value-pairs) in a handle record. If the key
@@ -444,6 +463,11 @@ class RESTHandleClient(HandleClient):
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
         '''
         LOGGER.debug('modify_handle_value...')
+        overwrite = True
+        return self.__handle_modification(handle, ttl, add_if_not_exist, overwrite, **kvpairs)
+
+
+    def __handle_modification(self, handle, ttl=None, add_if_not_exist=True, overwrite=True, **kvpairs):
 
         # Read handle record (the primary one with auth=True,
         # because we'll modify the primary one!)
@@ -537,7 +561,7 @@ class RESTHandleClient(HandleClient):
                 handle,
                 new_list_of_entries,
                 indices=indices,
-                overwrite=True,
+                overwrite=overwrite,
                 op=op)
             if hsresponses.handle_success(resp):
                 LOGGER.info('Handle modified: ' + handle)
