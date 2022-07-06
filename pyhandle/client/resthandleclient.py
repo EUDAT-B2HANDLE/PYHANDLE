@@ -246,7 +246,7 @@ class RESTHandleClient(HandleClient):
 
     # Methods with read access to Handle Server:
 
-    def retrieve_handle_record_json(self, handle, auth=False, **options):
+    def retrieve_handle_record_json(self, handle, auth=False, **hs_options):
         '''
         Retrieve a handle record from the Handle server as a complete nested
         dict (including index, ttl, timestamp, ...) for later use.
@@ -258,7 +258,7 @@ class RESTHandleClient(HandleClient):
         :param auth: Optional. If set to True, the handle record will be retrieved
             from the primary server and not from cache, so changes from the last
             max. 24 hours will be included. Defaults to False.
-        :param options: Optional. A list of key-value pairs which will be appended
+        :param hs_options: Optional. A list of key-value pairs which will be appended
             to the URL as parameters, to be passed to the Handle Server during the
             GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
             possible values.
@@ -274,10 +274,10 @@ class RESTHandleClient(HandleClient):
 
         # Add url parameters (see Tech Manual)
         if auth == True:
-            options['auth'] = 'true'
+            hs_options['auth'] = 'true'
         
-        if len(options)>0:
-            response = self.__send_handle_get_request(handle, **options)
+        if len(hs_options)>0:
+            response = self.__send_handle_get_request(handle, **hs_options)
         else:
             response = self.__send_handle_get_request(handle)
         
@@ -1029,7 +1029,7 @@ class RESTHandleClient(HandleClient):
         )
         return resp, payload
 
-    def __send_handle_get_request(self, handle, indices=None, **options):
+    def __send_handle_get_request(self, handle, indices=None, **hs_options):
         '''
         Send a HTTP GET request to the handle server to read either an entire
             handle or to some specified values from a handle record, using the
@@ -1039,14 +1039,14 @@ class RESTHandleClient(HandleClient):
         :param indices: Optional. A list of indices to retrieve. Defaults to
             None (i.e. the entire handle is retrieved.). The list can contain
             integers or strings.
-        :param options: Optional. A list of key-value pairs which will be appended
+        :param hs_options: Optional. A list of key-value pairs which will be appended
             to the URL as parameters, to be passed to the Handle Server during the
             GET request (e.g. "&auth=true"). Please see the Handle Tech Manual for
             possible values.
         :return: The server's response.
         '''
 
-        resp = self.__handlesystemconnector.send_handle_get_request(handle, indices, options)
+        resp = self.__handlesystemconnector.send_handle_get_request(handle, indices, **hs_options)
         return resp
 
     def __get_handle_record_if_necessary(self, handle, handlerecord_json, auth, **hs_options):
