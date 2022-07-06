@@ -297,7 +297,7 @@ class RESTHandleClient(HandleClient):
                 response=response
             )
            
-    def retrieve_handle_record(self, handle, handlerecord_json=None, auth=False, **options):
+    def retrieve_handle_record(self, handle, handlerecord_json=None, auth=False):
         '''
         Retrieve a handle record from the Handle server as a dict. If there
         is several entries of the same type, only the first one is
@@ -363,7 +363,7 @@ class RESTHandleClient(HandleClient):
     
     # Methods with write access to Handle Server:
 
-    def generate_and_register_handle(self, prefix, location, checksum=None, **extratypes):
+    def generate_and_register_handle(self, prefix, location, checksum=None, auth=False, **extratypes):
         '''
         Register a new Handle with a unique random name (random UUID).
 
@@ -390,11 +390,12 @@ class RESTHandleClient(HandleClient):
         handle = self.register_handle_kv(
             handle,
             overwrite=True,
+            auth,
             **extratypes
         )
         return handle
 
-    def modify_handle_value(self, handle, ttl=None, add_if_not_exist=True, auth=False, **kvpairs):
+    def modify_handle_value(self, handle, ttl=None, add_if_not_exist=True, **kvpairs):
         '''
         Modify entries (key-value-pairs) in a handle record. If the key
         does not exist yet, it is created.
@@ -656,7 +657,7 @@ class RESTHandleClient(HandleClient):
         # Create record itself and put to server:
         return self.__handle_registering(handle, list_of_entries, overwrite)
    
-    def register_handle(self, handle, location, checksum=None, additional_URLs=None, overwrite=False, **extratypes):
+    def register_handle(self, handle, location, checksum=None, additional_URLs=None, overwrite=False, auth=False, **extratypes):
         '''
         Registers a new Handle with given name. If the handle already exists
         and overwrite is not set to True, the method will throw an
@@ -697,6 +698,7 @@ class RESTHandleClient(HandleClient):
         return self.register_handle_kv(
             handle,
             overwrite,
+            auth,
             **extratypes
         )
 
