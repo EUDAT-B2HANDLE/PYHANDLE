@@ -480,16 +480,17 @@ class RESTHandleClient(HandleClient):
             # Check if that key already exists in the record:
             changed = False
             for i in xrange(len(list_of_existing_entries)):
-                if list_of_existing_entries[i]['type'] == key:
+                current_entry = list_of_existing_entries[i]
+                if current_entry['type'] == key:
 
                     # If it does, modify it:
                     if not changed:
-                        list_of_existing_entries[i]['data'] = newval
-                        list_of_existing_entries[i].pop('timestamp')  # will be ignored anyway
+                        current_entry['data'] = newval
+                        current_entry.pop('timestamp')  # will be ignored anyway
                         if key == 'HS_ADMIN':
                             newval['permissions'] = self.__HS_ADMIN_permissions
-                            list_of_existing_entries[i].pop('timestamp')  # will be ignored anyway
-                            list_of_existing_entries[i]['data'] = {
+                            current_entry.pop('timestamp')  # will be ignored anyway
+                            current_entry['data'] = {
                                 'format':'admin',
                                 'value':newval
                             }
@@ -497,8 +498,8 @@ class RESTHandleClient(HandleClient):
                                 ' "HS_ADMIN" of handle ' + handle)
                         changed = True
                         nothingchanged = False
-                        new_list_of_entries.append(list_of_existing_entries[i])
-                        list_of_old_and_new_entries.append(list_of_existing_entries[i])
+                        new_list_of_entries.append(current_entry)
+                        list_of_old_and_new_entries.append(current_entry)
                     else:
                         msg = 'There is several entries of type "' + key + '".' + \
                             ' This can lead to unexpected behaviour.' + \
