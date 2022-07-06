@@ -248,7 +248,7 @@ class HandleSystemConnector(object):
 
     # API methods:
 
-    def send_handle_get_request(self, handle, indices=None, options={}):
+    def send_handle_get_request(self, handle, indices=None, **hs_options):
         '''
         Send a HTTP GET request to the handle server to read either an entire
             handle or to some specified values from a handle record, using the
@@ -258,12 +258,16 @@ class HandleSystemConnector(object):
         :param indices: Optional. A list of indices to retrieve. Defaults to
             None (i.e. the entire handle is retrieved.). The list can contain
             integers or strings.
+        :param hs_options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&auth=true"). Please see the Handle Tech Manual for
+            possible values.
         :return: The server's response.
         '''
 
 
         # Assemble required info:
-        url = self.make_handle_URL(handle, indices, **options)
+        url = self.make_handle_URL(handle, indices, **hs_options)
         LOGGER.debug('GET Request to '+url)
         head = self.__get_headers('GET')
         veri = self.__HTTPS_verify
