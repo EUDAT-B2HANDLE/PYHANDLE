@@ -362,7 +362,10 @@ class RESTHandleClient(HandleClient):
             raise HandleNotFoundException(handle=handle)
         list_of_entries = handlerecord_json['values']
 
-        indices = []
+        # Instead of this filtering, we could simply pass "?type=key" to the Handle Server!!
+        # TODO: Reimplement!
+
+        indices = [] # Why indices? Why not just grab the value!
         for i in xrange(len(list_of_entries)):
             if list_of_entries[i]['type'] == key:
                 indices.append(i)
@@ -426,6 +429,8 @@ class RESTHandleClient(HandleClient):
         :param handle: Handle whose record is to be modified
         :param ttl: Optional. Integer value. If ttl should be set to a
             non-default value.
+        :param add_if_not_exist: Optional. Whether a kv pair should be added if
+            the key does not exist yet.
         :param all other args: The user can specify several key-value-pairs.
             These will be the handle value types and values that will be
             modified. The keys are the names or the handle value types (e.g.
@@ -489,7 +494,7 @@ class RESTHandleClient(HandleClient):
                             ' Please clean up before modifying the record.'
                         raise BrokenHandleRecordException(handle=handle, msg=msg)
 
-            # If the entry doesn't exist yet, add it:
+            # If the entry doesn't exist yet, add it (if you're allowed to!).
             if not changed:
                 if add_if_not_exist:
                     LOGGER.debug('modify_handle_value: Adding entry "' + key + '"' + \
@@ -500,6 +505,9 @@ class RESTHandleClient(HandleClient):
                     list_of_old_and_new_entries.append(entry_to_add)
                     changed = True
                     nothingchanged = False
+                else:
+                    LOGGER.debug('modify_handle_value: Key "'+key+'" does not exist,' + \
+                        ' but we\'re not allowed to add it to handle "'+handle+'".')
 
         # Add the indices
         indices = []
@@ -509,7 +517,7 @@ class RESTHandleClient(HandleClient):
         # append to the old record:
         if nothingchanged:
             LOGGER.debug('modify_handle_value: There was no entries ' + \
-                str(kvpairs.keys()) + ' to be modified (handle ' + handle + ').' + \
+                str(kvpairs.keys()) + ' to be modified (handle "' + handle + '").' + \
                 ' To add them, set add_if_not_exist = True')
         else:
             op = 'modifying handle values'
@@ -643,14 +651,27 @@ class RESTHandleClient(HandleClient):
 
     def register_handle_json(self, handle, list_of_entries, overwrite=False, auth=False):
         '''
-        entry = {'index':index, 'type':entrytype, 'data':data}
-        # Optional 'ttl'
-        Note: "auth" url param is only used during the check whether it already exists.
+        Registers a new Handle with given name. If the handle already exists
+        and overwrite is not set to True, the method will throw an
+        exception.
 
+        :param handle: The full name of the handle to be registered (prefix
+            and suffix)
+        :param list_of_entries: The entries to be included in the record,
+            e.g. URL, CHECKSUM, ... Example for an entry:
+            {'index':index, 'type':entrytype, 'data':data}
+            Optionally you can add 'ttl'.
+        :param overwrite: Optional. If set to True, an existing handle record
+            will be overwritten. Defaults to False.
         :param auth: Optional. If set to True, the check whether the handle already
             exists will go to the primary server. Rarely ever needed! (Only needed
             if the handle had already existed but was deleted in the last 24 hours
             or so). Defaults to False.
+        :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
+            set to False.
+        :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
+        :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
+        :return: The handle name.
         '''
 
         # If already exists and can't be overwritten:
@@ -738,8 +759,8 @@ class RESTHandleClient(HandleClient):
 
         :param handle: The full name of the handle to be registered (prefix
             and suffix)
-        :param extratypes: Optional, but highly recommended. The key value pairs
-            to be included in the record, e.g. URL, CHECKSUM, ...
+        :param kv_pairs: The key value pairs to be included in the record,
+            e.g. URL, CHECKSUM, ...
         :param overwrite: Optional. If set to True, an existing handle record
             will be overwritten. Defaults to False.
         :param auth: Optional. If set to True, the check whether the handle already
@@ -925,6 +946,8 @@ class RESTHandleClient(HandleClient):
         :param indices: Optional. A list of indices to delete. Defaults to
             None (i.e. the entire handle is deleted.). The list can contain
             integers or strings.
+        :param op: Name of the operation, e.g. 'registering handle', 'deleting handle'
+            or 'modifying handle values'. Only used in throwing exceptions.
         :return: The server's response.
         '''
 
@@ -948,6 +971,8 @@ class RESTHandleClient(HandleClient):
          contain integers or strings.
         :param overwrite: Optional. Whether the handle should be overwritten
          if it exists already.
+        :param op: Name of the operation, e.g. 'registering handle', 'deleting handle'
+            or 'modifying handle values'. Only used in throwing exceptions.
         :return: The server's response.
         '''
 
@@ -984,7 +1009,11 @@ class RESTHandleClient(HandleClient):
         '''
         Returns the handle record if it is None or if its handle is not the
             same as the specified handle.
-
+        :param handle: The handle.
+        :param handlerecord_json: The handle record as JSON. If it exists (and if
+            the contained handle matches the handle passed as param), it is simply
+            returned, to avoid repetitive GET requests. If it is None, the handle
+            record will be requested from the Handle Server and returned.
         :param auth: If set to True, the handle record will be retrieved from the 
             primary server and not from cache, so changes from the last max. 24 hours
             will be included. (The cache is refreshed after max 24h by default, this
