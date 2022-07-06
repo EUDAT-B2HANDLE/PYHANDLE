@@ -255,6 +255,15 @@ class RESTHandleClient(HandleClient):
         please use :meth:`~pyhandle.handleclient.RESTHandleClient.retrieve_handle_record`.
 
         :param handle: The Handle whose record to retrieve.
+        :param auth: Optional. If set to True, the handle record will be retrieved
+            from the primary server and not from cache, so changes from the last
+            max. 24 hours will be included. Defaults to False.
+        :param options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
+            possible values.
+            Note: Several indices cannot be passed, as a dict does not accept several
+            same keys. TODO FIXME
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
         :return: The handle record as a nested dict. If the handle does not
             exist, returns None.
@@ -307,6 +316,9 @@ class RESTHandleClient(HandleClient):
         :param handle: The handle whose record to retrieve.
         :param handlerecord_json: Optional. If the handlerecord has already
             been retrieved from the server, it can be reused.
+        :param auth: Optional. If set to True, the handle record will be retrieved
+            from the primary server and not from cache, so changes from the last
+            max. 24 hours or so will be included. Defaults to False.
         :return: A dict where the keys are keys from the Handle record (except
             for hidden entries) and every value is a string. The result will be
             None if the Handle does not exist.
@@ -334,6 +346,10 @@ class RESTHandleClient(HandleClient):
 
         :param handle: The handle to take the value from.
         :param key: The key.
+        :param auth: Optional. If set to True, the handle record will be retrieved
+            from the primary server and not from cache, so changes from the last
+            max. 24 hours or so will be included. Defaults to False.
+        TODO: Allow passing other options, notably publicOnly.
         :return: A string containing the value or None if the Handle record
          does not contain the key.
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
@@ -371,6 +387,10 @@ class RESTHandleClient(HandleClient):
             will generate a suffix.
         :param location: The URL of the data entity to be referenced.
         :param checksum: Optional. The checksum string.
+        :param auth: Optional. If set to True, the check whether the handle already
+            exists will go to the primary server. Rarely ever needed! (Only needed
+            if the handle had already existed but was deleted in the last 24 hours
+            or so). Defaults to False.
         :param extratypes: Optional. Additional key value pairs as dict.
         
         :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
@@ -420,11 +440,10 @@ class RESTHandleClient(HandleClient):
         '''
         LOGGER.debug('modify_handle_value...')
 
-        # Read handle record:
+        # Read handle record (the primary one with auth=True,
+        # because we'll modify the primary one!)
+        auth = True
         handlerecord_json = self.retrieve_handle_record_json(handle, auth)
-        # TODO: Do we need to enable passing more options here? That would be 
-        # difficult, as it clashes with the **kvpairs... Modifications don't take
-        # many options / url params anyway.
         if handlerecord_json is None:
             msg = 'Cannot modify unexisting handle'
             raise HandleNotFoundException(handle=handle, msg=msg)
@@ -627,6 +646,11 @@ class RESTHandleClient(HandleClient):
         entry = {'index':index, 'type':entrytype, 'data':data}
         # Optional 'ttl'
         Note: "auth" url param is only used during the check whether it already exists.
+
+        :param auth: Optional. If set to True, the check whether the handle already
+            exists will go to the primary server. Rarely ever needed! (Only needed
+            if the handle had already existed but was deleted in the last 24 hours
+            or so). Defaults to False.
         '''
 
         # If already exists and can't be overwritten:
@@ -676,6 +700,10 @@ class RESTHandleClient(HandleClient):
             not implemented.
         :param overwrite: Optional. If set to True, an existing handle record
             will be overwritten. Defaults to False.
+        :param auth: Optional. If set to True, the check whether the handle already
+            exists will go to the primary server. Rarely ever needed! (Only needed
+            if the handle had already existed but was deleted in the last 24 hours
+            or so). Defaults to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
             set to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
@@ -714,6 +742,10 @@ class RESTHandleClient(HandleClient):
             to be included in the record, e.g. URL, CHECKSUM, ...
         :param overwrite: Optional. If set to True, an existing handle record
             will be overwritten. Defaults to False.
+        :param auth: Optional. If set to True, the check whether the handle already
+            exists will go to the primary server. Rarely ever needed! (Only needed
+            if the handle had already existed but was deleted in the last 24 hours
+            or so). Defaults to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
             set to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
@@ -938,6 +970,10 @@ class RESTHandleClient(HandleClient):
         :param indices: Optional. A list of indices to retrieve. Defaults to
             None (i.e. the entire handle is retrieved.). The list can contain
             integers or strings.
+        :param options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&auth=true"). Please see the Handle Tech Manual for
+            possible values.
         :return: The server's response.
         '''
 
@@ -949,6 +985,10 @@ class RESTHandleClient(HandleClient):
         Returns the handle record if it is None or if its handle is not the
             same as the specified handle.
 
+        :param auth: If set to True, the handle record will be retrieved from the 
+            primary server and not from cache, so changes from the last max. 24 hours
+            will be included. (The cache is refreshed after max 24h by default, this
+            value may differ, depending on handle record's "ttl" value).
         '''
         if handlerecord_json is None:
             handlerecord_json = self.retrieve_handle_record_json(handle, auth)
