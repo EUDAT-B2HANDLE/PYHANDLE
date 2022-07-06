@@ -306,7 +306,7 @@ class RESTHandleClient(HandleClient):
                 response=response
             )
            
-    def retrieve_handle_record(self, handle, handlerecord_json=None, auth=False):
+    def retrieve_handle_record(self, handle, handlerecord_json=None, auth=False, **hs_options):
         '''
         Retrieve a handle record from the Handle server as a dict. If there
         is several entries of the same type, only the first one is
@@ -319,6 +319,10 @@ class RESTHandleClient(HandleClient):
         :param auth: Optional. If set to True, the handle record will be retrieved
             from the primary server and not from cache, so changes from the last
             max. 24 hours or so will be included. Defaults to False.
+        :param hs_options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
+            possible values.
         :return: A dict where the keys are keys from the Handle record (except
             for hidden entries) and every value is a string. The result will be
             None if the Handle does not exist.
@@ -326,7 +330,7 @@ class RESTHandleClient(HandleClient):
         '''
         LOGGER.debug('retrieve_handle_record...')
 
-        handlerecord_json = self.__get_handle_record_if_necessary(handle, handlerecord_json, auth)
+        handlerecord_json = self.__get_handle_record_if_necessary(handle, handlerecord_json, auth, **hs_options)
         if handlerecord_json is None:
             return None  # Instead of HandleNotFoundException!
         list_of_entries = handlerecord_json['values']
@@ -338,7 +342,7 @@ class RESTHandleClient(HandleClient):
                 record_as_dict[key] = str(entry['data']['value'])
         return record_as_dict
 
-    def get_value_from_handle(self, handle, key, handlerecord_json=None, auth=False):
+    def get_value_from_handle(self, handle, key, handlerecord_json=None, auth=False, **hs_options):
         '''
         Retrieve a single value from a single Handle. If several entries with
         this key exist, the methods returns the first one. If the handle
@@ -349,7 +353,10 @@ class RESTHandleClient(HandleClient):
         :param auth: Optional. If set to True, the handle record will be retrieved
             from the primary server and not from cache, so changes from the last
             max. 24 hours or so will be included. Defaults to False.
-        TODO: Allow passing other options, notably publicOnly.
+        :param hs_options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
+            possible values.
         :return: A string containing the value or None if the Handle record
          does not contain the key.
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
@@ -357,7 +364,7 @@ class RESTHandleClient(HandleClient):
         '''
         LOGGER.debug('get_value_from_handle...')
 
-        handlerecord_json = self.__get_handle_record_if_necessary(handle, handlerecord_json, auth)
+        handlerecord_json = self.__get_handle_record_if_necessary(handle, handlerecord_json, auth, **hs_options)
         if handlerecord_json is None:
             raise HandleNotFoundException(handle=handle)
         list_of_entries = handlerecord_json['values']
@@ -1042,7 +1049,7 @@ class RESTHandleClient(HandleClient):
         resp = self.__handlesystemconnector.send_handle_get_request(handle, indices, options)
         return resp
 
-    def __get_handle_record_if_necessary(self, handle, handlerecord_json, auth):
+    def __get_handle_record_if_necessary(self, handle, handlerecord_json, auth, **hs_options):
         '''
         Returns the handle record if it is None or if its handle is not the
             same as the specified handle.
@@ -1055,12 +1062,16 @@ class RESTHandleClient(HandleClient):
             primary server and not from cache, so changes from the last max. 24 hours
             will be included. (The cache is refreshed after max 24h by default, this
             value may differ, depending on handle record's "ttl" value).
+        :param hs_options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
+            possible values.
         '''
         if handlerecord_json is None:
-            handlerecord_json = self.retrieve_handle_record_json(handle, auth)
+            handlerecord_json = self.retrieve_handle_record_json(handle, auth, **hs_options)
         else:
             if handle != handlerecord_json['handle']:
-                handlerecord_json = self.retrieve_handle_record_json(handle, auth)
+                handlerecord_json = self.retrieve_handle_record_json(handle, auth, **hs_options)
         return handlerecord_json
 
     def __make_another_index(self, list_of_entries, url=False, hs_admin=False):
