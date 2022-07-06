@@ -246,7 +246,7 @@ class RESTHandleClient(HandleClient):
 
     # Methods with read access to Handle Server:
 
-    def retrieve_handle_record_json(self, handle, auth=False, **hs_options):
+    def retrieve_handle_record_json(self, handle, auth=False, indices=None, **hs_options):
         '''
         Retrieve a handle record from the Handle server as a complete nested
         dict (including index, ttl, timestamp, ...) for later use.
@@ -258,12 +258,13 @@ class RESTHandleClient(HandleClient):
         :param auth: Optional. If set to True, the handle record will be retrieved
             from the primary server and not from cache, so changes from the last
             max. 24 hours will be included. Defaults to False.
+        :param indices: Optional. A list of indices to retrieve. Defaults to
+            None (i.e. the entire handle record is retrieved). The list can contain
+            integers or strings.
         :param hs_options: Optional. A list of key-value pairs which will be appended
             to the URL as parameters, to be passed to the Handle Server during the
             GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
-            possible values.
-            Note: Several indices cannot be passed, as a dict does not accept several
-            same keys. TODO FIXME
+            possible values. To add several "?index=xyz" options, use the parameter "indices".
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
         :return: The handle record as a nested dict. If the handle does not
             exist, returns None.
@@ -277,9 +278,9 @@ class RESTHandleClient(HandleClient):
             hs_options['auth'] = 'true'
         
         if len(hs_options)>0:
-            response = self.__send_handle_get_request(handle, **hs_options)
+            response = self.__send_handle_get_request(handle, indices, **hs_options)
         else:
-            response = self.__send_handle_get_request(handle)
+            response = self.__send_handle_get_request(handle, indices)
         
         response_content = decoded_response(response)
                     
@@ -306,7 +307,7 @@ class RESTHandleClient(HandleClient):
                 response=response
             )
            
-    def retrieve_handle_record(self, handle, handlerecord_json=None, auth=False, **hs_options):
+    def retrieve_handle_record(self, handle, handlerecord_json=None, auth=False, indices=None, **hs_options):
         '''
         Retrieve a handle record from the Handle server as a dict. If there
         is several entries of the same type, only the first one is
@@ -319,6 +320,9 @@ class RESTHandleClient(HandleClient):
         :param auth: Optional. If set to True, the handle record will be retrieved
             from the primary server and not from cache, so changes from the last
             max. 24 hours or so will be included. Defaults to False.
+        :param indices: Optional. A list of indices to retrieve. Defaults to
+            None (i.e. the entire handle is retrieved.). The list can contain
+            integers or strings.
         :param hs_options: Optional. A list of key-value pairs which will be appended
             to the URL as parameters, to be passed to the Handle Server during the
             GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
@@ -330,7 +334,7 @@ class RESTHandleClient(HandleClient):
         '''
         LOGGER.debug('retrieve_handle_record...')
 
-        handlerecord_json = self.__get_handle_record_if_necessary(handle, handlerecord_json, auth, **hs_options)
+        handlerecord_json = self.__get_handle_record_if_necessary(handle, handlerecord_json, auth, indices, **hs_options)
         if handlerecord_json is None:
             return None  # Instead of HandleNotFoundException!
         list_of_entries = handlerecord_json['values']
@@ -342,7 +346,7 @@ class RESTHandleClient(HandleClient):
                 record_as_dict[key] = str(entry['data']['value'])
         return record_as_dict
 
-    def get_value_from_handle(self, handle, key, handlerecord_json=None, auth=False, **hs_options):
+    def get_value_from_handle(self, handle, key, handlerecord_json=None, auth=False, indices=None, **hs_options):
         '''
         Retrieve a single value from a single Handle. If several entries with
         this key exist, the methods returns the first one. If the handle
@@ -353,10 +357,13 @@ class RESTHandleClient(HandleClient):
         :param auth: Optional. If set to True, the handle record will be retrieved
             from the primary server and not from cache, so changes from the last
             max. 24 hours or so will be included. Defaults to False.
+        :param indices: Optional. A list of indices to retrieve. Defaults to
+            None (i.e. the entire handle is retrieved.). The list can contain
+            integers or strings.
         :param hs_options: Optional. A list of key-value pairs which will be appended
             to the URL as parameters, to be passed to the Handle Server during the
             GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
-            possible values.
+            possible values. To add several "?index=xyz" options, use the parameter "indices".
         :return: A string containing the value or None if the Handle record
          does not contain the key.
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
@@ -364,7 +371,7 @@ class RESTHandleClient(HandleClient):
         '''
         LOGGER.debug('get_value_from_handle...')
 
-        handlerecord_json = self.__get_handle_record_if_necessary(handle, handlerecord_json, auth, **hs_options)
+        handlerecord_json = self.__get_handle_record_if_necessary(handle, handlerecord_json, auth, indices, **hs_options)
         if handlerecord_json is None:
             raise HandleNotFoundException(handle=handle)
         list_of_entries = handlerecord_json['values']
@@ -598,7 +605,8 @@ class RESTHandleClient(HandleClient):
         '''
         LOGGER.debug('delete_handle_value...')
 
-        # read handle record:
+        # Read handle record (the primary one with auth=True,
+        # because we'll modify the primary one!)
         auth = True
         handlerecord_json = self.retrieve_handle_record_json(handle, auth)
         if handlerecord_json is None:
@@ -987,7 +995,7 @@ class RESTHandleClient(HandleClient):
 
         :param handle: The handle.
         :param indices: Optional. A list of indices to delete. Defaults to
-            None (i.e. the entire handle is deleted.). The list can contain
+            None (i.e. the entire handle record is deleted). The list can contain
             integers or strings.
         :param op: Name of the operation, e.g. 'registering handle', 'deleting handle'
             or 'modifying handle values'. Only used in throwing exceptions.
@@ -1010,7 +1018,7 @@ class RESTHandleClient(HandleClient):
         :param list_of_entries: A list of handle record entries to be written,
          in the format [{"index":xyz, "type":"xyz", "data":"xyz"}] or similar.
         :param indices: Optional. A list of indices to modify. Defaults
-         to None (i.e. the entire handle is updated.). The list can
+         to None (i.e. the entire handle record is updated). The list can
          contain integers or strings.
         :param overwrite: Optional. Whether the handle should be overwritten
          if it exists already.
@@ -1036,19 +1044,19 @@ class RESTHandleClient(HandleClient):
 
         :param handle: The handle.
         :param indices: Optional. A list of indices to retrieve. Defaults to
-            None (i.e. the entire handle is retrieved.). The list can contain
+            None (i.e. the entire handle record is retrieved). The list can contain
             integers or strings.
         :param hs_options: Optional. A list of key-value pairs which will be appended
             to the URL as parameters, to be passed to the Handle Server during the
             GET request (e.g. "&auth=true"). Please see the Handle Tech Manual for
-            possible values.
+            possible values. To add several "?index=xyz" options, use the parameter "indices".
         :return: The server's response.
         '''
 
         resp = self.__handlesystemconnector.send_handle_get_request(handle, indices, **hs_options)
         return resp
 
-    def __get_handle_record_if_necessary(self, handle, handlerecord_json, auth, **hs_options):
+    def __get_handle_record_if_necessary(self, handle, handlerecord_json, auth, indices, **hs_options):
         '''
         Returns the handle record if it is None or if its handle is not the
             same as the specified handle.
@@ -1061,16 +1069,19 @@ class RESTHandleClient(HandleClient):
             primary server and not from cache, so changes from the last max. 24 hours
             will be included. (The cache is refreshed after max 24h by default, this
             value may differ, depending on handle record's "ttl" value).
+        :param indices: Optional. A list of indices to retrieve. Defaults to
+            None (i.e. the entire handle record is retrieved). The list can contain
+            integers or strings.
         :param hs_options: Optional. A list of key-value pairs which will be appended
             to the URL as parameters, to be passed to the Handle Server during the
             GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
-            possible values.
+            possible values. To add several "?index=xyz" options, use the parameter "indices".
         '''
         if handlerecord_json is None:
-            handlerecord_json = self.retrieve_handle_record_json(handle, auth, **hs_options)
+            handlerecord_json = self.retrieve_handle_record_json(handle, auth, indices, **hs_options)
         else:
             if handle != handlerecord_json['handle']:
-                handlerecord_json = self.retrieve_handle_record_json(handle, auth, **hs_options)
+                handlerecord_json = self.retrieve_handle_record_json(handle, auth, indices, **hs_options)
         return handlerecord_json
 
     def __make_another_index(self, list_of_entries, url=False, hs_admin=False):

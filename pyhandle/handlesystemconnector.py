@@ -256,7 +256,7 @@ class HandleSystemConnector(object):
 
         :param handle: The handle.
         :param indices: Optional. A list of indices to retrieve. Defaults to
-            None (i.e. the entire handle is retrieved.). The list can contain
+            None (i.e. the entire handle record is retrieved). The list can contain
             integers or strings.
         :param hs_options: Optional. A list of key-value pairs which will be appended
             to the URL as parameters, to be passed to the Handle Server during the
