@@ -389,7 +389,7 @@ class RESTHandleClient(HandleClient):
     
     # Methods with write access to Handle Server:
 
-    def generate_and_register_handle(self, prefix, location, checksum=None, auth=False, **extratypes):
+    def generate_and_register_handle(self, prefix, location, checksum=None, auth=False, overwrite=False, **extratypes):
         '''
         Register a new Handle with a unique random name (random UUID).
 
@@ -417,7 +417,6 @@ class RESTHandleClient(HandleClient):
         if not checksum is None:
             extratypes["CHECKSUM"] = checksum
 
-        overwrite = True
         handle = self.register_handle_kv(
             handle,
             overwrite,
