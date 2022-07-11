@@ -396,7 +396,7 @@ class RESTHandleClient(HandleClient):
     
     # Methods with write access to Handle Server:
 
-    def generate_and_register_handle(self, prefix, location, checksum=None, auth=False, overwrite=False, **extratypes):
+    def generate_and_register_handle(self, prefix, location, checksum=None, overwrite=False, **extratypes):
         '''
         Register a new Handle with a unique random name (random UUID).
 
@@ -404,10 +404,6 @@ class RESTHandleClient(HandleClient):
             will generate a suffix.
         :param location: The URL of the data entity to be referenced.
         :param checksum: Optional. The checksum string.
-        :param auth: Optional. If set to True, the check whether the handle already
-            exists will go to the primary server. Rarely ever needed! (Only needed
-            if the handle had already existed but was deleted in the last 24 hours
-            or so). Defaults to False.
         :param extratypes: Optional. Additional key value pairs as dict.
         
         :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
@@ -415,6 +411,10 @@ class RESTHandleClient(HandleClient):
         '''
 
         LOGGER.debug('generate_and_register_handle...')
+
+        if 'auth' in extratypes:
+            LOGGER.debug('Found keyword "auth", which will be registered as a key-value-pair in the handle record.')
+            # TODO: Is this behaviour desired?
 
         handle = self.generate_PID_name(prefix)
 
@@ -427,7 +427,6 @@ class RESTHandleClient(HandleClient):
         handle = self.register_handle_kv(
             handle,
             overwrite,
-            auth,
             **extratypes
         )
         return handle
@@ -485,6 +484,7 @@ class RESTHandleClient(HandleClient):
 
         # Read handle record (the primary one with auth=True,
         # because we'll modify the primary one!)
+        # But I think we're talking to the primary anyway, as we're in read-write mode.
         auth = True
         handlerecord_json = self.retrieve_handle_record_json(handle, auth)
         if handlerecord_json is None:
@@ -700,7 +700,7 @@ class RESTHandleClient(HandleClient):
         else:
             raise GenericHandleError(op=op, handle=handle, response=resp)
 
-    def register_handle_json(self, handle, list_of_entries, overwrite=False, auth=False):
+    def register_handle_json(self, handle, list_of_entries, overwrite=False):
         '''
         Registers a new Handle with given name. If the handle already exists
         and overwrite is not set to True, the method will throw an
@@ -714,10 +714,6 @@ class RESTHandleClient(HandleClient):
             Optionally you can add 'ttl'.
         :param overwrite: Optional. If set to True, an existing handle record
             will be overwritten. Defaults to False.
-        :param auth: Optional. If set to True, the check whether the handle already
-            exists will go to the primary server. Rarely ever needed! (Only needed
-            if the handle had already existed but was deleted in the last 24 hours
-            or so). Defaults to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
             set to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
@@ -727,7 +723,9 @@ class RESTHandleClient(HandleClient):
 
         # If already exists and can't be overwritten:
         if overwrite == False:
-            handlerecord_json = self.retrieve_handle_record_json(handle, auth)
+            handlerecord_json = self.retrieve_handle_record_json(handle)
+            # Note: Adding "?auth=true" to this request makes no sense, as we are
+            # talking to the primary server anyway.
             if handlerecord_json is not None:
                 msg = 'Could not register handle'
                 LOGGER.error(msg + ', as it already exists.')
@@ -753,7 +751,7 @@ class RESTHandleClient(HandleClient):
         # Create record itself and put to server:
         return self.__handle_registering(handle, list_of_entries, overwrite)
    
-    def register_handle(self, handle, location, checksum=None, additional_URLs=None, overwrite=False, auth=False, **extratypes):
+    def register_handle(self, handle, location, checksum=None, additional_URLs=None, overwrite=False, **extratypes):
         '''
         Registers a new Handle with given name. If the handle already exists
         and overwrite is not set to True, the method will throw an
@@ -772,16 +770,16 @@ class RESTHandleClient(HandleClient):
             not implemented.
         :param overwrite: Optional. If set to True, an existing handle record
             will be overwritten. Defaults to False.
-        :param auth: Optional. If set to True, the check whether the handle already
-            exists will go to the primary server. Rarely ever needed! (Only needed
-            if the handle had already existed but was deleted in the last 24 hours
-            or so). Defaults to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
             set to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
         :return: The handle name.
         '''
+
+        if 'auth' in extratypes:
+            LOGGER.debug('Found keyword "auth", which will be registered as a key-value-pair in the handle record.')
+            # TODO: Is this behaviour desired?
 
         if extratypes is None:
             extratypes = {}
@@ -798,11 +796,10 @@ class RESTHandleClient(HandleClient):
         return self.register_handle_kv(
             handle,
             overwrite,
-            auth,
             **extratypes
         )
 
-    def register_handle_kv(self, handle, overwrite=False, auth=False, **kv_pairs):
+    def register_handle_kv(self, handle, overwrite=False, **kv_pairs):
         '''
         Registers a new Handle with given name. If the handle already exists
         and overwrite is not set to True, the method will throw an
@@ -814,10 +811,6 @@ class RESTHandleClient(HandleClient):
             e.g. URL, CHECKSUM, ...
         :param overwrite: Optional. If set to True, an existing handle record
             will be overwritten. Defaults to False.
-        :param auth: Optional. If set to True, the check whether the handle already
-            exists will go to the primary server. Rarely ever needed! (Only needed
-            if the handle had already existed but was deleted in the last 24 hours
-            or so). Defaults to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
             set to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
@@ -826,9 +819,15 @@ class RESTHandleClient(HandleClient):
         '''
         LOGGER.debug('register_handle_kv...')
 
+        if 'auth' in kv_pairs:
+            LOGGER.debug('Found keyword "auth", which will be registered as a key-value-pair in the handle record.')
+            # TODO: Is this behaviour desired?
+
         # If already exists and can't be overwritten:
         if overwrite == False:
-            handlerecord_json = self.retrieve_handle_record_json(handle, auth)
+            handlerecord_json = self.retrieve_handle_record_json(handle)
+            # Note: Adding "?auth=true" to this request makes no sense, as we are
+            # talking to the primary server anyway.
             if handlerecord_json is not None:
                 msg = 'Could not register handle'
                 LOGGER.error(msg + ', as it already exists.')
