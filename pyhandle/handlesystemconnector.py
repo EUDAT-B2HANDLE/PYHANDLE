@@ -567,7 +567,11 @@ class HandleSystemConnector(object):
 
         if len(options) > 0:
             for k,v in options.items():
-                url = url+separator+k+'='+v
+                if v == True:
+                    v = 'true'
+                elif v == False:
+                    v = 'false'
+                url = url+separator+k+'='+str(v)
                 separator = '&'
 
         return url
