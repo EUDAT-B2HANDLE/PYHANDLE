@@ -28,31 +28,31 @@ class RESTHandleClientSearchNoAccessTestCase(unittest.TestCase):
         pass
 
     def test_search_handle_for_forbiddenkeys(self):
-        with self.assertRaisesRegexp(ReverseLookupException, 'Cannot search for key[.]*'):
+        with self.assertRaisesRegex(ReverseLookupException, 'Cannot search for key[.]*'):
             self.inst.search_handle(url='*dkrz*',
                                           checksum='*123*',
                                           anotherfield='xyz')
         
     def test_search_handle_for_fulltext(self):
-        with self.assertRaisesRegexp(ReverseLookupException, 'Full-text search is not implemented yet[.]*'):
+        with self.assertRaisesRegex(ReverseLookupException, 'Full-text search is not implemented yet[.]*'):
             self.inst.search_handle(url='*dkrz*',
                                           checksum='*123*',
                                           searchterms=['searchterm1', 'searchterm2'])
 
     def test_search_handle_noterms(self):
-        with self.assertRaisesRegexp(ReverseLookupException, 'No search terms have been specified[.]*'):
+        with self.assertRaisesRegex(ReverseLookupException, 'No search terms have been specified[.]*'):
             self.inst.search_handle()
 
     def test_create_revlookup_query_fulltext(self):
-        with self.assertRaisesRegexp(ReverseLookupException, 'Full-text search is not implemented yet[.]*'):
+        with self.assertRaisesRegex(ReverseLookupException, 'Full-text search is not implemented yet[.]*'):
             self.searcher.create_revlookup_query('foo', 'bar')
 
     def test_create_revlookup_query_forbiddenkeys(self):
-        with self.assertRaisesRegexp(ReverseLookupException, 'Cannot search for key[.]*'):
+        with self.assertRaisesRegex(ReverseLookupException, 'Cannot search for key[.]*'):
             self.searcher.create_revlookup_query(foo='foo', bar='bar')
 
     def test_create_revlookup_query_noterms(self):
-        with self.assertRaisesRegexp(ReverseLookupException, 'No search terms have been specified[.]*'):
+        with self.assertRaisesRegex(ReverseLookupException, 'No search terms have been specified[.]*'):
             self.searcher.create_revlookup_query()
 
     def test_create_revlookup_query_norestriction(self):
