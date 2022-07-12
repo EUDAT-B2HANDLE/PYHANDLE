@@ -265,6 +265,7 @@ class RESTHandleClient(HandleClient):
             to the URL as parameters, to be passed to the Handle Server during the
             GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
             possible values. To add several "?index=xyz" options, use the parameter "indices".
+            To add several "?index=xyz" options, add them as a list.
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
         :return: The handle record as a nested dict. If the handle does not
             exist, returns None.
@@ -484,8 +485,8 @@ class RESTHandleClient(HandleClient):
 
         # Read handle record (the primary one with auth=True,
         # because we'll modify the primary one!)
-        # But I think we're talking to the primary anyway, as we're in read-write mode.
-        auth = True
+        # But we're talking to the primary anyway, as we're in read-write mode.
+        auth = True # makes no difference!
         handlerecord_json = self.retrieve_handle_record_json(handle, auth)
         if handlerecord_json is None:
             msg = 'Cannot modify unexisting handle'
@@ -607,7 +608,8 @@ class RESTHandleClient(HandleClient):
 
         # Read handle record (the primary one with auth=True,
         # because we'll modify the primary one!)
-        auth = True
+        # But we're talking to the primary anyway, as we're in read-write mode.
+        auth = True # makes no difference!
         handlerecord_json = self.retrieve_handle_record_json(handle, auth)
         if handlerecord_json is None:
             msg = 'Cannot modify unexisting handle'

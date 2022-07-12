@@ -557,6 +557,14 @@ class HandleSystemConnector(object):
                 url = url+separator+'index='+str(index)
                 separator = '&'
 
+        # Type can be passed several times:
+        if 'type' in options:
+            if type(options['type']) == type([]):
+                for item in options['type']:
+                    url = url+separator+'type='+str(item)
+                    separator = '&'
+                del options['type']
+
         if overwrite is not None:
             if overwrite:
                 url = url+separator+'overwrite=true'
