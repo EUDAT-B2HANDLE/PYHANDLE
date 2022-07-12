@@ -535,6 +535,12 @@ class HandleSystemConnector(object):
             one specified in the constructor should be used. Defaults to None.
             If set, it should be set including the URL extension,
             e.g. '/api/handles/'.
+        :param options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
+            possible values. To add several "?index=xyz" options, pass a list or 
+            use the parameter "indices". To add several "?type=xyz" options, add
+            them as a list.
         :return: The complete URL, e.g.
          'http://some.handle.server/api/handles/prefix/suffix?index=2&index=6&overwrite=false
         '''
@@ -556,6 +562,16 @@ class HandleSystemConnector(object):
                 # But be careful, "various" only works with PUT, not with DELETE or GET.
                 url = url+separator+'index='+str(index)
                 separator = '&'
+
+        # Index can be passed several times:
+        # Note: This is not required now, as several "index" values can be passed using "indices", but
+        # TODO: I think we should through away "indices", as this is more elegant.
+        if 'index' in options:
+            if type(options['index']) == type([]):
+                for item in options['index']:
+                    url = url+separator+'index='+str(item)
+                    separator = '&'
+                del options['index']
 
         # Type can be passed several times:
         if 'type' in options:

@@ -264,8 +264,9 @@ class RESTHandleClient(HandleClient):
         :param hs_options: Optional. A list of key-value pairs which will be appended
             to the URL as parameters, to be passed to the Handle Server during the
             GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
-            possible values. To add several "?index=xyz" options, use the parameter "indices".
-            To add several "?index=xyz" options, add them as a list.
+            possible values. To add several "?index=xyz" options, pass a list or 
+            use the parameter "indices". To add several "?type=xyz" options, add
+            them as a list.
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
         :return: The handle record as a nested dict. If the handle does not
             exist, returns None.
@@ -327,7 +328,9 @@ class RESTHandleClient(HandleClient):
         :param hs_options: Optional. A list of key-value pairs which will be appended
             to the URL as parameters, to be passed to the Handle Server during the
             GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
-            possible values.
+            possible values. To add several "?index=xyz" options, pass a list or 
+            use the parameter "indices". To add several "?type=xyz" options, add
+            them as a list.
         :return: A dict where the keys are keys from the Handle record (except
             for hidden entries) and every value is a string. The result will be
             None if the Handle does not exist.
@@ -364,7 +367,9 @@ class RESTHandleClient(HandleClient):
         :param hs_options: Optional. A list of key-value pairs which will be appended
             to the URL as parameters, to be passed to the Handle Server during the
             GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
-            possible values. To add several "?index=xyz" options, use the parameter "indices".
+            possible values. To add several "?index=xyz" options, pass a list or 
+            use the parameter "indices". To add several "?type=xyz" options, add
+            them as a list.
         :return: A string containing the value or None if the Handle record
          does not contain the key.
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
@@ -1046,11 +1051,13 @@ class RESTHandleClient(HandleClient):
         :param handle: The handle.
         :param indices: Optional. A list of indices to retrieve. Defaults to
             None (i.e. the entire handle record is retrieved). The list can contain
-            integers or strings.
+            integers or strings. Deprecated. Please use "index" instead.
         :param hs_options: Optional. A list of key-value pairs which will be appended
             to the URL as parameters, to be passed to the Handle Server during the
             GET request (e.g. "&auth=true"). Please see the Handle Tech Manual for
-            possible values. To add several "?index=xyz" options, use the parameter "indices".
+            possible values. To add several "?index=xyz" options, pass a list or 
+            use the parameter "indices". To add several "?type=xyz" options, add
+            them as a list.
         :return: The server's response.
         '''
 
@@ -1076,8 +1083,12 @@ class RESTHandleClient(HandleClient):
         :param hs_options: Optional. A list of key-value pairs which will be appended
             to the URL as parameters, to be passed to the Handle Server during the
             GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
-            possible values. To add several "?index=xyz" options, use the parameter "indices".
+            possible values. To add several "?index=xyz" options, pass a list or 
+            use the parameter "indices". To add several "?type=xyz" options, add
+            them as a list.
         '''
+
+
         if handlerecord_json is None:
             handlerecord_json = self.retrieve_handle_record_json(handle, auth, indices, **hs_options)
         else:
