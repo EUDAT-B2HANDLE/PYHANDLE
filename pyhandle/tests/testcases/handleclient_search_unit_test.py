@@ -76,8 +76,12 @@ class RESTHandleClientSearchNoAccessTestCase(unittest.TestCase):
 
 
     def test_create_revlookup_query_noterms(self):
-        with self.assertRaisesRegex(ReverseLookupException, 'No search terms have been specified[.]*'):
-            self.searcher.create_revlookup_query()
+        if (sys.version_info.major == 2):
+            with self.assertRaisesRegexp(ReverseLookupException, 'No search terms have been specified[.]*'):
+                self.searcher.create_revlookup_query()
+        else:
+            with self.assertRaisesRegex(ReverseLookupException, 'No search terms have been specified[.]*'):
+                self.searcher.create_revlookup_query()
 
     def test_create_revlookup_query_norestriction(self):
         searcher = Searcher(allowed_search_keys=[])
