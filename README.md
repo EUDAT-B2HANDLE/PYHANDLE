@@ -87,14 +87,24 @@ Copyright 2015-2022, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara
 The simplest way (tested with python 3.7.1):
 
 ```bash
-#DEPRECATED:
-#python setup.py test
+# Recommended: Use tox!
+pip install tox
+tox
 
+# You can also directly run pytest, but in that case you have to
+# create an environment and install the depedencies by yourself:
+virtualenv venv --python python3
+source venv/bin/activate
+# Dependencies for testing:
+pip install pytest
+pip install mock
+# Depedencies for pyhandle:
+pip install past
+# Run the test command:
 pytest pyhandle/tests/testcases
 
-# Dependencies:
-#pip install pytest
-#pip install mock
+#DEPRECATED:
+#python setup.py test
 ```
 
 (More info in the GitHub repository at [./pyhandle/tests/README.md](./pyhandle/tests/README.md)!)
