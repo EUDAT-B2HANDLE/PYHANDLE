@@ -67,6 +67,69 @@ Copyright 2015-2022, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara
    See the License for the specific language governing permissions and
    limitations under the License.
 
+
+# Some usage notes
+
+(to be migrated to documentation)
+
+
+* `register_handle_kv(handle, **kv-pairs)` allows to pass (additionally to the handle name) key-value pairs.
+
+* `register_handle_json(handle, list_of_entries, ...)` allow to pass JSON snippets instead of key-value pairs, so you can specify the indices. An entry looks like this: `{'index':index, 'type':entrytype, 'data':data}`. This is the format in which the changes are communicated to the handle server via its REST interface. An entry of type `HS_ADMIN` will be added if you do not provide one.
+
+* `register_handle(...)` allows to pass (additionally to the handle name) a mandatory URL, and optionally a CHECKSUM, and more types as key-value pairs. Old method, made for legacy reasons, as this library was created to replace an earlier library that had a method with specifically this signature.
+
+* `generate_and_register_handle(prefix, ...)` is a similar legacy method. Instead, just use `generate_PID_name(prefix)` to create a handle name and use one of the above. 
+
+
+# How to run the unit tests
+
+The simplest way (tested with python 3.7.1):
+
+```bash
+#DEPRECATED:
+#python setup.py test
+
+pytest pyhandle/tests/testcases
+
+# Dependencies:
+#pip install pytest
+#pip install mock
+```
+
+(More info in the GitHub repository at [./pyhandle/tests/README.md](./pyhandle/tests/README.md)!)
+
+To quickly test different versions using docker (see [./pyhandle/tests/testdockers](./pyhandle/tests/testdockers)):
+
+```
+today=`date +%m%d%Y`
+version="1.x.x" # pyhandle version, e.g. 1.0.4
+
+docker build -t temp_pyhandle:36_$version_$today -f pyhandle/tests/testdockers/Dockerfile36 . 
+docker run  -it temp_pyhandle:36_$version_$today python setup.py test
+
+docker build -t temp_pyhandle:37_$version_$today -f pyhandle/tests/testdockers/Dockerfile37 . 
+docker run  -it temp_pyhandle:37_$version_$today python setup.py test
+
+docker build -t temp_pyhandle:38_$version_$today -f pyhandle/tests/testdockers/Dockerfile38 . 
+docker run  -it temp_pyhandle:38_$version_$today python setup.py test
+```
+
+There are also Dockerfiles in [./pyhandle/tests/testdockers](./pyhandle/tests/testdockers), but they are not documented and fail.
+
+# TODO Fix these Dockerfiles eventually, or update to functioning versions.
+
+```
+# build successful, but fails to run:
+docker build -t eudat-pyhandle:py3.5 -f Dockerfile-py3.5 .
+cd ./pyhandle/tests
+docker build -t temp:temp -f Dockerfile-py3.5 .
+docker run -it temp:temp
+
+# build fails:
+docker build -t eudat-pyhandle:py2.6 -f Dockerfile-python2.6 .
+
+
 # Github contributions
 
 Devs:
