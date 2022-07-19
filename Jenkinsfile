@@ -117,9 +117,9 @@ pipeline {
             }
        }
        stage ('Deploy Docs') {
-            when {
-                branch 'devel'
-            }
+          //  when {
+            //    branch 'devel'
+            //}
             agent {
                 dockerfile {
                     filename "docs/Dockerfile"
