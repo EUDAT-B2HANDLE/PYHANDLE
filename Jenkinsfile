@@ -135,8 +135,7 @@ pipeline {
                     cd docs
                     make html
                 '''
-              
-                }
+            
             }
        }
     }
