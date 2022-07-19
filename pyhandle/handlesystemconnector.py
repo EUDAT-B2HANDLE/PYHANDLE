@@ -94,51 +94,51 @@ class HandleSystemConnector(object):
 
         if args['handle_server_url']:
             self.__handle_server_url = args['handle_server_url']
-            LOGGER.info(' - handle_server_url set to '+self.__handle_server_url)
+            LOGGER.debug(' - handle_server_url set to '+self.__handle_server_url)
         else:
             self.__handle_server_url = defaults['handle_server_url']
-            LOGGER.info(' - handle_server_url set to default: '+self.__handle_server_url)
+            LOGGER.debug(' - handle_server_url set to default: '+self.__handle_server_url)
 
 
         if args['REST_API_url_extension']:
             self.__REST_API_url_extension = args['REST_API_url_extension']
-            LOGGER.info(' - url_extension_REST_API set to: '+self.__REST_API_url_extension)
+            LOGGER.debug(' - url_extension_REST_API set to: '+self.__REST_API_url_extension)
         else:
             self.__REST_API_url_extension = defaults['REST_API_url_extension']
-            LOGGER.info(' - url_extension_REST_API set to default: '+self.__REST_API_url_extension)
+            LOGGER.debug(' - url_extension_REST_API set to default: '+self.__REST_API_url_extension)
 
 
         if args['HTTPS_verify'] is not None:
             self.__HTTPS_verify = pyhandle.util.get_valid_https_verify(
                 args['HTTPS_verify']
             )
-            LOGGER.info(' - https_verify set to: '+str(self.__HTTPS_verify))
+            LOGGER.debug(' - https_verify set to: '+str(self.__HTTPS_verify))
         else:
             self.__HTTPS_verify = defaults['HTTPS_verify']
-            LOGGER.info(' - https_verify set to default: '+str(self.__HTTPS_verify))
+            LOGGER.debug(' - https_verify set to default: '+str(self.__HTTPS_verify))
 
 
         # Useful for write:
 
         if args['password']:
             self.__password = args['password']
-            LOGGER.info(' - password set.')
+            LOGGER.debug(' - password set.')
 
         if args['username']:
             self.__username = args['username']
-            LOGGER.info(' - username set to: '+self.__username)
+            LOGGER.debug(' - username set to: '+self.__username)
 
         if args['certificate_only']:
             self.__certificate_only = args['certificate_only']
-            LOGGER.info(' - certificate_only set to: '+str(self.__certificate_only))
+            LOGGER.debug(' - certificate_only set to: '+str(self.__certificate_only))
 
         if args['private_key']:
             self.__private_key = args['private_key']
-            LOGGER.info(' - private_key set to: '+str(self.__private_key))
+            LOGGER.debug(' - private_key set to: '+str(self.__private_key))
 
         if args['certificate_and_key']:
             self.__certificate_and_key = args['certificate_and_key']
-            LOGGER.info(' - certificate_and_key set to: '+str(self.__certificate_and_key))
+            LOGGER.debug(' - certificate_and_key set to: '+str(self.__certificate_and_key))
 
     def __check_if_write_access(self, args):
         write_access_argnames = ['username', 'password', 'certificate_only', 'private_key', 'certificate_and_key']
@@ -169,6 +169,11 @@ class HandleSystemConnector(object):
         else:
             msg = 'Unknown authentication method: "'+self.__authentication_method+'".'
             self.__has_write_access = False
+
+        if self.__has_write_access:
+            LOGGER.info('Client configured for write access.')
+        else:
+            LOGGER.info('Client could not be configured for write access.')
 
     def __setup_for_auth_by_user_and_pw(self):
 
