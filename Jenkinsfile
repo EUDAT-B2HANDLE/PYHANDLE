@@ -32,7 +32,6 @@ pipeline {
                 sshagent (credentials: ['jenkins-master']) {
                     sh '''
                         cd $WORKSPACE/$PROJECT_DIR/docs/build/html
-                        mkdir ~/.ssh && ssh-keyscan -H github.com > ~/.ssh/known_hosts
                         git config --global user.email ${GH_EMAIL}
                         git config --global user.name ${GH_USER}
                         GIT_USER=${GH_USER} USE_SSH=true 
