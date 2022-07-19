@@ -39,7 +39,7 @@ class RESTHandleClientReadaccessFakedTestCase(unittest.TestCase):
         val = self.inst.get_value_from_handle(handle,
                                               'TEST1',
                                               handlerecord)
-        self.assertEquals(val, 'val1',
+        self.assertEqual(val, 'val1',
             'The value of "TEST1" should be "val1".')
 
     def test_get_value_from_handle_inexistentvalue(self):

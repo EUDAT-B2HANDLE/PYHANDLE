@@ -175,5 +175,5 @@ class RESTHandleClientNoaccessTestCase(unittest.TestCase):
     def test_create_authentication_string(self):
         auth = create_authentication_string('100:user/name', 'password123')
         expected = 'MTAwJTNBdXNlci9uYW1lOnBhc3N3b3JkMTIz'
-        self.assertEquals(expected, auth,
+        self.assertEqual(expected, auth,
                           'Authentication string is: ' + auth + ', but should be: ' + expected)

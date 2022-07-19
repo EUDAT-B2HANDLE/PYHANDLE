@@ -160,7 +160,7 @@ class RESTHandleClient(HandleClient):
 
         :param handle_server_url: Optional. The URL of the Handle System
             server to read from. Defaults to 'https://hdl.handle.net'
-        :param \**config: More key-value pairs may be passed that will be passed
+        :param **config: More key-value pairs may be passed that will be passed
             on to the constructor as config. Config options from the
             credentials object are overwritten by this.
         :return: An instance of the client.
@@ -180,7 +180,7 @@ class RESTHandleClient(HandleClient):
             reverse lookup servlet.
         :param reverselookup_password: The password to authenticate at the
             reverse lookup servlet.
-        :param \**config: More key-value pairs may be passed that will be passed
+        :param **config: More key-value pairs may be passed that will be passed
             on to the constructor as config. Config options from the
             credentials object are overwritten by this.
         :return: An instance of the client.
@@ -212,7 +212,7 @@ class RESTHandleClient(HandleClient):
             "index:prefix/suffix".
         :param password: This is the password stored as secret key in the
             actual Handle value the username points to.
-        :param \**config: More key-value pairs may be passed that will be passed
+        :param **config: More key-value pairs may be passed that will be passed
             on to the constructor as config.
         :raises: :exc:`~pyhandle.handleexceptions.HandleNotFoundException`: If the username handle is not found.
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
@@ -230,7 +230,7 @@ class RESTHandleClient(HandleClient):
 
         :param credentials: A credentials object, see separate class
             PIDClientCredentials.
-        :param \**config: More key-value pairs may be passed that will be passed
+        :param **config: More key-value pairs may be passed that will be passed
             on to the constructor as config. Config options from the
             credentials object are overwritten by this.
         :raises: :exc:`~pyhandle.handleexceptions.HandleNotFoundException`: If the username handle is not found.
