@@ -11,9 +11,7 @@ pipeline {
     }
     stages {
        stage ('Deploy Docs') {
-          //  when {
-            //    branch 'devel'
-            //}
+        
             agent {
                 dockerfile {
                     filename "docs/Dockerfile"
@@ -29,7 +27,6 @@ pipeline {
                     cd docs
                     make html
                 '''
-            
             }
        }
     }
