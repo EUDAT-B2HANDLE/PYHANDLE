@@ -117,9 +117,9 @@ pipeline {
             }
        }
        stage ('Deploy Docs') {
-            when {
-                changeset 'docs/source/**'
-            }   
+           // when {
+           //     changeset 'docs/source/**'
+           // }   
             agent {
                 docker {
                     image 'eudat-pyhandle:py3.10'
