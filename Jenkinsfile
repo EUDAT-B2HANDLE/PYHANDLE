@@ -117,25 +117,32 @@ pipeline {
             }
        }
        stage ('Deploy Docs') {
-                 
+            when {
+                changeset 'docs/source/**'
+            }   
             agent {
-               // dockerfile {
-               //     filename "docs/Dockerfile"
-                //    dir "$PROJECT_DIR"
-//                    additionalBuildArgs "-t eudat-pyhandle:docs"
-                 //   args "-u root:root"
                 docker {
                     image 'eudat-pyhandle:py3.10'
                 
                 }
             }
             steps {
-                echo 'Publish Sphinx docs...'
+                echo 'Build Sphinx docs...'
                 sh '''
                     cd $WORKSPACE/$PROJECT_DIR
                     cd docs
                     make html
                 '''
+                echo 'Sending to gh-pages...'
+                sshagent (credentials: ['jenkins-master']) {
+                    sh '''
+                        cd $WORKSPACE/$PROJECT_DIR/build/html
+                        mkdir ~/.ssh && ssh-keyscan -H github.com > ~/.ssh/known_hosts
+                        git config --global user.email ${GH_EMAIL}
+                        git config --global user.name ${GH_USER}
+                        GIT_USER=${GH_USER} USE_SSH=true 
+                        git checkout gh-pages
+                    '''
             }
        }
     }
