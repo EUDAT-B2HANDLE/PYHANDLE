@@ -121,7 +121,7 @@ pipeline {
                 branch 'devel'
             }
             agent {
-                docker {
+                dockerfile {
                     filename "docs/Dockerfile"
                     dir "$PROJECT_DIR"
                     additionalBuildArgs "-t eudat-pyhandle:docs"
