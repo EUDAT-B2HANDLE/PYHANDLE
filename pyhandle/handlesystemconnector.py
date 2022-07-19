@@ -253,22 +253,26 @@ class HandleSystemConnector(object):
 
     # API methods:
 
-    def send_handle_get_request(self, handle, indices=None):
+    def send_handle_get_request(self, handle, indices=None, **hs_options):
         '''
         Send a HTTP GET request to the handle server to read either an entire
             handle or to some specified values from a handle record, using the
             requests module.
 
         :param handle: The handle.
-        :param indices: Optional. A list of indices to delete. Defaults to
-            None (i.e. the entire handle is deleted.). The list can contain
+        :param indices: Optional. A list of indices to retrieve. Defaults to
+            None (i.e. the entire handle record is retrieved). The list can contain
             integers or strings.
+        :param hs_options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&auth=true"). Please see the Handle Tech Manual for
+            possible values.
         :return: The server's response.
         '''
 
 
         # Assemble required info:
-        url = self.make_handle_URL(handle, indices)
+        url = self.make_handle_URL(handle, indices, **hs_options)
         LOGGER.debug('GET Request to '+url)
         head = self.__get_headers('GET')
         veri = self.__HTTPS_verify
@@ -520,7 +524,7 @@ class HandleSystemConnector(object):
             LOGGER.debug('__getHeader: ACTION is unknown ('+action+')')
         return header
 
-    def make_handle_URL(self, handle, indices=None, overwrite=None, other_url=None):
+    def make_handle_URL(self, handle, indices=None, overwrite=None, other_url=None, **options):
         '''
         Create the URL for a HTTP request (URL + query string) to request
         a specific handle from the Handle Server.
@@ -536,6 +540,12 @@ class HandleSystemConnector(object):
             one specified in the constructor should be used. Defaults to None.
             If set, it should be set including the URL extension,
             e.g. '/api/handles/'.
+        :param options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
+            possible values. To add several "?index=xyz" options, pass a list or 
+            use the parameter "indices". To add several "?type=xyz" options, add
+            them as a list.
         :return: The complete URL, e.g.
          'http://some.handle.server/api/handles/prefix/suffix?index=2&index=6&overwrite=false
         '''
@@ -550,17 +560,48 @@ class HandleSystemConnector(object):
         url = url.strip('/')+'/'+ handle
 
         if indices is None:
-            indices = []
-        if len(indices) > 0:
+            pass
+        elif len(indices) > 0:
             for index in indices:
+                # TODO: It might be possible to replace this by "?index=various", see Tech Manual.
+                # But be careful, "various" only works with PUT, not with DELETE or GET.
                 url = url+separator+'index='+str(index)
                 separator = '&'
+
+        # Index can be passed several times:
+        # Note: This is not required now, as several "index" values can be passed using "indices", but
+        # TODO: I think we should through away "indices", as this is more elegant.
+        if 'index' in options:
+            if type(options['index']) == type([]):
+                for item in options['index']:
+                    url = url+separator+'index='+str(item)
+                    separator = '&'
+                del options['index']
+
+        # Type can be passed several times:
+        if 'type' in options:
+            if type(options['type']) == type([]):
+                for item in options['type']:
+                    url = url+separator+'type='+str(item)
+                    separator = '&'
+                del options['type']
 
         if overwrite is not None:
             if overwrite:
                 url = url+separator+'overwrite=true'
+                separator = '&'
             else:
                 url = url+separator+'overwrite=false'
+                separator = '&'
+
+        if len(options) > 0:
+            for k,v in options.items():
+                if v == True:
+                    v = 'true'
+                elif v == False:
+                    v = 'false'
+                url = url+separator+k+'='+str(v)
+                separator = '&'
 
         return url
 
