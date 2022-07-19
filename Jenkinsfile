@@ -116,6 +116,29 @@ pipeline {
                 }
             }
        }
+       stage ('Deploy Docs') {
+            when {
+                branch 'devel'
+            }
+            agent {
+                docker {
+                    filename "docs/Dockerfile"
+                    dir "$PROJECT_DIR"
+                    additionalBuildArgs "-t eudat-pyhandle:docs"
+                    args "-u root:root"
+                }
+            }
+            steps {
+                echo 'Publish Sphinx docs...'
+                sh '''
+                    cd $WORKSPACE/$PROJECT_DIR
+                    cd docs
+                    make html
+                '''
+              
+                }
+            }
+       }
     }
     post {
         always {
