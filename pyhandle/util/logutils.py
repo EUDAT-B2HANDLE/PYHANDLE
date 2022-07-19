@@ -45,9 +45,9 @@ def log_instantiation(LOGGER, classname, args, forbidden, with_date=False):
 
     # Info:
     if with_date:
-            LOGGER.info('Instantiating '+classname+' at '+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M'))
+            LOGGER.debug('Instantiating '+classname+' at '+datetime.datetime.now().strftime('%Y-%m-%d_%H:%M'))
     else:
-        LOGGER.info('Instantiating '+classname)
+        LOGGER.debug('Instantiating '+classname)
 
     # Debug:
     for argname in args:

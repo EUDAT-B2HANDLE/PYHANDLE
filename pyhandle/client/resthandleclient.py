@@ -129,28 +129,28 @@ class RESTHandleClient(HandleClient):
 
         if 'HS_ADMIN_permissions' in args.keys():
             self.__HS_ADMIN_permissions = args['HS_ADMIN_permissions']
-            LOGGER.info(' - HS_ADMIN_permissions set to: ' + self.__HS_ADMIN_permissions)
+            LOGGER.debug(' - HS_ADMIN_permissions set to: ' + self.__HS_ADMIN_permissions)
         else:
             self.__HS_ADMIN_permissions = defaults['HS_ADMIN_permissions']
-            LOGGER.info(' - HS_ADMIN_permissions set to default: ' + self.__HS_ADMIN_permissions)
+            LOGGER.debug(' - HS_ADMIN_permissions set to default: ' + self.__HS_ADMIN_permissions)
 
         
         if 'modify_HS_ADMIN' in args.keys():
             self.__modify_HS_ADMIN = args['modify_HS_ADMIN']
-            LOGGER.info(' - modify_HS_ADMIN set to: ' + str(self.__modify_HS_ADMIN))
+            LOGGER.debug(' - modify_HS_ADMIN set to: ' + str(self.__modify_HS_ADMIN))
         else:
             self.__modify_HS_ADMIN = defaults['modify_HS_ADMIN']
-            LOGGER.info(' - modify_HS_ADMIN set to default: ' + str(self.__modify_HS_ADMIN))
+            LOGGER.debug(' - modify_HS_ADMIN set to default: ' + str(self.__modify_HS_ADMIN))
 
 
         # Handle owner: The user name to be written into HS_ADMIN.
         # Can be specified in json credentials file (optionally):
         if ('handleowner' in args.keys()) and (args['handleowner'] is not None):
             self.__handleowner = args['handleowner']
-            LOGGER.info(' - handleowner set to: ' + self.__handleowner)
+            LOGGER.debug(' - handleowner set to: ' + self.__handleowner)
         else:
             self.__handleowner = None
-            LOGGER.info(' - handleowner: Will be set to default for each created handle separately.')
+            LOGGER.debug(' - handleowner: Will be set to default for each created handle separately.')
 
     @staticmethod
     def instantiate_for_read_access(handle_server_url=None, **config):
@@ -160,7 +160,7 @@ class RESTHandleClient(HandleClient):
 
         :param handle_server_url: Optional. The URL of the Handle System
             server to read from. Defaults to 'https://hdl.handle.net'
-        :param \**config: More key-value pairs may be passed that will be passed
+        :param **config: More key-value pairs may be passed that will be passed
             on to the constructor as config. Config options from the
             credentials object are overwritten by this.
         :return: An instance of the client.
@@ -180,7 +180,7 @@ class RESTHandleClient(HandleClient):
             reverse lookup servlet.
         :param reverselookup_password: The password to authenticate at the
             reverse lookup servlet.
-        :param \**config: More key-value pairs may be passed that will be passed
+        :param **config: More key-value pairs may be passed that will be passed
             on to the constructor as config. Config options from the
             credentials object are overwritten by this.
         :return: An instance of the client.
@@ -212,7 +212,7 @@ class RESTHandleClient(HandleClient):
             "index:prefix/suffix".
         :param password: This is the password stored as secret key in the
             actual Handle value the username points to.
-        :param \**config: More key-value pairs may be passed that will be passed
+        :param **config: More key-value pairs may be passed that will be passed
             on to the constructor as config.
         :raises: :exc:`~pyhandle.handleexceptions.HandleNotFoundException`: If the username handle is not found.
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
@@ -230,7 +230,7 @@ class RESTHandleClient(HandleClient):
 
         :param credentials: A credentials object, see separate class
             PIDClientCredentials.
-        :param \**config: More key-value pairs may be passed that will be passed
+        :param **config: More key-value pairs may be passed that will be passed
             on to the constructor as config. Config options from the
             credentials object are overwritten by this.
         :raises: :exc:`~pyhandle.handleexceptions.HandleNotFoundException`: If the username handle is not found.
@@ -447,7 +447,7 @@ class RESTHandleClient(HandleClient):
                                 'format':'admin',
                                 'value':newval
                             }
-                            LOGGER.info('Modified' + \
+                            LOGGER.debug('Modified' + \
                                 ' "HS_ADMIN" of handle ' + handle)
                         changed = True
                         nothingchanged = False
@@ -620,7 +620,7 @@ class RESTHandleClient(HandleClient):
         if overwrite == False:
             handlerecord_json = self.retrieve_handle_record_json(handle)
             if handlerecord_json is not None:
-                msg = 'Could not register handle'
+                msg = 'Could not register handle %s' % handle
                 LOGGER.error(msg + ', as it already exists.')
                 raise HandleAlreadyExistsException(handle=handle, msg=msg)
 

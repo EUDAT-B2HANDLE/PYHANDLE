@@ -77,6 +77,7 @@ def check_handle_syntax(string):
             # TODO: Actually this is not a handle, but refers to a field inside a handle record, so
             # to be strict, we should not accept this.
 
+
     return True
 
 def check_handle_syntax_with_index(string, base_already_checked=False):
