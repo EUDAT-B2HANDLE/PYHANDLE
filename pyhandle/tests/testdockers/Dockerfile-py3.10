@@ -6,7 +6,8 @@ RUN        pip install \
            pytest \
            pytest-cov \
            pip install -U "requests==2.23.0" && \
-           pip install -U pymysql
+           pip install -U pymysql \
+           pip install -U sphinx
 
 ADD        . /opt/PYHANDLE
 RUN        cd /opt/PYHANDLE && \
