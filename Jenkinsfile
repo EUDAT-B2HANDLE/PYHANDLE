@@ -143,6 +143,7 @@ pipeline {
                         GIT_USER=${GH_USER} USE_SSH=true 
                         git checkout gh-pages
                     '''
+                }
             }
        }
     }
