@@ -559,7 +559,7 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
         passed_payload, _ = self.get_payload_headers_from_mockresponse(putpatch)
 
         # Compare with expected payload:
-        expected_payload = {"values": [{"index": 4, "ttl": 86400, "type": "TEST4", "data": "newvalue"}]}
+        expected_payload = {"values": [{"type": "TEST4", "index": 4, "ttl": 86400, "data": "newvalue"}]}
         replace_timestamps(expected_payload)
         self.assertEqual(passed_payload, expected_payload,
             failure_message(expected=expected_payload,
