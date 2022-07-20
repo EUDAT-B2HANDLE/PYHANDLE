@@ -137,6 +137,7 @@ pipeline {
                 echo 'Sending to gh-pages...'
                 sshagent (credentials: ['jenkins-master']) {
                     sh '''
+                        ls ~/
                         mkdir ~/.ssh && ssh-keyscan -H github.com > ~/.ssh/known_hosts
                         git config --global user.email ${GH_EMAIL}
                         git config --global user.name ${GH_USER}
