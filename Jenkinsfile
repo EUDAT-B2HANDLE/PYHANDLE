@@ -42,6 +42,7 @@ pipeline {
                         make html
                         cd $WORKSPACE/$PROJECT_DIR/docs/build/html
                         touch .nojekyll
+                        git init
                         git remote add deploy "https://git@github.com/EUDAT-B2HANDLE/PYHANDLE"
                         git checkout -b gh-pages
                         git add .
