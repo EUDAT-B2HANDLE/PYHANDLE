@@ -60,7 +60,7 @@ pipeline {
                         touch .nojekyll
                         rm -rf .git  
                         git init
-                        git remote add deploy "https://git@github.com/EUDAT-B2HANDLE/PYHANDLE"
+                        git remote add deploy "git@github.com/EUDAT-B2HANDLE/PYHANDLE"
                         git checkout -b gh-pages
                         git add .
                         git commit -am "docs update"
