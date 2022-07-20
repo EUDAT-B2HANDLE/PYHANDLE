@@ -60,8 +60,8 @@ pipeline {
                         make html
                         cd $WORKSPACE/$PROJECT_DIR/docs/build/html
                         touch .nojekyll
-                        git init
                         rm -rf .git   
+                        git init
                         git remote add deploy git@github.com://EUDAT-B2HANDLE/PYHANDLE
                         git checkout -b gh-pages
                         git add .
