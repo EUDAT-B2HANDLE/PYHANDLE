@@ -2,6 +2,7 @@
 FROM       python:3.10
 
 RUN        useradd jenkins 
+RUN        mkdir -p /home/jenkins/
 RUN        chown -R jenkins:jenkins /home/jenkins
 
 RUN        pip install \
