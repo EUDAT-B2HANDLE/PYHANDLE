@@ -10,93 +10,9 @@ pipeline {
         
     }
     stages {
-            stage ('Run tests for each python version') {
+        stage ('Run tests for each python version') {
             parallel {
-                stage ('Test python 2.7') {
-                    agent {
-                        dockerfile {
-                            filename "pyhandle/tests/testdockers/Dockerfile"
-                            dir "$PROJECT_DIR"
-                            additionalBuildArgs "-t eudat-pyhandle"
-                            args "-u root:root"
-                        }
-                    }
-                    steps {
-                        sh '''
-                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
-                            ./docker-entrypoint.sh coverage
-                        '''
-                        cobertura coberturaReportFile: '**/coverage.xml'
-                    }
-                }
-                stage ('Test python 3.5') {
-                    agent {
-                        dockerfile {
-                            filename "pyhandle/tests/testdockers/Dockerfile-py3.5"
-                            dir "$PROJECT_DIR"
-                            additionalBuildArgs "-t eudat-pyhandle:py3.5"
-                            args "-u root:root"
-                        }
-                    }
-                    steps {
-                        sh '''
-                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
-                            ./docker-entrypoint.sh coverage
-                        '''
-                        cobertura coberturaReportFile: '**/coverage.xml'
-                    }
-                }
-                stage ('Test python 3.6') {
-                    agent {
-                        dockerfile {
-                            filename "pyhandle/tests/testdockers/Dockerfile-py3.6"
-                            dir "$PROJECT_DIR"
-                            additionalBuildArgs "-t eudat-pyhandle:py3.6"
-                            args "-u root:root"
-                        }
-                    }
-                    steps {
-                        sh '''
-                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
-                            ./docker-entrypoint.sh coverage
-                        '''
-                        cobertura coberturaReportFile: '**/coverage.xml'
-                    }
-                }
-                stage ('Test python 3.7') {
-                    agent {
-                        dockerfile {
-                            filename "pyhandle/tests/testdockers/Dockerfile-py3.7"
-                            dir "$PROJECT_DIR"
-                            additionalBuildArgs "-t eudat-pyhandle:py3.7"
-                            args "-u root:root"
-                        }
-                    }
-                    steps {
-                        sh '''
-                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
-                            ./docker-entrypoint.sh coverage
-                        '''
-                        cobertura coberturaReportFile: '**/coverage.xml'
-                    }
-                }
-                 stage ('Test python 3.9') {
-                    agent {
-                        dockerfile {
-                            filename "pyhandle/tests/testdockers/Dockerfile-py3.9"
-                            dir "$PROJECT_DIR"
-                            additionalBuildArgs "-t eudat-pyhandle:py3.9"
-                            args "-u root:root"
-                        }
-                    }
-                    steps {
-                        sh '''
-                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
-                            ./docker-entrypoint.sh coverage
-                        '''
-                        cobertura coberturaReportFile: '**/coverage.xml'
-                    }
-                }
+               
                 stage ('Test python 3.10') {
                     agent {
                         dockerfile {
@@ -142,6 +58,7 @@ pipeline {
                         make html
                         cd $WORKSPACE/$PROJECT_DIR/docs/build/html
                         touch .nojekyll
+                        rm -rf .git  
                         git init
                         git remote add deploy "https://git@github.com/EUDAT-B2HANDLE/PYHANDLE"
                         git checkout -b gh-pages
