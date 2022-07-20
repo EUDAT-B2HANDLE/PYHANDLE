@@ -39,13 +39,15 @@ pipeline {
                         GIT_USER=${GH_USER} USE_SSH=true 
                         cd $WORKSPACE/$PROJECT_DIR
                         cd docs
-                        git checkout gh-pages
                         make html
                         cd $WORKSPACE/$PROJECT_DIR/docs/build/html
                         touch .nojekyll
-                        git status
-                        ls -al
-                        git push --force 
+                        git init
+                        git remote add deploy "https://github.com/EUDAT-B2HANDLE/PYHANDLE"
+                        git checkout -b gh-pages
+                        git add .
+                        git commit -am "docs update"
+                        git push deploy gh-pages --force
                         
                     '''
                 }
