@@ -10,7 +10,112 @@ pipeline {
         
     }
     stages {
-        
+            stage ('Run tests for each python version') {
+            parallel {
+                stage ('Test python 2.7') {
+                    agent {
+                        dockerfile {
+                            filename "pyhandle/tests/testdockers/Dockerfile"
+                            dir "$PROJECT_DIR"
+                            additionalBuildArgs "-t eudat-pyhandle"
+                            args "-u root:root"
+                        }
+                    }
+                    steps {
+                        sh '''
+                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
+                            ./docker-entrypoint.sh coverage
+                        '''
+                        cobertura coberturaReportFile: '**/coverage.xml'
+                    }
+                }
+                stage ('Test python 3.5') {
+                    agent {
+                        dockerfile {
+                            filename "pyhandle/tests/testdockers/Dockerfile-py3.5"
+                            dir "$PROJECT_DIR"
+                            additionalBuildArgs "-t eudat-pyhandle:py3.5"
+                            args "-u root:root"
+                        }
+                    }
+                    steps {
+                        sh '''
+                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
+                            ./docker-entrypoint.sh coverage
+                        '''
+                        cobertura coberturaReportFile: '**/coverage.xml'
+                    }
+                }
+                stage ('Test python 3.6') {
+                    agent {
+                        dockerfile {
+                            filename "pyhandle/tests/testdockers/Dockerfile-py3.6"
+                            dir "$PROJECT_DIR"
+                            additionalBuildArgs "-t eudat-pyhandle:py3.6"
+                            args "-u root:root"
+                        }
+                    }
+                    steps {
+                        sh '''
+                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
+                            ./docker-entrypoint.sh coverage
+                        '''
+                        cobertura coberturaReportFile: '**/coverage.xml'
+                    }
+                }
+                stage ('Test python 3.7') {
+                    agent {
+                        dockerfile {
+                            filename "pyhandle/tests/testdockers/Dockerfile-py3.7"
+                            dir "$PROJECT_DIR"
+                            additionalBuildArgs "-t eudat-pyhandle:py3.7"
+                            args "-u root:root"
+                        }
+                    }
+                    steps {
+                        sh '''
+                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
+                            ./docker-entrypoint.sh coverage
+                        '''
+                        cobertura coberturaReportFile: '**/coverage.xml'
+                    }
+                }
+                 stage ('Test python 3.9') {
+                    agent {
+                        dockerfile {
+                            filename "pyhandle/tests/testdockers/Dockerfile-py3.9"
+                            dir "$PROJECT_DIR"
+                            additionalBuildArgs "-t eudat-pyhandle:py3.9"
+                            args "-u root:root"
+                        }
+                    }
+                    steps {
+                        sh '''
+                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
+                            ./docker-entrypoint.sh coverage
+                        '''
+                        cobertura coberturaReportFile: '**/coverage.xml'
+                    }
+                }
+                stage ('Test python 3.10') {
+                    agent {
+                        dockerfile {
+                            filename "pyhandle/tests/testdockers/Dockerfile-py3.10"
+                            dir "$PROJECT_DIR"
+                            additionalBuildArgs "-t eudat-pyhandle:py3.10"
+                            args "-u root:root"
+                        }
+                    }
+                    steps {
+                        sh '''
+                            cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
+                            ./docker-entrypoint-310.sh coverage
+                        '''
+                        cobertura coberturaReportFile: '**/coverage.xml'
+                    }
+                }
+            }
+       }
         
        stage ('Deploy Docs') {
            // when {
@@ -23,12 +128,7 @@ pipeline {
                 }
             }
             steps {
-                echo 'Build Sphinx docs...'
-                sh '''
-                    cd $WORKSPACE/$PROJECT_DIR
-                    cd docs
-                    make html
-                '''
+            
                 echo 'Sending to gh-pages...'
                 sshagent (credentials: ['jenkins-master']) {
                     sh '''
@@ -48,7 +148,7 @@ pipeline {
                         git add .
                         git commit -am "docs update"
                         git push deploy gh-pages --force
-                        
+                        rm -rf .git                        
                     '''
                 }
             }
