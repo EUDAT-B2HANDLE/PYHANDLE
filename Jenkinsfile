@@ -42,12 +42,11 @@ pipeline {
                         make html
                         cd $WORKSPACE/$PROJECT_DIR/docs/build/html
                         touch .nojekyll
-                        git init
                         git remote add deploy "https://${GH_EMAIL}:${GH_USER}@github.com/EUDAT-B2HANDLE/PYHANDLE"
                         git checkout -b gh-pages
                         git add .
                         git commit -am "docs update"
-                        git push deploy gh-pages --force user.email 
+                        git push deploy gh-pages --force 
                         
                     '''
                 }
