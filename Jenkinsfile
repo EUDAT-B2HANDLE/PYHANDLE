@@ -38,7 +38,7 @@ pipeline {
                         git config --global user.name ${GH_USER}
                         GIT_USER=${GH_USER} USE_SSH=true 
                         cd $WORKSPACE/$PROJECT_DIR/docs/build/html
-                        git checkout -b gh-pages
+                        git checkout gh-pages
                         git status
                         ls -al 
                         
