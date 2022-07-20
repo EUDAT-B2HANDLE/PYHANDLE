@@ -3,6 +3,7 @@ PyHandleClient
 ==============
 
 
+This is the main class of the PYHANDLE Library. 
 PyHandleClient is the main class of the PyHandle library and provides methods to:
 
  * select a client (REST, DB or Batch)
