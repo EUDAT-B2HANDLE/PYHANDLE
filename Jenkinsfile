@@ -45,7 +45,7 @@ pipeline {
                         touch .nojekyll
                         git status
                         ls -al
-                        
+                        git push --force 
                         
                     '''
                 }
