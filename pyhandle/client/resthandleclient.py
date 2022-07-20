@@ -406,6 +406,9 @@ class RESTHandleClient(HandleClient):
         '''
         Register a new Handle with a unique random name (random UUID).
 
+        Note: is a similar legacy method. Instead, just use 
+        generate_PID_name(prefix) to create a handle name and use one of the above.
+
         :param prefix: The prefix of the handle to be registered. The method
             will generate a suffix.
         :param location: The URL of the data entity to be referenced.
@@ -713,6 +716,13 @@ class RESTHandleClient(HandleClient):
         and overwrite is not set to True, the method will throw an
         exception.
 
+        Note:It allows to pass JSON snippets instead of key-value pairs, so you can 
+        specify the indices. An entry looks like this: 
+        {'index':index, 'type':entrytype, 'data':data}. 
+        This is the format in which the changes are communicated to the handle 
+        server via its REST interface. 
+        An entry of type HS_ADMIN will be added if you do not provide one.
+
         :param handle: The full name of the handle to be registered (prefix
             and suffix)
         :param list_of_entries: The entries to be included in the record,
@@ -766,6 +776,12 @@ class RESTHandleClient(HandleClient):
         Note: This is just a wrapper for register_handle_kv. It was made for
         legacy reasons, as this library was created to replace an earlier
         library that had a method with specifically this signature.
+
+        Note 2: It allows to pass (additionally to the handle name) a 
+        mandatory URL, and optionally a CHECKSUM, and more types as 
+        key-value pairs. Old method, made for legacy reasons, as this library 
+        was created to replace an earlier library that had a method with 
+        specifically this signature.
 
         :param handle: The full name of the handle to be registered (prefix
             and suffix)

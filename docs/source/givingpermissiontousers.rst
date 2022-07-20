@@ -5,7 +5,7 @@ Giving write permissions to users
 =================================
 
 No matter which of the methods for *authentication* is used, in both cases the
-Handle Server admin (or prefix owner) has to give write permissions to
+Handle Server admin (or prefix owner) has to give the correct write permissions to
 the user (*authorisation*):
 
 * Authentication: Are you who you claim to be?

@@ -10,7 +10,7 @@ pipeline {
         
     }
     stages {
-        stage ('Run tests for each python version') {
+            stage ('Run tests for each python version') {
             parallel {
                 stage ('Test python 2.7') {
                     agent {
@@ -113,6 +113,46 @@ pipeline {
                         '''
                         cobertura coberturaReportFile: '**/coverage.xml'
                     }
+                }
+            }
+       }
+        
+       stage ('Deploy Docs') {
+           when {
+                changeset 'docs/source/**'
+           }   
+           agent {
+                docker {
+                    image 'eudat-pyhandle:py3.10'
+                
+                }
+            }
+            steps {
+            
+                echo 'Sending to gh-pages...'
+                sshagent (credentials: ['jenkins-master']) {
+                    sh '''
+                         
+                        ls ~/
+                        mkdir ~/.ssh && ssh-keyscan -H github.com > ~/.ssh/known_hosts
+                        git config --global user.email ${GH_EMAIL}
+                        git config --global user.name ${GH_USER}
+                        GIT_USER=${GH_USER} 
+                        USE_SSH=true 
+                        cd $WORKSPACE/$PROJECT_DIR
+                        cd docs
+                        make html
+                        cd $WORKSPACE/$PROJECT_DIR/docs/build/html
+                        touch .nojekyll
+                        rm -rf .git   
+                        git init
+                        git remote add deploy git@github.com:EUDAT-B2HANDLE/PYHANDLE
+                        git checkout -b gh-pages
+                        git add .
+                        git commit -am "docs update"
+                        git push deploy gh-pages --force
+                        rm -rf .git                        
+                    '''
                 }
             }
        }
