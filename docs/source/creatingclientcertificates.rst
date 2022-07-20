@@ -4,7 +4,7 @@
 Creating the client certificate
 ===============================
 
-For authentication using client certificates, a special pair of keys and a certificate file is required.
+For authentication using client certificates, there is a special pair of keys and a certificate file that it is required.
 Follow these five steps to create them for your users:
 
 1. :ref:`step1`.

@@ -37,7 +37,11 @@ pipeline {
                         git config --global user.email ${GH_EMAIL}
                         git config --global user.name ${GH_USER}
                         GIT_USER=${GH_USER} USE_SSH=true 
+                        cd $WORKSPACE/$PROJECT_DIR
+                        cd docs
+                        make html
                         cd $WORKSPACE/$PROJECT_DIR/docs/build/html
+                        touch .nojekyll
                         git checkout gh-pages
                         git status
                         ls -al 
