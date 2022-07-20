@@ -39,12 +39,13 @@ pipeline {
                         GIT_USER=${GH_USER} USE_SSH=true 
                         cd $WORKSPACE/$PROJECT_DIR
                         cd docs
+                        git checkout gh-pages
                         make html
                         cd $WORKSPACE/$PROJECT_DIR/docs/build/html
                         touch .nojekyll
-                        git branch gh-pages
                         git status
                         ls -al
+                        
                         
                     '''
                 }
