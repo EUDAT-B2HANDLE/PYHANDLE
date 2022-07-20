@@ -46,7 +46,7 @@ pipeline {
                         git checkout -b gh-pages
                         git add .
                         git commit -am "docs update"
-                        git push deploy gh-pages --force 
+                        git push gh-pages --force 
                         
                     '''
                 }
