@@ -525,6 +525,65 @@ class RESTHandleClientWriteaccessPatchedTestCase(unittest.TestCase):
 
     @mock.patch('pyhandle.handlesystemconnector.requests.Session.put')
     @mock.patch('pyhandle.handlesystemconnector.requests.Session.get')
+    def test_modify_handle_value_with_hdl(self, getpatch, putpatch):
+        """Test whether a prepended "hdl:" gets removed before asking the server to modify existing handle value.
+        Because the Handle Server won't accept REST API calls with hdl: prepended. It will respond with HTTP 400
+        and Response: {"responseCode":301, "message":"That prefix doesn't live here","handle":"hdl:21.14106/TESTTESTTEST"}
+        The problem is prevented by removing any hdl: or doi: right before making the request."""
+
+        # Define the replacement for the patched GET method:
+        cont = {"responseCode":1, "handle":"my/testhandle", "values":[{"index":111, "type": "TEST1", "data":{"format":"string", "value":"val1"}, "ttl":86400, "timestamp":"2015-09-29T15:51:08Z"}, {"index":2222, "type": "TEST2", "data":{"format":"string", "value":"val2"}, "ttl":86400, "timestamp":"2015-09-29T15:51:08Z"}, {"index":333, "type": "TEST3", "data":{"format":"string", "value":"val3"}, "ttl":86400, "timestamp":"2015-09-29T15:51:08Z"}, {"index":4, "type": "TEST4", "data":{"format":"string", "value":"val4"}, "ttl":86400, "timestamp":"2015-09-29T15:51:08Z"}]}
+        mock_response_get = MockResponse(status_code=200, content=json.dumps(cont))
+        getpatch.return_value = mock_response_get
+
+        # Define the replacement for the patched requests.put method:
+        testhandle = 'hdl:my/testhandle'
+        cont = {"responseCode":1, "handle":"my/testhandle"}
+        mock_response_put = MockResponse(handle=testhandle, status_code=201, content=json.dumps(cont))
+        putpatch.return_value = mock_response_put
+
+        # Run the method to be tested:
+        self.inst.modify_handle_value(testhandle, TEST4='newvalue')
+
+        # Check if the PUT request was sent exactly once:
+        self.assertEqual(putpatch.call_count, 1,
+            'The method "requests.put" was not called once, but ' + str(putpatch.call_count) + ' times.')
+
+        # Check whether the API got called with a handle WITHOUT "hdl:":
+        url = 'http://handle.server/api/handles/my/testhandle?index=4&overwrite=true'
+        payload = '{"values": [{"index": 4, "type": "TEST4", "data": "newvalue", "ttl": 86400}]}'
+        head = {'Authorization': 'Basic OTk5JTNBdXNlci9uYW1lOmFwYXNzd29yZA==', 'Content-Type': 'application/json'}
+        if not (sys.version_info.major==3 and sys.version_info.minor==5):
+            putpatch.assert_called_with(url, data=payload, headers=head, verify=True, allow_redirects=False)    
+        else:
+            # In Python 3.5 sorting dictionaries is a problem. But the only thing that matters is the url, so we
+            # test only that:
+            rec_args = putpatch.call_args
+            self.assertTrue(rec_args[0][0] == 'http://handle.server/api/handles/my/testhandle?index=4&overwrite=true')
+            #print(rec_args[0])    # positional args: ('http://handle.server/api/handles/my/testhandle?index=4&overwrite=true',)
+            #print(rec_args[1])    # kwargs
+            # specific:
+            #print(rec_args[0][0])                 # http://handle.server/api/handles/my/testhandle?index=4&overwrite=true
+            #print(rec_args[1]['allow_redirects']) # False
+            #print(rec_args[1]['data'])            # {"values": [{"ttl": 86400, "data": "newvalue", "index": 4, "type": "TEST4"}]}
+            #print(rec_args[1]['headers'])         # {'Authorization': 'Basic OTk5JTNBdXNlci9uYW1lOmFwYXNzd29yZA==', 'Content-Type': 'application/json'}
+            #print(rec_args[1]['verify'])          # True
+
+        # Get the payload passed to "requests.put"
+        passed_payload, _ = self.get_payload_headers_from_mockresponse(putpatch)
+
+        # Compare with expected payload:
+        expected_payload = {"values": [{"type": "TEST4", "index": 4, "ttl": 86400, "data": "newvalue"}]}
+        replace_timestamps(expected_payload)
+        self.assertEqual(sorted(passed_payload['values'][0]), sorted(expected_payload['values'][0]))
+        #self.assertEqual(passed_payload, expected_payload,
+        #    failure_message(expected=expected_payload,
+        #                         passed=passed_payload,
+        #                         methodname='modify_handle_value'))
+
+
+    @mock.patch('pyhandle.handlesystemconnector.requests.Session.put')
+    @mock.patch('pyhandle.handlesystemconnector.requests.Session.get')
     def test_modify_handle_value_several(self, getpatch, putpatch):
         """Test modifying several existing handle values."""
 
