@@ -48,17 +48,20 @@ pipeline {
                 echo 'Sending to gh-pages...'
                 sshagent (credentials: ['jenkins-master']) {
                     sh '''
+                         
                         ls ~/
                         mkdir ~/.ssh && ssh-keyscan -H github.com > ~/.ssh/known_hosts
                         git config --global user.email ${GH_EMAIL}
                         git config --global user.name ${GH_USER}
-                        GIT_USER=${GH_USER} USE_SSH=true 
+                        GIT_USER=${GH_USER} 
+                        USE_SSH=true 
                         cd $WORKSPACE/$PROJECT_DIR
                         cd docs
                         make html
                         cd $WORKSPACE/$PROJECT_DIR/docs/build/html
                         touch .nojekyll
                         git init
+                        rm -rf .git   
                         git remote add deploy git@github.com://EUDAT-B2HANDLE/PYHANDLE
                         git checkout -b gh-pages
                         git add .
