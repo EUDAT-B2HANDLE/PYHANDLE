@@ -42,9 +42,9 @@ pipeline {
                         make html
                         cd $WORKSPACE/$PROJECT_DIR/docs/build/html
                         touch .nojekyll
-                        git checkout gh-pages
+                        git branch gh-pages
                         git status
-                        ls -al 
+                        ls -al
                         
                     '''
                 }
