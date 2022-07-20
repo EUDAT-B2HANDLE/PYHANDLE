@@ -1,0 +1,988 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pyhandle.client.dbhandleclient &#8212; PyHandle 1.0.5-dev documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pyhandle.client.dbhandleclient</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyhandle.client.dbhandleclient</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This class provides different methods to manage Handles using the database interface.</span>
+
+<span class="sd">Author: Sofiane Bendoukha (DKRZ), 2017</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">binascii</span>
+<span class="kn">import</span> <span class="nn">codecs</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">pymysql</span>
+
+<span class="kn">from</span> <span class="nn">pyhandle.clientcredentials</span> <span class="kn">import</span> <span class="n">PIDClientCredentials</span>
+<span class="kn">from</span> <span class="nn">pyhandle.dbhsexceptions</span> <span class="kn">import</span> <span class="n">DBHandleNotFoundException</span><span class="p">,</span> <span class="n">DBHandleKeyNotFoundException</span><span class="p">,</span> \
+    <span class="n">DBHandleAlreadyExistsException</span><span class="p">,</span> <span class="n">DBHandleKeyNotSpecifiedException</span>
+<span class="kn">from</span> <span class="nn">pyhandle.pyhandleclient</span> <span class="kn">import</span> <span class="n">HandleClient</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">util</span>
+<span class="kn">from</span> <span class="nn">..util</span> <span class="kn">import</span> <span class="n">timeutil</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">LOGGER</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">util</span><span class="o">.</span><span class="n">NullHandler</span><span class="p">())</span>
+
+
+<span class="k">class</span> <span class="nc">DBHandleClient</span><span class="p">(</span><span class="n">HandleClient</span><span class="p">):</span>
+    <span class="n">_handle_db_connection</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_handle_db_cur</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">HANDLE_CLIENT</span> <span class="o">=</span> <span class="s1">&#39;db&#39;</span>
+
+<div class="viewcode-block" id="DBHandleClient.__init__"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">credentials</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initialize the DB client. Instantiate a connection object and connect to the HS database</span>
+
+<span class="sd">        :param db_host: host where the handle server database is located</span>
+<span class="sd">        :param db_user: username to log in as</span>
+<span class="sd">        :param db_password: password for db_user</span>
+<span class="sd">        :param db_name: database name</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="mi">60</span> <span class="o">*</span> <span class="s1">&#39;*&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Instantiation of DBHandleClient</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="mi">60</span> <span class="o">*</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span>
+
+
+        <span class="k">if</span> <span class="n">credentials</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No credentials given&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">credentials</span><span class="p">,</span> <span class="n">PIDClientCredentials</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span> <span class="o">=</span> <span class="n">credentials</span><span class="o">.</span><span class="n">get_all_args</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span> <span class="o">=</span> <span class="n">credentials</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="p">[</span><span class="s1">&#39;db_host&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_user</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="p">[</span><span class="s1">&#39;db_user&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="p">[</span><span class="s1">&#39;db_password&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="p">[</span><span class="s1">&#39;db_name&#39;</span><span class="p">]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_handle_db_connection</span> <span class="o">=</span> <span class="n">pymysql</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_host</span><span class="p">,</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">db_user</span><span class="p">,</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">db_password</span><span class="p">,</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">db_name</span><span class="p">,</span>
+                                                         <span class="n">cursorclass</span><span class="o">=</span><span class="n">pymysql</span><span class="o">.</span><span class="n">cursors</span><span class="o">.</span><span class="n">DictCursor</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_handle_db_cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_db_connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
+        <span class="k">except</span> <span class="n">pymysql</span><span class="o">.</span><span class="n">InternalError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="n">code</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">error</span><span class="o">.</span><span class="n">args</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&quot;</span><span class="p">,</span> <span class="n">code</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">execute_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Execute the SQL query.</span>
+
+<span class="sd">        :param query: the sql query to be performed</span>
+
+<span class="sd">        :return: result_as_dict: the result of the sql query as dictionary</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Execute query&#39;</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">query</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_db_cur</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+                <span class="n">self_handle_db_cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_db_connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+                <span class="n">self_handle_db_cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">self_handle_db_cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_handle_db_connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Query result </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="n">pymysql</span><span class="o">.</span><span class="n">InternalError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="n">code</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">error</span><span class="o">.</span><span class="n">args</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&quot;</span><span class="p">,</span> <span class="n">code</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="DBHandleClient.search_handle"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.search_handle">[docs]</a>    <span class="k">def</span> <span class="nf">search_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Search for handles containing the specified key with the specified</span>
+<span class="sd">        value (one key-value). The number of record can be controlled by limit and offset.</span>
+
+<span class="sd">        :param pattern: Optional. This value can be set to do search depending on the handle name.</span>
+<span class="sd">        :param limit: Optional. Limit the number of results returned in a SQL statement.</span>
+<span class="sd">        :param offset: Optional. Page number, first row to return. Initial raw is 0.</span>
+<span class="sd">        :param args: e.g URL=&#39;www.example.com&#39;</span>
+<span class="sd">        :return: A list of all Handles (list of strings) that bear the given key with</span>
+<span class="sd">            given value of given prefix or server. The list may be empty and</span>
+<span class="sd">            may also contain more than one element.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">query_result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">list_handles</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Check if there is any key-value pairs to be searched.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;search_handle: No key value pair was specified.&#39;</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;No search terms have been specified. Please specify&#39;</span> <span class="o">+</span> \
+                  <span class="s1">&#39; at least one key-value-pair.&#39;</span>
+            <span class="k">raise</span> <span class="n">DBHandleKeyNotSpecifiedException</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">limit</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">offset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">list_handles</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__search_handle_limit</span><span class="p">(</span>
+                <span class="n">pattern</span><span class="o">=</span><span class="n">pattern</span><span class="p">,</span>
+                <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
+                <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">args</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+           <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">pattern</span><span class="p">:</span>
+                    <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT handle from handles WHERE handle LIKE &#39;</span><span class="si">%s</span><span class="s2">&#39; AND type= &#39;</span><span class="si">%s</span><span class="s2">&#39; AND data=&#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT handle from handles WHERE type= &#39;</span><span class="si">%s</span><span class="s2">&#39; AND data LIKE &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+                <span class="n">query_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+           <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">query_result</span><span class="p">)):</span>
+                <span class="n">list_handles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">query_result</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;handle&#39;</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">list_handles</span></div>
+
+    <span class="k">def</span> <span class="nf">__search_handle_limit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Search handles with limit and offset.</span>
+
+<span class="sd">        :param pattern: Optional. This value can be set to do search depending on the handle name.</span>
+<span class="sd">        :param limit:  Optional. Number of records to return from the SQL statement.</span>
+<span class="sd">        :param offset: Page number, first row to return. Initial raw is 0.</span>
+<span class="sd">        :param args: search items as key-value e.g URL=&#39;www.example.com&#39;</span>
+<span class="sd">        :return: list_handles: A list of all Handles (list of strings) that bear the given key with</span>
+<span class="sd">            given value of given prefix or server. The list may be empty and</span>
+<span class="sd">            may also contain more than one element.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">query_result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">list_handles</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Check if there is any key-value pairs to be searched.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;search_handle: No key value pair was specified.&#39;</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;No search terms have been specified. Please specify&#39;</span> <span class="o">+</span> \
+                  <span class="s1">&#39; at least one key-value-pair.&#39;</span>
+            <span class="k">raise</span> <span class="n">DBHandleKeyNotSpecifiedException</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">pattern</span><span class="p">:</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT handle from handles WHERE handle LIKE &#39;</span><span class="si">%s</span><span class="s2">&#39; AND type= &#39;</span><span class="si">%s</span><span class="s2">&#39; AND data=&#39;</span><span class="si">%s</span><span class="s2">&#39; LIMIT </span><span class="si">%s</span><span class="s2">&quot;</span> \
+                        <span class="s2">&quot; OFFSET </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT handle from handles WHERE type= &#39;</span><span class="si">%s</span><span class="s2">&#39; AND data LIKE &#39;</span><span class="si">%s</span><span class="s2">&#39; LIMIT </span><span class="si">%s</span><span class="s2"> OFFSET </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span>
+                <span class="n">value</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+
+            <span class="n">query_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">query_result</span><span class="p">)):</span>
+            <span class="n">list_handles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">query_result</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;handle&#39;</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">list_handles</span>
+
+    <span class="c1">#TODO</span>
+<div class="viewcode-block" id="DBHandleClient.search_handle_multiple_keys"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.search_handle_multiple_keys">[docs]</a>    <span class="k">def</span> <span class="nf">search_handle_multiple_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Search for handles containing the specified key(s) with the specified</span>
+<span class="sd">        value(s).</span>
+
+<span class="sd">        :param args: Several search fields and values can</span>
+<span class="sd">            be specified as key-value-pairs,</span>
+<span class="sd">            e.g. CHECKSUM=123456, URL=www.foo.com</span>
+
+<span class="sd">        :return: A list of all Handles (list of strings) that bear the given key with</span>
+<span class="sd">            given value of given prefix or server. The list may be empty and</span>
+<span class="sd">            may also contain more than one element.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">list_handles</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">temp_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Check if there is any key-value pairs to be searched.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+               <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;search_handle: No key value pair was specified.&#39;</span><span class="p">)</span>
+               <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;No search terms have been specified. Please specify&#39;</span> <span class="o">+</span> \
+                 <span class="s1">&#39; at least one key-value-pair.&#39;</span>
+               <span class="k">raise</span> <span class="n">DBHandleKeyNotSpecifiedException</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+
+            <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT handle from handles WHERE type LIKE &#39;</span><span class="si">%s</span><span class="s2">&#39; AND data LIKE &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="n">query_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_query_from_user</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">query_result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+               <span class="k">break</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">query_result</span><span class="p">)):</span>
+                 <span class="k">if</span> <span class="n">query_result</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;handle&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">list_handles</span><span class="p">:</span>
+                    <span class="n">temp_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">query_result</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;handle&#39;</span><span class="p">])</span>
+
+                 <span class="n">list_handles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">query_result</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;handle&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">temp_list</span></div>
+
+
+    <span class="k">def</span> <span class="nf">execute_query_customized</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Execute the customized SQL query.</span>
+
+<span class="sd">        :param key: Optional.</span>
+<span class="sd">        :param handle: Handle name</span>
+<span class="sd">        :param query: the sql query to be performed</span>
+<span class="sd">        :return: Query result as list of dictionaries</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Get handle, key and execute query&#39;</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">self_handle_db_cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_db_connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="n">self_handle_db_cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">self_handle_db_cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Query result </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">pymysql</span><span class="o">.</span><span class="n">InternalError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="n">code</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">error</span><span class="o">.</span><span class="n">args</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&quot;</span><span class="p">,</span> <span class="n">code</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">convert_query_result_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_result</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Convert the query result (list) to dictionary</span>
+
+<span class="sd">        :param query_result: the result of the sql query (list)</span>
+<span class="sd">        :return: The result of the query as a dictionary (No HS values)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Convert query result to dict&#39;</span><span class="p">)</span>
+
+        <span class="n">result_as_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">hs_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;HS_ADMIN&#39;</span><span class="p">,</span> <span class="s1">&#39;HS_SITE&#39;</span><span class="p">,</span> <span class="s1">&#39;HS_PUBKEY&#39;</span><span class="p">,</span> <span class="s1">&#39;HS_SECKEY&#39;</span><span class="p">,</span> <span class="s1">&#39;HS_ALIAS&#39;</span><span class="p">,</span> <span class="s1">&#39;HS_VLIST&#39;</span><span class="p">,</span> <span class="s1">&#39;HS_SERV&#39;</span><span class="p">]</span>
+        <span class="n">all_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">()</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">query_result</span><span class="p">)))</span>
+
+        <span class="n">skip</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">query_result</span><span class="p">)):</span>
+            <span class="n">skiped_key</span> <span class="o">=</span> <span class="n">query_result</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">skiped_key</span> <span class="ow">in</span> <span class="n">hs_keys</span><span class="p">:</span>
+                <span class="n">skip</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">skip</span><span class="p">:</span>
+                <span class="n">skip</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">continue</span>
+            <span class="n">temp_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">query_result</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">):</span> <span class="n">query_result</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)}</span>
+            <span class="n">result_as_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">temp_dict</span><span class="p">)</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Query result </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">result_as_dict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result_as_dict</span>
+
+    <span class="k">def</span> <span class="nf">check_if_handle_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This statement is used to query whether or not a given handle exists in the database</span>
+
+<span class="sd">        :param handle: The handle being queried.</span>
+<span class="sd">        :return: True if handle exists.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">query_result_as_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT count(*) FROM handles WHERE handle= &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">handle</span>
+
+        <span class="n">query_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">query_result_as_dict</span> <span class="o">=</span> <span class="n">query_result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">query_result_as_dict</span> <span class="o">=</span> <span class="n">query_result_as_dict</span><span class="p">[</span><span class="s1">&#39;count(*)&#39;</span><span class="p">]</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Query result </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">query_result_as_dict</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">query_result_as_dict</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">generate_PID_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Generate a unique random Handle name (random UUID). The Handle is not</span>
+<span class="sd">        registered. If a prefix is specified, the PID name has the syntax</span>
+<span class="sd">        &lt;prefix&gt;/&lt;generatedname&gt;, otherwise it just returns the generated</span>
+<span class="sd">        random name (suffix for the Handle).</span>
+
+<span class="sd">        :param prefix: Optional. The prefix to be used for the Handle name.</span>
+<span class="sd">        :return: The handle name in the form &lt;prefix&gt;/&lt;generatedsuffix&gt; or</span>
+<span class="sd">            &lt;generatedsuffix&gt;.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;generate_PID_name...&#39;</span><span class="p">)</span>
+
+        <span class="n">randomuuid</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">randomuuid</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">randomuuid</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DBHandleClient.generate_and_register_handle"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.generate_and_register_handle">[docs]</a>    <span class="k">def</span> <span class="nf">generate_and_register_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">checksum</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">extratypes</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Register a new Handle with a unique random name (random UUID).</span>
+
+<span class="sd">        :param prefix: The prefix of the handle to be registered. The method</span>
+<span class="sd">            will generate a suffix.</span>
+<span class="sd">        :param location: The URL of the data entity to be referenced.</span>
+<span class="sd">        :param checksum: Optional. The checksum string.</span>
+<span class="sd">        :param extratypes: Optional. Additional key value pairs as dict.</span>
+
+<span class="sd">        :return: The new handle name.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;generate_and_register_handle...&#39;</span><span class="p">)</span>
+
+        <span class="n">handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_PID_name</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="n">handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">register_handle</span><span class="p">(</span>
+            <span class="n">handle</span><span class="p">,</span>
+            <span class="n">location</span><span class="p">,</span>
+            <span class="n">checksum</span><span class="p">,</span>
+            <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">extratypes</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">handle</span></div>
+
+<div class="viewcode-block" id="DBHandleClient.register_handle"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.register_handle">[docs]</a>    <span class="k">def</span> <span class="nf">register_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Register a new Handle with given name. If the handle already exists</span>
+<span class="sd">        and overwrite is not set to True, the method will throw an</span>
+<span class="sd">        exception.</span>
+
+<span class="sd">        :param handle: The full name of the handle to be registered (prefix</span>
+<span class="sd">            and suffix)</span>
+<span class="sd">        :param url: The URL of the data entity to be referenced</span>
+<span class="sd">        :param overwrite: Optional. If set to True, an existing handle record</span>
+<span class="sd">            will be overwritten. Defaults to False.</span>
+<span class="sd">        :param args: Mandatory key_value parameters for the admin of the Handle being created.</span>
+<span class="sd">               Example:</span>
+
+<span class="sd">                        admin_handle = &#39;prefix/suffix&#39;.</span>
+
+<span class="sd">                        admin_handle_index = 200.</span>
+
+<span class="sd">                        perm = &#39;111111111111&#39;</span>
+<span class="sd">        :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or</span>
+<span class="sd">            set to False.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;register_handle...&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Get values for HS_ADMIN</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">admin_handle</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;admin_handle&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">admin_handle_index</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;admin_handle_index&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">perm</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;permissions&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Set current UNIX time</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">timeutil</span><span class="o">.</span><span class="n">generate_timestamp</span><span class="p">()</span>
+
+        <span class="n">handle_exists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_handle_exists</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+
+        <span class="c1"># default idx for url</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="c1"># If already exists and can&#39;t be overwritten:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">overwrite</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="n">handle_exists</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Could not register handle&#39;</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span> <span class="o">+</span> <span class="s1">&#39;, as it already exists.&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">DBHandleAlreadyExistsException</span><span class="p">(</span><span class="n">handle</span><span class="o">=</span><span class="n">handle</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">handle_exists</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">delete_handle</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+
+        <span class="c1"># Create handle without HS_ADMIN</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;INSERT INTO handles (handle, idx, type, data, ttl_type, ttl, timestamp, refs, admin_read, &quot;</span> \
+                <span class="s2">&quot;admin_write, pub_read, &quot;</span> \
+                <span class="s2">&quot;pub_write) values (&quot;</span> \
+                <span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="s1">&#39;URL&#39;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span>
+                                                                                             <span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;86400&#39;</span><span class="p">,</span> <span class="n">ts</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span>
+                                                                                             <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="c1"># Add HS_ADMIN values (default values 0.NA/prefix)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_admin_entry</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_handle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_handle_index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">add_handle_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Add a key-value pair from a handle record.</span>
+
+<span class="sd">        :param handle: Handle from whose record they entry should be deleted.</span>
+<span class="sd">        :param key: Key to be deleted.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Add handle value&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_handle_exists</span><span class="p">(</span><span class="n">handle</span><span class="p">):</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;INSERT INTO handles WHERE handle= &#39;</span><span class="si">%s</span><span class="s2">&#39; AND type=&#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">execute_query_customized</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DBHandleClient.get_value_from_handle"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.get_value_from_handle">[docs]</a>    <span class="k">def</span> <span class="nf">get_value_from_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Retrieve a single value from a single handle.</span>
+
+<span class="sd">        :param handle: The handle to take the value from.</span>
+<span class="sd">        :param key: The key.</span>
+
+<span class="sd">        :raises: :exc:`~pyhandle.dbhsexceptions.DBHandleNotFoundException`</span>
+<span class="sd">        :raises: :exc:`~pyhandle.dbhsexceptions.DBHandleKeyNotFoundException`</span>
+<span class="sd">        :return: A string containing the value.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Get value from handle&#39;</span><span class="p">)</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT data FROM handles WHERE handle= &#39;</span><span class="si">%s</span><span class="s2">&#39; AND type=&#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="n">handle_records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="n">handle_record_exists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_handle_exists</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+        <span class="n">key_exists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_key_exists</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">handle_record_exists</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key_exists</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">handle_records</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">handle_value</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">handle_value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Key not found in Handle&#39;</span>
+                <span class="k">raise</span> <span class="n">DBHandleKeyNotFoundException</span><span class="p">(</span><span class="n">handle</span><span class="o">=</span><span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Cannot modify unexisting handle&#39;</span>
+            <span class="k">raise</span> <span class="n">DBHandleNotFoundException</span><span class="p">(</span><span class="n">handle</span><span class="o">=</span><span class="n">handle</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DBHandleClient.delete_handle"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.delete_handle">[docs]</a>    <span class="k">def</span> <span class="nf">delete_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Delete handle and its handle record.</span>
+
+<span class="sd">        :param handle: Handle being deleted</span>
+
+<span class="sd">        :raises: :exc:`~pyhandle.dbhsexceptions.DBHandleNotFoundException`</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;delete handle&#39;</span><span class="p">)</span>
+        <span class="n">handle_exists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_handle_exists</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+
+        <span class="c1"># delete query</span>
+        <span class="k">if</span> <span class="n">handle_exists</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;DELETE FROM handles WHERE handle= &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">handle</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Handle does not exists&#39;</span>
+            <span class="k">raise</span> <span class="n">DBHandleNotFoundException</span><span class="p">(</span><span class="n">handle</span><span class="o">=</span><span class="n">handle</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DBHandleClient.delete_handle_value"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.delete_handle_value">[docs]</a>    <span class="k">def</span> <span class="nf">delete_handle_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Delete a key-value pair from a handle record. If the key exists more</span>
+<span class="sd">        than once, all key-value pairs with this key are deleted.</span>
+
+<span class="sd">        :param handle: Handle from whose record the entry should be deleted.</span>
+<span class="sd">        :param key: Key to be deleted. Also accepts a list of keys.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;delete_handle_value...&#39;</span><span class="p">)</span>
+
+        <span class="n">key_exists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_key_exists</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key_exists</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;DELETE FROM handles WHERE handle= &#39;</span><span class="si">%s</span><span class="s2">&#39; AND type=&#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Key not found in Handle&#39;</span>
+            <span class="k">raise</span> <span class="n">DBHandleKeyNotFoundException</span><span class="p">(</span><span class="n">handle</span><span class="o">=</span><span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DBHandleClient.get_list_of_idx"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.get_list_of_idx">[docs]</a>    <span class="k">def</span> <span class="nf">get_list_of_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create a list of indices already used.</span>
+
+<span class="sd">        :param handle: the handle to extract the indexes from.</span>
+
+<span class="sd">        :return: list_idx: List of indices</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">list_idx</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT idx FROM handles WHERE handle=&#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">handle</span>
+        <span class="n">query_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">query_result</span><span class="p">)):</span>
+            <span class="n">list_idx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">query_result</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;idx&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">list_idx</span></div>
+
+<div class="viewcode-block" id="DBHandleClient.list_all_handles"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.list_all_handles">[docs]</a>    <span class="k">def</span> <span class="nf">list_all_handles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Get a list of all of the handles in the database.</span>
+
+<span class="sd">        :return: A list of all handles in the table</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">list_all_handles</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s1">&#39;SELECT DISTINCT handle FROM handles&#39;</span>
+        <span class="n">result_query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result_query</span><span class="p">)):</span>
+            <span class="n">list_all_handles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">result_query</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;handle&#39;</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">list_all_handles</span></div>
+
+    <span class="k">def</span> <span class="nf">list_handles_by_prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Get a list of handles in the database that have a given prefix.</span>
+
+<span class="sd">        :param prefix: The prefix, including the slash (&#39;/&#39;) character.</span>
+
+<span class="sd">        :raises: :exc:`~pyhandle.handleexceptions.HandleNotFoundOnDBException`</span>
+<span class="sd">        :return: List of handles</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT DISTINCT handle FROM handles WHERE handle LIKE &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">prefix</span>
+        <span class="n">handle_records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_records</span>
+
+    <span class="k">def</span> <span class="nf">retrieve_handle_record_without_HS_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Retrieve a handle record from the Handle server database as a dict.</span>
+
+<span class="sd">        :param handle: The handle whose record is to be retrieved.</span>
+
+<span class="sd">        :raises: :exc:`~pyhandle.dbhsexceptions.DBHandleNotFoundException`</span>
+<span class="sd">        :return: The handle record values as a list.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Retrieving handle record (db)&quot;</span><span class="p">)</span>
+        <span class="n">handle_record_exists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_handle_exists</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">handle_record_exists</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT type, data FROM handles WHERE handle= &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">handle</span>
+            <span class="n">handle_records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Handle not found&#39;</span>
+            <span class="k">raise</span> <span class="n">DBHandleNotFoundException</span><span class="p">(</span><span class="n">handle</span><span class="o">=</span><span class="n">handle</span><span class="p">)</span>
+
+        <span class="n">handle_records_as_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert_query_result_to_dict</span><span class="p">(</span><span class="n">handle_records</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_records_as_dict</span>
+
+<div class="viewcode-block" id="DBHandleClient.modify_handle_value"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.modify_handle_value">[docs]</a>    <span class="k">def</span> <span class="nf">modify_handle_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">ttl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">add_if_not_exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kvpairs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This statement is used to update a single handle value with new values. The value to</span>
+<span class="sd">        update is identified by the handle and index.</span>
+<span class="sd">        Modify entries (key-value pairs).</span>
+
+
+<span class="sd">        :param handle: Handle whose record is to be modified</span>
+<span class="sd">        :param ttl: Optional. Integer value. If ttl should be set to a</span>
+<span class="sd">            non-default value.</span>
+<span class="sd">        :param kvpairs: The user can specify several key-value-pairs.</span>
+<span class="sd">            These will be the handle value types and values that will be</span>
+<span class="sd">            modified. The keys are the names or the handle value types (e.g.</span>
+<span class="sd">            &quot;URL&quot;). The values are the new values to store in &quot;data&quot;.</span>
+<span class="sd">        :param add_if_not_exists: Optional.</span>
+
+<span class="sd">        :raises: :exc:`~pyhandle.dbhsexceptions.DBHandleNotFoundException`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Modify handle value (db)&quot;</span><span class="p">)</span>
+
+        <span class="n">handle_key</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">kvpairs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">handle_value</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">kvpairs</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+        <span class="c1"># check if handle and the key already exist</span>
+        <span class="n">handle_record_exists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_handle_exists</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+        <span class="n">key_exists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_key_exists</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">handle_key</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">handle_record_exists</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key_exists</span><span class="p">:</span>
+                <span class="c1"># update the value of the key</span>
+                <span class="n">idx_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_idx_existing_key</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">handle_key</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;UPDATE handles set data = &#39;</span><span class="si">%s</span><span class="s2">&#39; WHERE handle = &#39;</span><span class="si">%s</span><span class="s2">&#39; and idx = &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">handle_value</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">handle</span><span class="p">,</span>
+                                                                                               <span class="n">idx_key</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">add_if_not_exists</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;modify_handle_value: Adding entry &quot;&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">handle_key</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;&quot;&#39;</span> <span class="o">+</span> \
+                             <span class="s1">&#39; to handle &#39;</span> <span class="o">+</span> <span class="n">handle</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_new_value</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">handle_key</span><span class="o">=</span><span class="n">handle_key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">handle_value</span><span class="o">=</span><span class="n">handle_value</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Cannot modify unexisting handle&#39;</span>
+            <span class="k">raise</span> <span class="n">DBHandleNotFoundException</span><span class="p">(</span><span class="n">handle</span><span class="o">=</span><span class="n">handle</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">get_idx_existing_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT idx FROM handles WHERE handle=&#39;</span><span class="si">%s</span><span class="s2">&#39; AND type= &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="n">query_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="n">list_idx</span> <span class="o">=</span> <span class="n">query_result</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;idx&#39;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">list_idx</span>
+
+    <span class="k">def</span> <span class="nf">create_new_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="o">**</span><span class="n">kvpairs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Add new handle value.</span>
+
+<span class="sd">        :param: handle: The handle in which the value will be added</span>
+<span class="sd">        :param: **kvpairs: any other key-value pairs</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">timeutil</span><span class="o">.</span><span class="n">generate_timestamp</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">kvpairs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handle_key</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">kvpairs</span><span class="p">[</span><span class="s1">&#39;handle_key&#39;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handle_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">kvpairs</span><span class="p">[</span><span class="s1">&#39;handle_value&#39;</span><span class="p">])</span>
+
+        <span class="n">newidx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_new_index</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;INSERT INTO handles (idx, handle, type, data, ttl_type, ttl, timestamp, refs, admin_read, &quot;</span> \
+                <span class="s2">&quot;admin_write, pub_read, pub_write) VALUES (&#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &quot;</span> \
+                <span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;)&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                    <span class="n">newidx</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle_key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle_value</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;86400&#39;</span><span class="p">,</span> <span class="n">ts</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">add_admin_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">admin_handle</span><span class="p">,</span> <span class="n">admin_handle_index</span><span class="p">,</span> <span class="n">perm</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create an HS_ADMIN entry.</span>
+<span class="sd">        The admin value is byte array constant, which means that all handle created use the same HS_ADMIN value.</span>
+
+<span class="sd">        :param handle: The handle in which the HS-ADMIN value is added</span>
+<span class="sd">        :param admin_handle: The administrator of the Handle (prefix/suffx)</span>
+<span class="sd">        :param admin_handle_index: The index of the admin_handle</span>
+<span class="sd">        :param perm: The permissions of the administrator of the handle in form &#39;101001010100&#39;</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">index_length</span> <span class="o">=</span> <span class="mi">8</span>
+        <span class="n">hsadmin_index</span> <span class="o">=</span> <span class="nb">hex</span><span class="p">(</span><span class="n">admin_handle_index</span><span class="p">)[</span><span class="mi">2</span><span class="p">:]</span>
+
+        <span class="c1"># Add missing values to index hex</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">index_length</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">hsadmin_index</span><span class="p">)):</span>
+            <span class="n">hsadmin_index</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span> <span class="o">+</span> <span class="n">hsadmin_index</span>
+
+        <span class="n">admin_perm</span> <span class="o">=</span> <span class="nb">hex</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">perm</span><span class="p">,</span> <span class="mi">2</span><span class="p">))[</span><span class="mi">2</span><span class="p">:]</span>
+
+        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">admin_handle</span> <span class="o">=</span> <span class="n">codecs</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">admin_handle</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="s1">&#39;hex&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;UTF-8&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">admin_handle</span> <span class="o">=</span> <span class="n">admin_handle</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">)</span>
+
+        <span class="n">hsadmin_hex_value</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span> <span class="o">+</span> <span class="n">admin_perm</span> <span class="o">+</span> <span class="s2">&quot;0000000f&quot;</span> <span class="o">+</span> <span class="n">admin_handle</span> <span class="o">+</span> <span class="n">hsadmin_index</span>
+
+        <span class="n">admin_idx</span> <span class="o">=</span> <span class="s1">&#39;100&#39;</span>
+
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">timeutil</span><span class="o">.</span><span class="n">generate_timestamp</span><span class="p">()</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;INSERT INTO handles (idx, handle, type, data, ttl_type, ttl, timestamp, refs, admin_read, &quot;</span> \
+                <span class="s2">&quot;admin_write, &quot;</span> \
+                <span class="s2">&quot;pub_read, pub_write) VALUES (&#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, UNHEX(&#39;</span><span class="si">%s</span><span class="s2">&#39;), &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;</span><span class="si">%s</span><span class="s2">&#39;, &quot;</span> \
+                <span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39;)&quot;</span> \
+                <span class="o">%</span> <span class="p">(</span><span class="n">admin_idx</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="s1">&#39;HS_ADMIN&#39;</span><span class="p">,</span> <span class="n">hsadmin_hex_value</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;86400&#39;</span><span class="p">,</span>
+                   <span class="n">ts</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">create_new_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">hs_admin</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Find an index not yet used in the handle record and not reserved for</span>
+<span class="sd">            any (other) special type.</span>
+
+<span class="sd">        :param handle: The handle in which indices will be allocated</span>
+<span class="sd">        :param url: If True, an index for an URL entry is returned (1, unless</span>
+<span class="sd">            it is already in use).</span>
+<span class="sd">        :param hs_admin: If True, an index for HS_ADMIN is returned (100 or one</span>
+<span class="sd">            of the following).</span>
+<span class="sd">        :return: An integer.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">start</span> <span class="o">=</span> <span class="mi">2</span>
+
+        <span class="c1"># reserved indices:</span>
+        <span class="n">reserved_for_url</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">reserved_for_admin</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+        <span class="n">prohibited_indices</span> <span class="o">=</span> <span class="n">reserved_for_url</span> <span class="o">|</span> <span class="n">reserved_for_admin</span>
+
+        <span class="k">if</span> <span class="n">url</span><span class="p">:</span>
+            <span class="n">prohibited_indices</span> <span class="o">=</span> <span class="n">prohibited_indices</span> <span class="o">-</span> <span class="n">reserved_for_url</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">hs_admin</span><span class="p">:</span>
+            <span class="n">prohibited_indices</span> <span class="o">=</span> <span class="n">prohibited_indices</span> <span class="o">-</span> <span class="n">reserved_for_admin</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="mi">100</span>
+
+        <span class="c1"># existing indices</span>
+        <span class="n">list_of_indices_already_used</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_list_of_idx</span><span class="p">(</span><span class="n">handle</span><span class="p">))</span>
+
+        <span class="c1"># find new index:</span>
+        <span class="n">all_prohibited_indices</span> <span class="o">=</span> <span class="n">list_of_indices_already_used</span> <span class="o">|</span> <span class="n">prohibited_indices</span>
+
+        <span class="n">searchmax</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">all_prohibited_indices</span><span class="p">))</span> <span class="o">+</span> <span class="mi">2</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">searchmax</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_prohibited_indices</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">index</span>
+
+    <span class="k">def</span> <span class="nf">check_if_value_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="o">**</span><span class="n">kvpairs</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">handle</span> <span class="o">=</span> <span class="n">handle</span>
+        <span class="n">handle_record</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_handle_record_without_HS_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="p">)</span>
+        <span class="n">handle_key</span> <span class="o">=</span> <span class="n">kvpairs</span><span class="p">[</span><span class="s1">&#39;handle_key&#39;</span><span class="p">]</span>
+
+        <span class="n">value_exists</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">handle_key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">handle_record</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">check_if_key_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Check if a given key exists in a handle record.</span>
+
+<span class="sd">        :param handle: The handle in which the key is searched</span>
+<span class="sd">        :param key: The key</span>
+<span class="sd">        :return: True if key exists</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">query_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_handle_record_without_HS_values</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+        <span class="n">handle_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">query_result</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">handle_keys</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">retrieve_handle_record_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This statement is used to retrieve the set of handle values associated with a handle</span>
+<span class="sd">        from the database.</span>
+
+<span class="sd">        :param handle: The name of the handle to be queried.</span>
+<span class="sd">        :return: handle_records: This contains</span>
+<span class="sd">                idx positive integer value: unique across all values for the handle</span>
+<span class="sd">                type alphanumeric value: indicates the type of the data in each value</span>
+<span class="sd">                                        data alphanumeric value; the data associated with</span>
+<span class="sd">                                        the value ttl type byte/short; 0=relative, 1=absolute</span>
+<span class="sd">                ttl numeric: cache timeout for this value in seconds (if ttl type is absolute, then this indicates</span>
+<span class="sd">                             the date/time of expiration in seconds since Jan 1 0:00:00 1970.</span>
+<span class="sd">                timestamp numeric: the date that this value was last modified, in seconds since Jan 1 0:00:00</span>
+<span class="sd">                                   1970</span>
+<span class="sd">                refs alphanumeric: list of tab delimited index:handle pairs. In each pair, tabs that occur in the</span>
+<span class="sd">                                  handle part are escaped as \t.</span>
+<span class="sd">                admin read boolean: indicates whether clients with administrative privileges have access to</span>
+<span class="sd">                                   retrieve the handle value</span>
+<span class="sd">                admin write boolean: indicates whether clients with administrative privileges have</span>
+<span class="sd">                                   permission to modify the handle value</span>
+<span class="sd">                pub read boolean: indicates whether all clients have permission to retrieve the handle value</span>
+<span class="sd">                pub write boolean: indicates whether all clients have permission to modify the handle value</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># pylint: disable=missing-docstring</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT idx, type, data, ttl, timestamp FROM handles WHERE handle = &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">handle</span>
+
+        <span class="n">handle_records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">handle_records</span>
+
+    <span class="k">def</span> <span class="nf">get_query_from_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Execute the SQL query formulated by user.</span>
+
+<span class="sd">        :param query: the sql query to be performed</span>
+<span class="sd">        :return: The handle record</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">handle_records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Get query from user </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">handle_records</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_records</span>
+
+<div class="viewcode-block" id="DBHandleClient.create_list_of_queries"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.create_list_of_queries">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">create_list_of_queries</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create a list of queries, which will be executed in a specific order.</span>
+
+<span class="sd">        :param query: The query to be added to the list.</span>
+<span class="sd">        :return: A list of queries</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">list_queries</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">list_queries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">list_queries</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">pretty_print</span><span class="p">(</span><span class="n">record</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Print the query result as a table.</span>
+<span class="sd">        :param record: The result of the query as dict.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">record</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;----------------------------------------&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:&lt;15}</span><span class="s2"> </span><span class="si">{:&lt;25}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+
+<div class="viewcode-block" id="DBHandleClient.connection_status"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.connection_status">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">connection_status</span><span class="p">(</span><span class="n">handle_db_connection</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Check whether a connection to DB is open.</span>
+
+<span class="sd">        :param handle_db_connection:</span>
+<span class="sd">        :return: True if connection is open</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">handle_db_connection</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+    <span class="k">def</span> <span class="nf">_db_disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Close the connection to the database. &#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_db_connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DBHandleClient.retrieve_handle_record"><a class="viewcode-back" href="../../../pyhandleclientdb.html#pyhandle.client.dbhandleclient.DBHandleClient.retrieve_handle_record">[docs]</a>    <span class="k">def</span> <span class="nf">retrieve_handle_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Retrieve all Handle record values including HS_ADMIN</span>
+<span class="sd">        Extract HS_ADMIN value from the query result and converts it to Hex.</span>
+
+<span class="sd">        :param handle: The handle from which the values are retrieved.</span>
+<span class="sd">        :return: handle_records: All values of the Handle including HS_ADMIN.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">scale</span> <span class="o">=</span> <span class="mi">16</span>
+
+        <span class="n">num_of_bits</span> <span class="o">=</span> <span class="mi">12</span>
+
+        <span class="n">hsadmin</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+        <span class="n">handle_records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_handle_record_without_HS_values</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+
+        <span class="n">handle_records_json</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_handle_record_json</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+
+        <span class="c1"># Get value of HS_ADMIN</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">handle_records_json</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">handle_records_json</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;HS_ADMIN&#39;</span><span class="p">:</span>
+                <span class="n">hsadmin</span> <span class="o">=</span> <span class="n">handle_records_json</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+
+        <span class="n">hexhsadmin</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">hsadmin</span><span class="p">)</span>
+
+        <span class="n">hs_admin_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_hs_admin_index</span><span class="p">(</span><span class="n">hexhsadmin</span><span class="p">)</span>
+
+        <span class="n">length_record</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hexhsadmin</span><span class="p">)</span>
+        <span class="n">admin_handle</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">hexhsadmin</span><span class="p">[</span><span class="mi">12</span><span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">length_record</span> <span class="o">-</span> <span class="mi">8</span><span class="p">)])</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Get and convert permissions</span>
+        <span class="n">permissions</span> <span class="o">=</span> <span class="n">hexhsadmin</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span>
+
+        <span class="n">perm_bin</span> <span class="o">=</span> <span class="nb">bin</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">permissions</span><span class="p">,</span> <span class="n">scale</span><span class="p">))[</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="n">num_of_bits</span><span class="p">)</span>
+
+        <span class="n">temp_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;handle&#39;</span><span class="p">:</span> <span class="n">admin_handle</span><span class="p">,</span> <span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="n">hs_admin_index</span><span class="p">,</span> <span class="s1">&#39;permissions&#39;</span><span class="p">:</span> <span class="n">perm_bin</span><span class="p">}</span>
+
+        <span class="n">handle_records</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;HS_ADMIN&#39;</span><span class="p">:</span> <span class="n">temp_dict</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">handle_records</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_hs_admin_index</span><span class="p">(</span><span class="n">hexhsadmin</span><span class="p">):</span>
+
+        <span class="n">hexadmin_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hexhsadmin</span><span class="p">)</span>
+        <span class="n">hs_admin_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hexhsadmin</span><span class="p">[</span><span class="n">hexadmin_length</span> <span class="o">-</span> <span class="mi">8</span><span class="p">:</span><span class="n">hexadmin_length</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">hs_admin_index</span>
+
+    <span class="k">def</span> <span class="nf">get_permissions_from_hsadmin_hex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">        :param handle: The handle for which the permissions are retrieved.</span>
+<span class="sd">        :return: permission: Bit-like permissions</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">handle_record_hex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert_hs_admin_values_to_hex</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+        <span class="n">permissions</span> <span class="o">=</span> <span class="n">handle_record_hex</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">permissions</span>
+
+    <span class="k">def</span> <span class="nf">convert_permissions_to_binary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get permissions in HEX form and convert them to binary.</span>
+
+<span class="sd">        :param handle: The Handle that contains the permissions</span>
+<span class="sd">        :return: perm_bin</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">scale</span> <span class="o">=</span> <span class="mi">16</span>
+
+        <span class="n">num_of_bits</span> <span class="o">=</span> <span class="mi">12</span>
+
+        <span class="n">perm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_permissions_from_hsadmin_hex</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+
+        <span class="n">perm_bin</span> <span class="o">=</span> <span class="nb">bin</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">perm</span><span class="p">,</span> <span class="n">scale</span><span class="p">))[</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="n">num_of_bits</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">perm_bin</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pyhandle.client.dbhandleclient</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015-2017, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

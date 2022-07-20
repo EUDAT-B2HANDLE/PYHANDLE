@@ -1,0 +1,171 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>PyHandleClient &#8212; PyHandle 1.0.5-dev documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="REST Handle Client" href="pyhandleclientrest.html" />
+    <link rel="prev" title="Welcome to PYHANDLE’s documentation!" href="index.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyhandleclientrest.html" title="REST Handle Client"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to PYHANDLE’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">PyHandleClient</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="pyhandleclient">
+<h1>PyHandleClient<a class="headerlink" href="#pyhandleclient" title="Permalink to this heading">¶</a></h1>
+<p>This is the main class of the PYHANDLE Library.
+From Here you may understand the PyHandle library and the method it provides.
+PyHandleClient is the main class of the PyHandle library and provides methods to:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>select a client (REST, DB or Batch)</p></li>
+<li><p>authenticate to the Handle System server</p></li>
+<li><p>invoke methods to create, retrieve, update and delete Handles</p></li>
+</ul>
+</div></blockquote>
+<section id="select-a-client">
+<h2>Select a client<a class="headerlink" href="#select-a-client" title="Permalink to this heading">¶</a></h2>
+<p>PyHandleClient acts as a factory that takes arguments to determine what type of client to instantiate.
+There are two interfaces to interact with the Handle System server: REST, DB or Batch.
+User selects the client by passing the client as String to the PyHandleClient class and if required by the client more parameters.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyhandle.handleclient</span> <span class="kn">import</span> <span class="n">PyHandleClient</span>
+</pre></div>
+</div>
+<p>and then:</p>
+<ul class="simple">
+<li><p>REST</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">client</span> <span class="o">=</span> <span class="n">PyHandleClient</span><span class="p">(</span><span class="s1">&#39;rest&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>DB</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">client</span> <span class="o">=</span> <span class="n">PyHandleClient</span><span class="p">(</span><span class="s1">&#39;db&#39;</span><span class="p">,</span> <span class="n">credentials</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Batch</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">client</span> <span class="o">=</span> <span class="n">PyHandleClient</span><span class="p">(</span><span class="s1">&#39;batch&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Each client has its own methods and rules to authenticate to the Handle server. When some methods of REST client do not require authentication/authorization (see <a class="reference internal" href="pyhandleclientrest.html"><span class="doc">REST Handle Client</span></a>), all methods related to DB or Batch need authorization.</p>
+<p>Credentials are mandatory when creating a DB client. In that case, information about the database have to be
+passed to the client (see <a class="reference internal" href="pyhandleclientdb.html"><span class="doc">DB Handle Client</span></a>). Authentication within the Batch client is explained in <a class="reference internal" href="pyhandleclientbatch.html"><span class="doc">BATCH Handle Client</span></a> and can be performed after instantiating the client.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">PyHandleClient</a><ul>
+<li><a class="reference internal" href="#select-a-client">Select a client</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">Welcome to PYHANDLE’s documentation!</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="pyhandleclientrest.html"
+                          title="next chapter">REST Handle Client</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pyhandleclient.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyhandleclientrest.html" title="REST Handle Client"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to PYHANDLE’s documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">PyHandleClient</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015-2017, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

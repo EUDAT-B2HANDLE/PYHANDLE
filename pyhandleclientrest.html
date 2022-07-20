@@ -1,0 +1,1167 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>REST Handle Client &#8212; PyHandle 1.0.5-dev documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="DB Handle Client" href="pyhandleclientdb.html" />
+    <link rel="prev" title="PyHandleClient" href="pyhandleclient.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyhandleclientdb.html" title="DB Handle Client"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pyhandleclient.html" title="PyHandleClient"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">REST Handle Client</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="rest-handle-client">
+<h1>REST Handle Client<a class="headerlink" href="#rest-handle-client" title="Permalink to this heading">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The REST client documentation is based mainly on the <a class="reference external" href="http://eudat-b2safe.github.io/B2HANDLE/index.html">B2Handle</a> documentation.
+Here we describe only the main functionalities of the REST client.</p>
+</div>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>If you encounter security warnings when using the library, contact your Handle server administrators and ask them to set up the server certificates correctly! (see <a class="reference internal" href="handleserverconfig.html"><span class="doc">Handle Server Configuration</span></a>)</p>
+</div>
+<p>The RESTHandleClient class provides a Python-level interface for interactions with a Handle server through its native REST interface. The class provides common methods for working with Handles and their records:</p>
+<ul class="simple">
+<li><p>Create and modify Handles</p></li>
+<li><p>Search across Handles (using an additional servlet)</p></li>
+</ul>
+<section id="general-usage">
+<h2>General usage<a class="headerlink" href="#general-usage" title="Permalink to this heading">¶</a></h2>
+<p>First, you create an instance of the client. It holds all necessary information, such as from which handle server to read, which
+user credentials to use etc. Several different instantiation methods are available for different usages (see
+<a class="reference internal" href="pyhandleclient.html"><span class="doc">PyHandleClient</span></a>).</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyhandle.handleclient</span> <span class="kn">import</span> <span class="n">PyHandleClient</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">PyHandleClient</span><span class="p">(</span><span class="s1">&#39;rest&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">instantiate_</span><span class="o">...</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Then, use the client’s methods to read, create and modify handles.</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">value</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">some_method</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Search functionality is not offered by the Handle System. For searching, you need access to a customized search servlet.</p>
+</section>
+<section id="instantiation">
+<h2>Instantiation<a class="headerlink" href="#instantiation" title="Permalink to this heading">¶</a></h2>
+<p>When instantiating the REST client there are several constructors with differences in
+the permissions and thus possible actions on the Handle server.
+Aside from the default constructor <code class="xref py py-meth docutils literal notranslate"><span class="pre">__init__()</span></code>, there are
+several shorthand constructors:</p>
+<dl class="simple">
+<dt><code class="xref py py-meth docutils literal notranslate"><span class="pre">instantiate_for_read_access()</span></code></dt><dd><p>Anonymous read-only access, no credentials needed, no search capabilities. Handles are read from the global Handle Registry.</p>
+</dd>
+<dt><code class="xref py py-meth docutils literal notranslate"><span class="pre">instantiate_for_read_and_search()</span></code></dt><dd><p>Read-only access, credentials for search functions required.</p>
+</dd>
+<dt><code class="xref py py-meth docutils literal notranslate"><span class="pre">instantiate_with_username_and_password()</span></code></dt><dd><p>Full read and write access, credentials required (username and password).</p>
+</dd>
+<dt><code class="xref py py-meth docutils literal notranslate"><span class="pre">instantiate_with_credentials()</span></code></dt><dd><p>Full read and write access, credentials required (username and password or client certificates). Credentials can
+conveniently be loaded from a JSON file. For this, please see documentation of <a class="reference internal" href="#module-pyhandle.clientcredentials" title="pyhandle.clientcredentials"><code class="xref py py-mod docutils literal notranslate"><span class="pre">clientcredentials</span></code></a>.</p>
+</dd>
+</dl>
+<p>On top of the required arguments, more arguments can be passed to the constructors as key-value pairs. Please see the documentation of
+the default constructor to find out which values are understood.</p>
+<p>Instantiation can be performed when specifying the client as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyhandle.handleclient</span> <span class="kn">import</span> <span class="n">PyHandleClient</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">PyHandleClient</span><span class="p">(</span><span class="s1">&#39;rest&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">instantiate_</span><span class="o">...</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The instantiation methods mentioned above concern only the REST client. Concerning the DB client there is for now no
+restriction for creating or modifying Handles in the database.</p>
+</div>
+</section>
+<section id="authentication">
+<h2>Authentication<a class="headerlink" href="#authentication" title="Permalink to this heading">¶</a></h2>
+<p>For creating and modifying handles* you need to authenticate at the Handle Server you’d like to write to. Authentication using pyhandle is straightforward. There are two possibilities:</p>
+<ul class="simple">
+<li><p>Authenticating using username and password</p></li>
+<li><p>Authenticating using client certificates</p></li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Here we assume that you know your username and password or have your private key file and your certificate file ready. If you need to set these up, please see <a class="reference internal" href="authentication.html"><span class="doc">Authentication at a Handle Server</span></a>.</p>
+</div>
+<section id="authentication-using-client-certificates">
+<h3>Authentication using client certificates<a class="headerlink" href="#authentication-using-client-certificates" title="Permalink to this heading">¶</a></h3>
+<p>Using client certificates, you need to provide paths to the file containing your private key and to the certificate in a JSON file. The class <code class="xref py py-class docutils literal notranslate"><span class="pre">PIDClientCredentials</span></code> provides a method <code class="xref py py-meth docutils literal notranslate"><span class="pre">load_from_JSON()</span></code>. This can be read as follows:</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyhandle.clientcredentials</span> <span class="kn">import</span> <span class="n">PIDClientCredentials</span>
+<span class="n">cred</span> <span class="o">=</span> <span class="n">PIDClientCredentials</span><span class="o">.</span><span class="n">load_from_JSON</span><span class="p">(</span><span class="s1">&#39;my_credentials.json&#39;</span><span class="p">)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">PyHandleClient</span><span class="p">(</span><span class="s1">&#39;rest&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">instantiate_with_credentials</span><span class="p">(</span><span class="n">cred</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>The JSON file should look like this:</p>
+<blockquote>
+<div><div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;client&quot;</span><span class="p">:</span><span class="s2">&quot;rest&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;handle_server_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://my.handle.server&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;private_key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my_private_key.pem&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;certificate_only&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my_certificate.pem&quot;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div></blockquote>
+</section>
+<section id="authentication-using-username-and-password">
+<h3>Authentication using username and password<a class="headerlink" href="#authentication-using-username-and-password" title="Permalink to this heading">¶</a></h3>
+<p>If you have a username (something that looks like <strong>300:foo/bar</strong>) and a password, we recommend using this constructor: <a class="reference internal" href="#pyhandle.handleclient.RESTHandleClient.instantiate_with_username_and_password" title="pyhandle.handleclient.RESTHandleClient.instantiate_with_username_and_password"><code class="xref py py-meth docutils literal notranslate"><span class="pre">instantiate_with_username_and_password()</span></code></a>:</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">client</span> <span class="o">=</span> <span class="n">PyHandleClient</span><span class="p">(</span><span class="s1">&#39;rest&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">instantiate_with_username_and_password</span><span class="p">(</span>
+  <span class="s1">&#39;https://my.handle.server&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;300:foo/bar&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;mypassword123&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<dl class="simple">
+<dt>Alternatively, you can store your username and password in a JSON file, instead of paths to certificate and key::</dt><dd><p>{
+“baseuri”: “<a class="reference external" href="https://my.handle.server">https://my.handle.server</a>”,
+“username”: “300:foo/bar”,
+“password”: “mypassword123”
+}</p>
+</dd>
+</dl>
+<p>Like above, you can read the JSON like as shown above:</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cred</span> <span class="o">=</span> <span class="n">PIDClientCredentials</span><span class="o">.</span><span class="n">load_from_JSON</span><span class="p">(</span><span class="s1">&#39;my_credentials.json&#39;</span><span class="p">)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">PyHandleClient</span><span class="p">(</span><span class="s1">&#39;rest&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">instantiate_with_credentials</span><span class="p">(</span><span class="n">cred</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</section>
+<section id="credentials-json-file">
+<h3>Credentials JSON file<a class="headerlink" href="#credentials-json-file" title="Permalink to this heading">¶</a></h3>
+<p>The JSON file can contain more information. All items it contains are passed to the client constructor as config. Please see <a class="reference internal" href="#pyhandle.handleclient.RESTHandleClient.__init__" title="pyhandle.handleclient.RESTHandleClient.__init__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__init__()</span></code></a> to find out which configuration items the client constructor understands.</p>
+</section>
+</section>
+<section id="basic-handle-interaction">
+<h2>Basic Handle interaction<a class="headerlink" href="#basic-handle-interaction" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Creating a Handle</dt><dd><p>Use <a class="reference internal" href="#pyhandle.handleclient.RESTHandleClient.register_handle" title="pyhandle.handleclient.RESTHandleClient.register_handle"><code class="xref py py-meth docutils literal notranslate"><span class="pre">register_handle()</span></code></a> to create a Handle with a custom name or <a class="reference internal" href="#pyhandle.handleclient.RESTHandleClient.generate_and_register_handle" title="pyhandle.handleclient.RESTHandleClient.generate_and_register_handle"><code class="xref py py-meth docutils literal notranslate"><span class="pre">generate_and_register_handle()</span></code></a> to create a Handle with a random UUID-based name.</p>
+</dd>
+<dt>Deleting a Handle</dt><dd><p>Use <a class="reference internal" href="#pyhandle.handleclient.RESTHandleClient.delete_handle" title="pyhandle.handleclient.RESTHandleClient.delete_handle"><code class="xref py py-meth docutils literal notranslate"><span class="pre">delete_handle()</span></code></a>.</p>
+</dd>
+<dt>Retrieving a full Handle record</dt><dd><p>This can be done either through <a class="reference internal" href="#pyhandle.handleclient.RESTHandleClient.retrieve_handle_record" title="pyhandle.handleclient.RESTHandleClient.retrieve_handle_record"><code class="xref py py-meth docutils literal notranslate"><span class="pre">retrieve_handle_record()</span></code></a> or <a class="reference internal" href="#pyhandle.handleclient.RESTHandleClient.retrieve_handle_record_json" title="pyhandle.handleclient.RESTHandleClient.retrieve_handle_record_json"><code class="xref py py-meth docutils literal notranslate"><span class="pre">retrieve_handle_record_json()</span></code></a>.</p>
+</dd>
+<dt>Retrieving a single value</dt><dd><p>Use <a class="reference internal" href="#pyhandle.handleclient.RESTHandleClient.get_value_from_handle" title="pyhandle.handleclient.RESTHandleClient.get_value_from_handle"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_value_from_handle()</span></code></a> to retrieve a single Handle record value.</p>
+</dd>
+<dt>Modifying a Handle record</dt><dd><p>Use <a class="reference internal" href="#pyhandle.handleclient.RESTHandleClient.modify_handle_value" title="pyhandle.handleclient.RESTHandleClient.modify_handle_value"><code class="xref py py-meth docutils literal notranslate"><span class="pre">modify_handle_value()</span></code></a> to modify any number of values in a specific Handle record. To remove individual values, use <a class="reference internal" href="#pyhandle.handleclient.RESTHandleClient.delete_handle_value" title="pyhandle.handleclient.RESTHandleClient.delete_handle_value"><code class="xref py py-meth docutils literal notranslate"><span class="pre">delete_handle_value()</span></code></a>.</p>
+</dd>
+<dt>Searching for a Handle</dt><dd><p>Use <a class="reference internal" href="#pyhandle.handleclient.RESTHandleClient.search_handle" title="pyhandle.handleclient.RESTHandleClient.search_handle"><code class="xref py py-meth docutils literal notranslate"><span class="pre">search_handle()</span></code></a> to search for Handles with a specific key and value.
+Please note that searching requires access to a search servlet whose access information, if it differs from the handle server,
+has to be specified at client instantiation.</p>
+</dd>
+</dl>
+</section>
+<section id="full-method-documentation">
+<h2>Full method documentation<a class="headerlink" href="#full-method-documentation" title="Permalink to this heading">¶</a></h2>
+<section id="constructors">
+<h3>Constructors<a class="headerlink" href="#constructors" title="Permalink to this heading">¶</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.__init__">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle_server_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the client. Depending on the arguments passed, it is set to
+read-only, write and/or search mode. All arguments are optional.
+If none is set, the client is in read-only mode, reading from
+the global handle resolver.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle_server_url</strong> – Optional. The URL of the Handle System
+server to read from. Defaults to ‘<a class="reference external" href="https://hdl.handle.net">https://hdl.handle.net</a>’</p></li>
+<li><p><strong>username</strong> – Optional. This must be a handle value reference in
+the format “index:prefix/suffix”. The method will throw an exception
+upon bad syntax or non-existing Handle. The existence or validity
+of the password in the handle is not checked at this moment.</p></li>
+<li><p><strong>password</strong> – Optional. This is the password stored as secret key
+in the actual Handle value the username points to.</p></li>
+<li><p><strong>REST_API_url_extension</strong> – Optional. The extension of a Handle
+Server’s URL to access its REST API. Defaults to ‘/api/handles/’.</p></li>
+<li><p><strong>allowed_search_keys</strong> – Optional. The keys that can be used for
+reverse lookup of handles, as a list of strings. Defaults to ‘URL’
+and ‘CHECKSUM’. If the list is empty, all keys are passed to the
+reverse lookup servlet and exceptions are passed on to the user.</p></li>
+<li><p><strong>modify_HS_ADMIN</strong> – Optional. Advanced usage. Determines whether
+the HS_ADMIN handle record entry can be modified using this library.
+Defaults to False and should not be modified.</p></li>
+<li><p><strong>HTTPS_verify</strong> – Optional. This parameter can have three values.
+‘True’, ‘False’ or ‘the path to a CA_BUNDLE file or directory with
+certificates of trusted CAs’. If set to False, the certificate is
+not verified in HTTP requests. Defaults to True.</p></li>
+<li><p><strong>reverselookup_baseuri</strong> – Optional. The base URL of the reverse
+lookup service. If not set, the handle server base URL is used.</p></li>
+<li><p><strong>reverselookup_url_extension</strong> – Optional. The path to append to
+the reverse lookup base URL to reach the reverse lookup service.
+Defaults to ‘/hrls/handles/’.</p></li>
+<li><p><strong>handleowner</strong> – Optional. The username that will be given admin
+permissions over every newly created handle. By default, it is
+‘200:0.NA/xyz’ (where xyz is the prefix of the handle being created.</p></li>
+<li><p><strong>HS_ADMIN_permissions</strong> – Optional. Advanced usage. This indicates
+the permissions that are given to the handle owner of newly
+created handles in the HS_ADMIN entry.</p></li>
+<li><p><strong>private_key</strong> – Optional. The path to a file containing the private
+key that will be used for authentication in write mode. If this is
+specified, a certificate needs to be specified too.</p></li>
+<li><p><strong>certificate_only</strong> – Optional. The path to a file containing the
+client certificate that will be used for authentication in write
+mode. If this is specified, a private key needs to be specified too.</p></li>
+<li><p><strong>certificate_and_key</strong> – Optional. The path to a file containing both
+certificate and private key, used for authentication in write mode.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.instantiate_for_read_access">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">instantiate_for_read_access</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle_server_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.instantiate_for_read_access"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.instantiate_for_read_access" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the client in read-only mode. Access is anonymous,
+thus no credentials are required.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle_server_url</strong> – Optional. The URL of the Handle System
+server to read from. Defaults to ‘<a class="reference external" href="https://hdl.handle.net">https://hdl.handle.net</a>’</p></li>
+<li><p><strong>**config</strong> – <p>More key-value pairs may be passed that will be passed
+on to the constructor as config. Config options from the
+credentials object are overwritten by this.</p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance of the client.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.instantiate_for_read_and_search">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">instantiate_for_read_and_search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle_server_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverselookup_username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverselookup_password</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.instantiate_for_read_and_search"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.instantiate_for_read_and_search" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize client with read access and with search function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle_server_url</strong> – The URL of the Handle Server. May be None
+(then, the default ‘<a class="reference external" href="https://hdl.handle.net">https://hdl.handle.net</a>’ is used).</p></li>
+<li><p><strong>reverselookup_username</strong> – The username to authenticate at the
+reverse lookup servlet.</p></li>
+<li><p><strong>reverselookup_password</strong> – The password to authenticate at the
+reverse lookup servlet.</p></li>
+<li><p><strong>**config</strong> – <p>More key-value pairs may be passed that will be passed
+on to the constructor as config. Config options from the
+credentials object are overwritten by this.</p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance of the client.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.instantiate_with_username_and_password">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">instantiate_with_username_and_password</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle_server_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.instantiate_with_username_and_password"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.instantiate_with_username_and_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize client against an HSv8 instance with full read/write access.</p>
+<p>The method will throw an exception upon bad syntax or non-existing
+Handle. The existence or validity of the password in the handle is
+not checked at this moment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle_server_url</strong> – The URL of the Handle System server.</p></li>
+<li><p><strong>username</strong> – This must be a handle value reference in the format
+“index:prefix/suffix”.</p></li>
+<li><p><strong>password</strong> – This is the password stored as secret key in the
+actual Handle value the username points to.</p></li>
+<li><p><strong>**config</strong> – <p>More key-value pairs may be passed that will be passed
+on to the constructor as config.</p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleNotFoundException" title="pyhandle.handleexceptions.HandleNotFoundException"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleNotFoundException</span></code></a>: If the username handle is not found.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleSyntaxError" title="pyhandle.handleexceptions.HandleSyntaxError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></a></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance of the client.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.instantiate_with_credentials">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">instantiate_with_credentials</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">credentials</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.instantiate_with_credentials"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.instantiate_with_credentials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the client against an HSv8 instance with full read/write
+access.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>credentials</strong> – A credentials object, see separate class
+PIDClientCredentials.</p></li>
+<li><p><strong>**config</strong> – <p>More key-value pairs may be passed that will be passed
+on to the constructor as config. Config options from the
+credentials object are overwritten by this.</p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleNotFoundException" title="pyhandle.handleexceptions.HandleNotFoundException"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleNotFoundException</span></code></a>: If the username handle is not found.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An instance of the client.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="handle-record-methods">
+<h3>Handle record methods<a class="headerlink" href="#handle-record-methods" title="Permalink to this heading">¶</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.register_handle">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">register_handle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checksum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_URLs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extratypes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.register_handle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.register_handle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a new Handle with given name. If the handle already exists
+and overwrite is not set to True, the method will throw an
+exception.
+Note: This is just a wrapper for register_handle_kv. It was made for
+legacy reasons, as this library was created to replace an earlier
+library that had a method with specifically this signature.</p>
+<p>Note 2: It allows to pass (additionally to the handle name) a 
+mandatory URL, and optionally a CHECKSUM, and more types as 
+key-value pairs. Old method, made for legacy reasons, as this library 
+was created to replace an earlier library that had a method with 
+specifically this signature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle</strong> – The full name of the handle to be registered (prefix
+and suffix)</p></li>
+<li><p><strong>location</strong> – The URL of the data entity to be referenced</p></li>
+<li><p><strong>checksum</strong> – Optional. The checksum string.</p></li>
+<li><p><strong>extratypes</strong> – Optional. Additional key value pairs such as: additional_URLs for 10320/loc</p></li>
+<li><p><strong>additional_URLs</strong> – Optional. A list of URLs (as strings) to be
+added to the handle record as 10320/LOC entry. Note: This is currently
+not implemented.</p></li>
+<li><p><strong>overwrite</strong> – Optional. If set to True, an existing handle record
+will be overwritten. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleAlreadyExistsException" title="pyhandle.handleexceptions.HandleAlreadyExistsException"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleAlreadyExistsException</span></code></a> Only if overwrite is not set or
+set to False.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleAuthenticationError" title="pyhandle.handleexceptions.HandleAuthenticationError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleAuthenticationError</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleSyntaxError" title="pyhandle.handleexceptions.HandleSyntaxError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The handle name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.register_handle_kv">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">register_handle_kv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kv_pairs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.register_handle_kv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.register_handle_kv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a new Handle with given name. If the handle already exists
+and overwrite is not set to True, the method will throw an
+exception.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle</strong> – The full name of the handle to be registered (prefix
+and suffix)</p></li>
+<li><p><strong>kv_pairs</strong> – The key value pairs to be included in the record,
+e.g. URL, CHECKSUM, …</p></li>
+<li><p><strong>overwrite</strong> – Optional. If set to True, an existing handle record
+will be overwritten. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleAlreadyExistsException" title="pyhandle.handleexceptions.HandleAlreadyExistsException"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleAlreadyExistsException</span></code></a> Only if overwrite is not set or
+set to False.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleAuthenticationError" title="pyhandle.handleexceptions.HandleAuthenticationError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleAuthenticationError</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleSyntaxError" title="pyhandle.handleexceptions.HandleSyntaxError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The handle name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.register_handle_json">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">register_handle_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_of_entries</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.register_handle_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.register_handle_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a new Handle with given name. If the handle already exists
+and overwrite is not set to True, the method will throw an
+exception.</p>
+<p>Note:It allows to pass JSON snippets instead of key-value pairs, so you can 
+specify the indices. An entry looks like this: 
+{‘index’:index, ‘type’:entrytype, ‘data’:data}. 
+This is the format in which the changes are communicated to the handle 
+server via its REST interface. 
+An entry of type HS_ADMIN will be added if you do not provide one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle</strong> – The full name of the handle to be registered (prefix
+and suffix)</p></li>
+<li><p><strong>list_of_entries</strong> – The entries to be included in the record,
+e.g. URL, CHECKSUM, … Example for an entry:
+{‘index’:index, ‘type’:entrytype, ‘data’:data}
+Optionally you can add ‘ttl’.</p></li>
+<li><p><strong>overwrite</strong> – Optional. If set to True, an existing handle record
+will be overwritten. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleAlreadyExistsException" title="pyhandle.handleexceptions.HandleAlreadyExistsException"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleAlreadyExistsException</span></code></a> Only if overwrite is not set or
+set to False.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleAuthenticationError" title="pyhandle.handleexceptions.HandleAuthenticationError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleAuthenticationError</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleSyntaxError" title="pyhandle.handleexceptions.HandleSyntaxError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The handle name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.generate_and_register_handle">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">generate_and_register_handle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checksum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extratypes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.generate_and_register_handle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.generate_and_register_handle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a new Handle with a unique random name (random UUID).</p>
+<p>Note: is a similar legacy method. Instead, just use 
+generate_PID_name(prefix) to create a handle name and use one of the above.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prefix</strong> – The prefix of the handle to be registered. The method
+will generate a suffix.</p></li>
+<li><p><strong>location</strong> – The URL of the data entity to be referenced.</p></li>
+<li><p><strong>checksum</strong> – Optional. The checksum string.</p></li>
+<li><p><strong>extratypes</strong> – Optional. Additional key value pairs as dict.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleAuthenticationError" title="pyhandle.handleexceptions.HandleAuthenticationError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleAuthenticationError</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The new handle name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.delete_handle">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">delete_handle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.delete_handle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.delete_handle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete the handle and its handle record. If the Handle is not found, an Exception is raised.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle</strong> – Handle to be deleted.</p></li>
+<li><p><strong>other</strong> – Deprecated. This only exists to catch wrong method usage
+by users who are used to delete handle VALUES with the method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The deleted handle.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleAuthenticationError" title="pyhandle.handleexceptions.HandleAuthenticationError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleAuthenticationError</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleNotFoundException" title="pyhandle.handleexceptions.HandleNotFoundException"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleNotFoundException</span></code></a></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleSyntaxError" title="pyhandle.handleexceptions.HandleSyntaxError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.retrieve_handle_record">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">retrieve_handle_record</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlerecord_json</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">hs_options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.retrieve_handle_record"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.retrieve_handle_record" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a handle record from the Handle server as a dict. If there
+is several entries of the same type, only the first one is
+returned. Values of complex types (such as HS_ADMIN) are
+transformed to strings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle</strong> – The handle whose record to retrieve.</p></li>
+<li><p><strong>handlerecord_json</strong> – Optional. If the handlerecord has already
+been retrieved from the server, it can be reused.</p></li>
+<li><p><strong>auth</strong> – Optional. If set to True, the handle record will be retrieved
+from the primary server and not from cache, so changes from the last
+max. 24 hours or so will be included. Defaults to False.</p></li>
+<li><p><strong>indices</strong> – Optional. A list of indices to retrieve. Defaults to
+None (i.e. the entire handle is retrieved.). The list can contain
+integers or strings.</p></li>
+<li><p><strong>hs_options</strong> – Optional. A list of key-value pairs which will be appended
+to the URL as parameters, to be passed to the Handle Server during the
+GET request (e.g. “&amp;type=xyz”). Please see the Handle Tech Manual for
+possible values. To add several “?index=xyz” options, pass a list or 
+use the parameter “indices”. To add several “?type=xyz” options, add
+them as a list.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dict where the keys are keys from the Handle record (except
+for hidden entries) and every value is a string. The result will be
+None if the Handle does not exist.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleSyntaxError" title="pyhandle.handleexceptions.HandleSyntaxError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.retrieve_handle_record_json">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">retrieve_handle_record_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">hs_options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.retrieve_handle_record_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.retrieve_handle_record_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a handle record from the Handle server as a complete nested
+dict (including index, ttl, timestamp, …) for later use.</p>
+<p>Note: For retrieving a simple dict with only the keys and values,
+please use <a class="reference internal" href="#pyhandle.handleclient.RESTHandleClient.retrieve_handle_record" title="pyhandle.handleclient.RESTHandleClient.retrieve_handle_record"><code class="xref py py-meth docutils literal notranslate"><span class="pre">retrieve_handle_record()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle</strong> – The Handle whose record to retrieve.</p></li>
+<li><p><strong>auth</strong> – Optional. If set to True, the handle record will be retrieved
+from the primary server and not from cache, so changes from the last
+max. 24 hours will be included. Defaults to False.</p></li>
+<li><p><strong>indices</strong> – Optional. A list of indices to retrieve. Defaults to
+None (i.e. the entire handle record is retrieved). The list can contain
+integers or strings.</p></li>
+<li><p><strong>hs_options</strong> – Optional. A list of key-value pairs which will be appended
+to the URL as parameters, to be passed to the Handle Server during the
+GET request (e.g. “&amp;type=xyz”). Please see the Handle Tech Manual for
+possible values. To add several “?index=xyz” options, pass a list or 
+use the parameter “indices”. To add several “?type=xyz” options, add
+them as a list.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleSyntaxError" title="pyhandle.handleexceptions.HandleSyntaxError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The handle record as a nested dict. If the handle does not
+exist, returns None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.get_value_from_handle">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">get_value_from_handle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlerecord_json</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">hs_options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.get_value_from_handle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.get_value_from_handle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a single value from a single Handle. If several entries with
+this key exist, the methods returns the first one. If the handle
+does not exist, the method will raise a HandleNotFoundException.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle</strong> – The handle to take the value from.</p></li>
+<li><p><strong>key</strong> – The key.</p></li>
+<li><p><strong>auth</strong> – Optional. If set to True, the handle record will be retrieved
+from the primary server and not from cache, so changes from the last
+max. 24 hours or so will be included. Defaults to False.</p></li>
+<li><p><strong>indices</strong> – Optional. A list of indices to retrieve. Defaults to
+None (i.e. the entire handle is retrieved.). The list can contain
+integers or strings.</p></li>
+<li><p><strong>hs_options</strong> – Optional. A list of key-value pairs which will be appended
+to the URL as parameters, to be passed to the Handle Server during the
+GET request (e.g. “&amp;type=xyz”). Please see the Handle Tech Manual for
+possible values. To add several “?index=xyz” options, pass a list or 
+use the parameter “indices”. To add several “?type=xyz” options, add
+them as a list.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A string containing the value or None if the Handle record
+does not contain the key.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleSyntaxError" title="pyhandle.handleexceptions.HandleSyntaxError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleNotFoundException" title="pyhandle.handleexceptions.HandleNotFoundException"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleNotFoundException</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.modify_handle_value">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">modify_handle_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_if_not_exist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kvpairs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.modify_handle_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.modify_handle_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modify entries (key-value-pairs) in a handle record. If the key
+does not exist yet, it is created.</p>
+<p><em>Note:</em> We assume that a key exists only once. In case a key exists
+several time, an exception will be raised.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle</strong> – Handle whose record is to be modified</p></li>
+<li><p><strong>ttl</strong> – Optional. Integer value. If ttl should be set to a
+non-default value.</p></li>
+<li><p><strong>add_if_not_exist</strong> – Optional. Whether a kv pair should be added if
+the key does not exist yet.</p></li>
+<li><p><strong>args</strong> (<em>all other</em>) – The user can specify several key-value-pairs.
+These will be the handle value types and values that will be
+modified. The keys are the names or the handle value types (e.g.
+“URL”). The values are the new values to store in “data”. If the
+key is ‘HS_ADMIN’, the new value needs to be of the form
+{‘handle’:’xyz’, ‘index’:xyz}. The permissions will be set to the
+default permissions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The modified handle.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleAuthenticationError" title="pyhandle.handleexceptions.HandleAuthenticationError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleAuthenticationError</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleNotFoundException" title="pyhandle.handleexceptions.HandleNotFoundException"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleNotFoundException</span></code></a></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleSyntaxError" title="pyhandle.handleexceptions.HandleSyntaxError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.delete_handle_value">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">delete_handle_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.delete_handle_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.delete_handle_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a key-value pair from a handle record. If the key exists more
+than once, all key-value pairs with this key are deleted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>handle</strong> – Handle from whose record the entry should be deleted.</p></li>
+<li><p><strong>key</strong> – Key to be deleted. Also accepts a list of keys.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The deleted handle.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleAuthenticationError" title="pyhandle.handleexceptions.HandleAuthenticationError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleAuthenticationError</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleNotFoundException" title="pyhandle.handleexceptions.HandleNotFoundException"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleNotFoundException</span></code></a></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleSyntaxError" title="pyhandle.handleexceptions.HandleSyntaxError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.search_handle">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">search_handle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">URL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">key_value_pairs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.search_handle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.search_handle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search for handles containing the specified key with the specified
+value. The search terms are passed on to the reverse lookup servlet
+as-is. The servlet is supposed to be case-insensitive, but if it
+isn’t, the wrong case will cause a <a class="reference internal" href="#pyhandle.handleexceptions.ReverseLookupException" title="pyhandle.handleexceptions.ReverseLookupException"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ReverseLookupException</span></code></a>.</p>
+<p><em>Note:</em> If allowed search keys are configured, only these are used. If
+no allowed search keys are specified, all key-value pairs are
+passed on to the reverse lookup servlet, possibly causing a
+<a class="reference internal" href="#pyhandle.handleexceptions.ReverseLookupException" title="pyhandle.handleexceptions.ReverseLookupException"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ReverseLookupException</span></code></a>.</p>
+<p>Example calls:</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">list_of_handles</span> <span class="o">=</span> <span class="n">search_handle</span><span class="p">(</span><span class="s1">&#39;http://www.foo.com&#39;</span><span class="p">)</span>
+<span class="n">list_of_handles</span> <span class="o">=</span> <span class="n">search_handle</span><span class="p">(</span><span class="s1">&#39;http://www.foo.com&#39;</span><span class="p">,</span> <span class="n">CHECKSUM</span><span class="o">=</span><span class="mi">99999</span><span class="p">)</span>
+<span class="n">list_of_handles</span> <span class="o">=</span> <span class="n">search_handle</span><span class="p">(</span><span class="n">URL</span><span class="o">=</span><span class="s1">&#39;http://www.foo.com&#39;</span><span class="p">,</span> <span class="n">CHECKSUM</span><span class="o">=</span><span class="mi">99999</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>URL</strong> – Optional. The URL to search for (reverse lookup). [This is
+NOT the URL of the search servlet!]</p></li>
+<li><p><strong>prefix</strong> – Optional. The Handle prefix to which the search should
+be limited to. If unspecified, the method will search across all
+prefixes present at the server given to the constructor.</p></li>
+<li><p><strong>key_value_pairs</strong> – Optional. Several search fields and values can
+be specified as key-value-pairs,
+e.g. CHECKSUM=123456, URL=www.foo.com</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raise<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.ReverseLookupException" title="pyhandle.handleexceptions.ReverseLookupException"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ReverseLookupException</span></code></a>: If a search field is specified that
+cannot be used, or if something else goes wrong.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of all Handles (strings) that bear the given key with
+given value of given prefix or server. The list may be empty and
+may also contain more than one element.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="helper-methods">
+<h3>Helper methods<a class="headerlink" href="#helper-methods" title="Permalink to this heading">¶</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.generate_PID_name">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">generate_PID_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.generate_PID_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.generate_PID_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a unique random Handle name (random UUID). The Handle is not
+registered. If a prefix is specified, the PID name has the syntax
+&lt;prefix&gt;/&lt;generatedname&gt;, otherwise it just returns the generated
+random name (suffix for the Handle).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prefix</strong> – Optional. The prefix to be used for the Handle name.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The handle name in the form &lt;prefix&gt;/&lt;generatedsuffix&gt; or
+&lt;generatedsuffix&gt;.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.handleclient.RESTHandleClient.get_handlerecord_indices_for_key">
+<span class="sig-prename descclassname"><span class="pre">RESTHandleClient.</span></span><span class="sig-name descname"><span class="pre">get_handlerecord_indices_for_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_of_entries</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/client/resthandleclient.html#RESTHandleClient.get_handlerecord_indices_for_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleclient.RESTHandleClient.get_handlerecord_indices_for_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the Handle entry indices of all entries that have a specific
+type.</p>
+<p><em>Important:</em> It finds the Handle System indices! These are not
+the python indices of the list, so they can not be used for
+iteration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> – The key (Handle Record type)</p></li>
+<li><p><strong>list_of_entries</strong> – A list of the existing entries in which to find
+the indices.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of strings, the indices of the entries of type “key” in
+the given handle record.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+<section id="module-pyhandle.utilhandle">
+<span id="utilities"></span><h2>Utilities<a class="headerlink" href="#module-pyhandle.utilhandle" title="Permalink to this heading">¶</a></h2>
+<p>This module provides some handle-related functions
+that are needed across various modules of the
+pyhandle library.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyhandle.utilhandle.check_handle_syntax">
+<span class="sig-prename descclassname"><span class="pre">pyhandle.utilhandle.</span></span><span class="sig-name descname"><span class="pre">check_handle_syntax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/utilhandle.html#check_handle_syntax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.utilhandle.check_handle_syntax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the syntax of a handle without an index (are prefix
+and suffix there, are there too many slashes?).</p>
+<dl class="field-list simple">
+<dt class="field-odd">String<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The handle without index, as string prefix/suffix.</p>
+</dd>
+<dt class="field-even">Raise<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True. If it’s not ok, exceptions are raised.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyhandle.utilhandle.check_handle_syntax_with_index">
+<span class="sig-prename descclassname"><span class="pre">pyhandle.utilhandle.</span></span><span class="sig-name descname"><span class="pre">check_handle_syntax_with_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_already_checked</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/utilhandle.html#check_handle_syntax_with_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.utilhandle.check_handle_syntax_with_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the syntax of a handle with an index (is index there, is it an
+integer?), and of the handle itself.</p>
+<dl class="field-list simple">
+<dt class="field-odd">String<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The handle with index, as string index:prefix/suffix.</p>
+</dd>
+<dt class="field-even">Raise<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True. If it’s not ok, exceptions are raised.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyhandle.utilhandle.create_authentication_string">
+<span class="sig-prename descclassname"><span class="pre">pyhandle.utilhandle.</span></span><span class="sig-name descname"><span class="pre">create_authentication_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/utilhandle.html#create_authentication_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.utilhandle.create_authentication_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an authentication string from the username and password.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Username<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Username.</p>
+</dd>
+<dt class="field-even">Password<span class="colon">:</span></dt>
+<dd class="field-even"><p>Password.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The encoded string.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyhandle.utilhandle.make_request_log_message">
+<span class="sig-prename descclassname"><span class="pre">pyhandle.utilhandle.</span></span><span class="sig-name descname"><span class="pre">make_request_log_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/utilhandle.html#make_request_log_message"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.utilhandle.make_request_log_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a string containing all relevant information
+about a request made to the Handle System, for
+logging purposes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Handle<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The handle that the request is about.</p>
+</dd>
+<dt class="field-even">Url<span class="colon">:</span></dt>
+<dd class="field-even"><p>The url the request is sent to.</p>
+</dd>
+<dt class="field-odd">Headers<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The headers sent along with the request.</p>
+</dd>
+<dt class="field-even">Verify<span class="colon">:</span></dt>
+<dd class="field-even"><p>Boolean parameter passed to the requests
+module (https verification).</p>
+</dd>
+<dt class="field-odd">Resp<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The request’s response.</p>
+</dd>
+<dt class="field-even">Op<span class="colon">:</span></dt>
+<dd class="field-even"><p>The library operation during which the request
+was sent.</p>
+</dd>
+<dt class="field-odd">Payload<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional. The payload sent with the request.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A formatted string.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyhandle.utilhandle.remove_index_from_handle">
+<span class="sig-prename descclassname"><span class="pre">pyhandle.utilhandle.</span></span><span class="sig-name descname"><span class="pre">remove_index_from_handle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle_with_index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/utilhandle.html#remove_index_from_handle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.utilhandle.remove_index_from_handle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns index and handle separately, in a tuple.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Handle_with_index<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The handle string with an index (e.g.
+500:prefix/suffix)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>index and handle as a tuple, where index is integer.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-pyhandle.clientcredentials">
+<span id="client-credentials"></span><h2>Client credentials<a class="headerlink" href="#module-pyhandle.clientcredentials" title="Permalink to this heading">¶</a></h2>
+<p>This module provides the class PIDClientCredentials
+which handles the credentials for Handle server
+Interaction and for the Search Servlet.</p>
+<p>Author: Merret Buurman (DKRZ), 2015-2016</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.clientcredentials.PIDClientCredentials.load_from_JSON">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PIDClientCredentials.</span></span><span class="sig-name descname"><span class="pre">load_from_JSON</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/clientcredentials.html#PIDClientCredentials.load_from_JSON"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.clientcredentials.PIDClientCredentials.load_from_JSON" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new instance of a PIDClientCredentials with information read
+from a local JSON file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>json_filename</strong> – <p>The path to the json credentials file. The json
+file should have the following format:</p>
+<blockquote>
+<div><div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;handle_server_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://url.to.your.handle.server&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;index:prefix/suffix&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;password&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ZZZZZZZ&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;prefix&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;prefix_to_use_for_writing_handles&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;handleowner&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;username_to_own_handles&quot;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Any additional key-value-pairs are stored in the instance as
+config.</p>
+</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pyhandle.handleexceptions.CredentialsFormatError" title="pyhandle.handleexceptions.CredentialsFormatError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">CredentialsFormatError</span></code></a></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleSyntaxError" title="pyhandle.handleexceptions.HandleSyntaxError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></a></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyhandle.clientcredentials.PIDClientCredentials.__init__">
+<span class="sig-prename descclassname"><span class="pre">PIDClientCredentials.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/clientcredentials.html#PIDClientCredentials.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.clientcredentials.PIDClientCredentials.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize client credentials instance.</p>
+<p>The constructor checks if enough arguments are passed to
+authenticate at a handle server or search servlet. For this,
+the following parameters are checked. Depending on the
+chosen authentication method, only a subset of them are
+required.</p>
+<p>All other parameters passed are stored and can be retrieved
+using ‘get_config()’. If a credentials objects is used to
+initialize the client, these key-value pairs are passed on
+to the client constructor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>client</strong> – Client object to the HS (‘rest’ or ‘db’)</p></li>
+<li><p><strong>handle_server_url</strong> – Optional. The URL of the Handle System
+server to read from. Defaults to ‘<a class="reference external" href="https://hdl.handle.net">https://hdl.handle.net</a>’</p></li>
+<li><p><strong>username</strong> – Optional. This must be a handle value reference in
+the format “index:prefix/suffix”. The method will throw an exception
+upon bad syntax or non-existing Handle. The existence or validity
+of the password in the handle is not checked at this moment.</p></li>
+<li><p><strong>password</strong> – Optional. This is the password stored as secret key
+in the actual Handle value the username points to.</p></li>
+<li><p><strong>handleowner</strong> – Optional. The username that will be given admin
+permissions over every newly created handle. By default, it is
+‘200:0.NA/xyz’ (where xyz is the prefix of the handle being created.</p></li>
+<li><p><strong>private_key</strong> – Optional. The path to a file containing the private
+key that will be used for authentication in write mode. If this is
+specified, a certificate needs to be specified too.</p></li>
+<li><p><strong>certificate_only</strong> – Optional. The path to a file containing the
+client certificate that will be used for authentication in write
+mode. If this is specified, a private key needs to be specified too.</p></li>
+<li><p><strong>certificate_and_key</strong> – Optional. The path to a file containing both
+certificate and private key, used for authentication in write mode.</p></li>
+<li><p><strong>prefix</strong> – Prefix. This is not used by the library, but may be
+retrieved by the user.</p></li>
+<li><p><strong>**args</strong> – Any other key-value pairs are stored and can be accessed
+using ‘get_config()’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Credentials_filename<span class="colon">:</span></dt>
+<dd class="field-even"><p>This is the file location of the credentials file,
+if read from JSON. It is used to find the certificate/key files, if any.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyhandle.handleexceptions.HandleSyntaxError" title="pyhandle.handleexceptions.HandleSyntaxError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">HandleSyntaxError</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-pyhandle.handleexceptions">
+<span id="exceptions"></span><h2>Exceptions<a class="headerlink" href="#module-pyhandle.handleexceptions" title="Permalink to this heading">¶</a></h2>
+<p>This module contains the exceptions that may occur in
+libraries interacting with the Handle System.</p>
+<p>Author: Merret Buurman (DKRZ), 2015-2016</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="pyhandle.handleexceptions.BrokenHandleRecordException">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyhandle.handleexceptions.</span></span><span class="sig-name descname"><span class="pre">BrokenHandleRecordException</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/handleexceptions.html#BrokenHandleRecordException"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleexceptions.BrokenHandleRecordException" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="pyhandle.handleexceptions.CredentialsFormatError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyhandle.handleexceptions.</span></span><span class="sig-name descname"><span class="pre">CredentialsFormatError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/handleexceptions.html#CredentialsFormatError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleexceptions.CredentialsFormatError" title="Permalink to this definition">¶</a></dt>
+<dd><p>To be raised if credentials are ill-formatted or miss essential items.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="pyhandle.handleexceptions.GenericHandleError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyhandle.handleexceptions.</span></span><span class="sig-name descname"><span class="pre">GenericHandleError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/handleexceptions.html#GenericHandleError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleexceptions.GenericHandleError" title="Permalink to this definition">¶</a></dt>
+<dd><p>To be raised when the Handle Server returned an unexpected status code
+that does not map to any other specific exception.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="pyhandle.handleexceptions.HandleAlreadyExistsException">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyhandle.handleexceptions.</span></span><span class="sig-name descname"><span class="pre">HandleAlreadyExistsException</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/handleexceptions.html#HandleAlreadyExistsException"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleexceptions.HandleAlreadyExistsException" title="Permalink to this definition">¶</a></dt>
+<dd><p>To be raised if self.handle already exists.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="pyhandle.handleexceptions.HandleAuthenticationError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyhandle.handleexceptions.</span></span><span class="sig-name descname"><span class="pre">HandleAuthenticationError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/handleexceptions.html#HandleAuthenticationError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleexceptions.HandleAuthenticationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>To be raised if authentication failed, if there was no
+write permission for creating, modifying, deleting.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="pyhandle.handleexceptions.HandleNotFoundException">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyhandle.handleexceptions.</span></span><span class="sig-name descname"><span class="pre">HandleNotFoundException</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/handleexceptions.html#HandleNotFoundException"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleexceptions.HandleNotFoundException" title="Permalink to this definition">¶</a></dt>
+<dd><p>To be raised if the self.handle was not found on the Handle Server.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="pyhandle.handleexceptions.HandleSyntaxError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyhandle.handleexceptions.</span></span><span class="sig-name descname"><span class="pre">HandleSyntaxError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/handleexceptions.html#HandleSyntaxError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleexceptions.HandleSyntaxError" title="Permalink to this definition">¶</a></dt>
+<dd><p>To be raised if the Handle does not have correct syntax.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="pyhandle.handleexceptions.IllegalOperationException">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyhandle.handleexceptions.</span></span><span class="sig-name descname"><span class="pre">IllegalOperationException</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/handleexceptions.html#IllegalOperationException"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleexceptions.IllegalOperationException" title="Permalink to this definition">¶</a></dt>
+<dd><p>To be raised when the user tries to create a HS_ADMIN self.handle,
+when he wants to create or remove 10320/loc entries using the
+wrong method, …</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="pyhandle.handleexceptions.ReverseLookupException">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyhandle.handleexceptions.</span></span><span class="sig-name descname"><span class="pre">ReverseLookupException</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyhandle/handleexceptions.html#ReverseLookupException"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyhandle.handleexceptions.ReverseLookupException" title="Permalink to this definition">¶</a></dt>
+<dd><p>To be raised if the reverse lookup servlet returns an error.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">REST Handle Client</a><ul>
+<li><a class="reference internal" href="#general-usage">General usage</a></li>
+<li><a class="reference internal" href="#instantiation">Instantiation</a></li>
+<li><a class="reference internal" href="#authentication">Authentication</a><ul>
+<li><a class="reference internal" href="#authentication-using-client-certificates">Authentication using client certificates</a></li>
+<li><a class="reference internal" href="#authentication-using-username-and-password">Authentication using username and password</a></li>
+<li><a class="reference internal" href="#credentials-json-file">Credentials JSON file</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#basic-handle-interaction">Basic Handle interaction</a></li>
+<li><a class="reference internal" href="#full-method-documentation">Full method documentation</a><ul>
+<li><a class="reference internal" href="#constructors">Constructors</a></li>
+<li><a class="reference internal" href="#handle-record-methods">Handle record methods</a></li>
+<li><a class="reference internal" href="#helper-methods">Helper methods</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-pyhandle.utilhandle">Utilities</a></li>
+<li><a class="reference internal" href="#module-pyhandle.clientcredentials">Client credentials</a></li>
+<li><a class="reference internal" href="#module-pyhandle.handleexceptions">Exceptions</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="pyhandleclient.html"
+                          title="previous chapter">PyHandleClient</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="pyhandleclientdb.html"
+                          title="next chapter">DB Handle Client</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pyhandleclientrest.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyhandleclientdb.html" title="DB Handle Client"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pyhandleclient.html" title="PyHandleClient"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">REST Handle Client</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015-2017, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

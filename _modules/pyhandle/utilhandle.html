@@ -1,0 +1,259 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pyhandle.utilhandle &#8212; PyHandle 1.0.5-dev documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pyhandle.utilhandle</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyhandle.utilhandle</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">This module provides some handle-related functions</span>
+<span class="sd">that are needed across various modules of the</span>
+<span class="sd">pyhandle library.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">from</span> <span class="nn">future.standard_library</span> <span class="kn">import</span> <span class="n">install_aliases</span>
+<span class="n">install_aliases</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">quote</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">handleexceptions</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">util</span>
+
+
+<div class="viewcode-block" id="remove_index_from_handle"><a class="viewcode-back" href="../../pyhandleclientrest.html#pyhandle.utilhandle.remove_index_from_handle">[docs]</a><span class="k">def</span> <span class="nf">remove_index_from_handle</span><span class="p">(</span><span class="n">handle_with_index</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns index and handle separately, in a tuple.</span>
+
+<span class="sd">    :handle_with_index: The handle string with an index (e.g.</span>
+<span class="sd">        500:prefix/suffix)</span>
+<span class="sd">    :return: index and handle as a tuple, where index is integer.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">split</span> <span class="o">=</span> <span class="n">handle_with_index</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">split</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">split</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">split</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">split</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">handle_with_index</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">split</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">handleexceptions</span><span class="o">.</span><span class="n">HandleSyntaxError</span><span class="p">(</span>
+            <span class="n">msg</span><span class="o">=</span><span class="s1">&#39;Too many colons&#39;</span><span class="p">,</span>
+            <span class="n">handle</span><span class="o">=</span><span class="n">handle_with_index</span><span class="p">,</span>
+            <span class="n">expected_syntax</span><span class="o">=</span><span class="s1">&#39;index:prefix/suffix&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="check_handle_syntax"><a class="viewcode-back" href="../../pyhandleclientrest.html#pyhandle.utilhandle.check_handle_syntax">[docs]</a><span class="k">def</span> <span class="nf">check_handle_syntax</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Checks the syntax of a handle without an index (are prefix</span>
+<span class="sd">    and suffix there, are there too many slashes?).</span>
+
+<span class="sd">    :string: The handle without index, as string prefix/suffix.</span>
+<span class="sd">    :raise: :exc:`~pyhandle.handleexceptions.handleexceptions.HandleSyntaxError`</span>
+<span class="sd">    :return: True. If it&#39;s not ok, exceptions are raised.</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">expected</span> <span class="o">=</span> <span class="s1">&#39;prefix/suffix&#39;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">handleexceptions</span><span class="o">.</span><span class="n">HandleSyntaxError</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s1">&#39;The provided handle is None&#39;</span><span class="p">,</span> <span class="n">expected_syntax</span><span class="o">=</span><span class="n">expected</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;No slash&#39;</span>
+        <span class="k">raise</span> <span class="n">handleexceptions</span><span class="o">.</span><span class="n">HandleSyntaxError</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">handle</span><span class="o">=</span><span class="n">string</span><span class="p">,</span> <span class="n">expected_syntax</span><span class="o">=</span><span class="n">expected</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Empty prefix&#39;</span>
+        <span class="k">raise</span> <span class="n">handleexceptions</span><span class="o">.</span><span class="n">HandleSyntaxError</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">handle</span><span class="o">=</span><span class="n">string</span><span class="p">,</span> <span class="n">expected_syntax</span><span class="o">=</span><span class="n">expected</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Empty suffix&#39;</span>
+        <span class="k">raise</span> <span class="n">handleexceptions</span><span class="o">.</span><span class="n">HandleSyntaxError</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">handle</span><span class="o">=</span><span class="n">string</span><span class="p">,</span> <span class="n">expected_syntax</span><span class="o">=</span><span class="n">expected</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s1">&#39;:&#39;</span> <span class="ow">in</span> <span class="n">string</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">string</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;hdl:&#39;</span><span class="p">):</span> <span class="c1"># Fixing https://github.com/EUDAT-B2HANDLE/PYHANDLE/issues/49</span>
+            <span class="c1"># TODO: Note: What about DOIs? -&gt; Fixed in a different PR</span>
+            <span class="c1"># Note of caution: Handle Server won&#39;t accept REST API calls with hdl: prepended.</span>
+            <span class="c1"># It will respond with HTTP Status Code 400 and Response: {&quot;responseCode&quot;:301,</span>
+            <span class="c1"># &quot;message&quot;:&quot;That prefix doesn&#39;t live here&quot;,&quot;handle&quot;:&quot;hdl:21.14106/TESTTESTTEST&quot;}</span>
+            <span class="c1"># The problem is prevented by removing any hdl: or doi: right before making the request.</span>
+            <span class="k">return</span> <span class="kc">True</span>
+            
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">check_handle_syntax_with_index</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="n">base_already_checked</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="c1"># TODO: Actually this is not a handle, but refers to a field inside a handle record, so</span>
+            <span class="c1"># to be strict, we should not accept this.</span>
+
+
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="check_handle_syntax_with_index"><a class="viewcode-back" href="../../pyhandleclientrest.html#pyhandle.utilhandle.check_handle_syntax_with_index">[docs]</a><span class="k">def</span> <span class="nf">check_handle_syntax_with_index</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="n">base_already_checked</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Checks the syntax of a handle with an index (is index there, is it an</span>
+<span class="sd">    integer?), and of the handle itself.</span>
+
+<span class="sd">    :string: The handle with index, as string index:prefix/suffix.</span>
+<span class="sd">    :raise: :exc:`~pyhandle.handleexceptions.handleexceptions.HandleSyntaxError`</span>
+<span class="sd">    :return: True. If it&#39;s not ok, exceptions are raised.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">expected</span> <span class="o">=</span> <span class="s1">&#39;index:prefix/suffix&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">handleexceptions</span><span class="o">.</span><span class="n">HandleSyntaxError</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s1">&#39;The provided handle is None.&#39;</span><span class="p">,</span> <span class="n">expected_syntax</span><span class="o">=</span><span class="n">expected</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Too many colons&#39;</span>
+        <span class="k">raise</span> <span class="n">handleexceptions</span><span class="o">.</span><span class="n">HandleSyntaxError</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">handle</span><span class="o">=</span><span class="n">string</span><span class="p">,</span> <span class="n">expected_syntax</span><span class="o">=</span><span class="n">expected</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;No colon&#39;</span>
+        <span class="k">raise</span> <span class="n">handleexceptions</span><span class="o">.</span><span class="n">HandleSyntaxError</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">handle</span><span class="o">=</span><span class="n">string</span><span class="p">,</span> <span class="n">expected_syntax</span><span class="o">=</span><span class="n">expected</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;hdl:&#39;</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Handle string starts with &quot;hdl:&quot;, not with an index.&#39;</span>
+            <span class="k">raise</span> <span class="n">handleexceptions</span><span class="o">.</span><span class="n">HandleSyntaxError</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">handle</span><span class="o">=</span><span class="n">string</span><span class="p">,</span> <span class="n">expected_syntax</span><span class="o">=</span><span class="n">expected</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Index is not an integer&#39;</span>
+            <span class="k">raise</span> <span class="n">handleexceptions</span><span class="o">.</span><span class="n">HandleSyntaxError</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">handle</span><span class="o">=</span><span class="n">string</span><span class="p">,</span> <span class="n">expected_syntax</span><span class="o">=</span><span class="n">expected</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">base_already_checked</span><span class="p">:</span>
+        <span class="n">check_handle_syntax</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="create_authentication_string"><a class="viewcode-back" href="../../pyhandleclientrest.html#pyhandle.utilhandle.create_authentication_string">[docs]</a><span class="k">def</span> <span class="nf">create_authentication_string</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Creates an authentication string from the username and password.</span>
+
+<span class="sd">    :username: Username.</span>
+<span class="sd">    :password: Password.</span>
+<span class="sd">    :return: The encoded string.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">username_utf8</span> <span class="o">=</span> <span class="n">username</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="n">userpw_utf8</span> <span class="o">=</span> <span class="n">password</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="n">username_perc</span> <span class="o">=</span> <span class="n">quote</span><span class="p">(</span><span class="n">username_utf8</span><span class="p">)</span>
+
+    <span class="n">authinfostring</span> <span class="o">=</span> <span class="n">username_perc</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="n">userpw_utf8</span>
+    <span class="n">authinfostring_base64</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">authinfostring</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">authinfostring_base64</span></div>
+
+<div class="viewcode-block" id="make_request_log_message"><a class="viewcode-back" href="../../pyhandleclientrest.html#pyhandle.utilhandle.make_request_log_message">[docs]</a><span class="k">def</span> <span class="nf">make_request_log_message</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Creates a string containing all relevant information</span>
+<span class="sd">    about a request made to the Handle System, for</span>
+<span class="sd">    logging purposes.</span>
+
+<span class="sd">    :handle: The handle that the request is about.</span>
+<span class="sd">    :url: The url the request is sent to.</span>
+<span class="sd">    :headers: The headers sent along with the request.</span>
+<span class="sd">    :verify: Boolean parameter passed to the requests</span>
+<span class="sd">        module (https verification).</span>
+<span class="sd">    :resp: The request&#39;s response.</span>
+<span class="sd">    :op: The library operation during which the request</span>
+<span class="sd">        was sent.</span>
+<span class="sd">    :payload: Optional. The payload sent with the request.</span>
+<span class="sd">    :return: A formatted string.</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">mandatory_args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;op&#39;</span><span class="p">,</span> <span class="s1">&#39;handle&#39;</span><span class="p">,</span> <span class="s1">&#39;url&#39;</span><span class="p">,</span> <span class="s1">&#39;headers&#39;</span><span class="p">,</span> <span class="s1">&#39;verify&#39;</span><span class="p">,</span> <span class="s1">&#39;resp&#39;</span><span class="p">]</span>
+    <span class="n">optional_args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;payload&#39;</span><span class="p">]</span>
+    <span class="n">util</span><span class="o">.</span><span class="n">check_presence_of_mandatory_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">mandatory_args</span><span class="p">)</span>
+    <span class="n">util</span><span class="o">.</span><span class="n">add_missing_optional_args_with_value_none</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">optional_args</span><span class="p">)</span>
+
+    <span class="n">space</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">   &#39;</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">message</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">+</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;op&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39; &#39;</span><span class="o">+</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;handle&#39;</span><span class="p">]</span>
+    <span class="n">message</span> <span class="o">+=</span> <span class="n">space</span><span class="o">+</span><span class="s1">&#39;URL:          &#39;</span><span class="o">+</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;url&#39;</span><span class="p">]</span>
+    <span class="n">message</span> <span class="o">+=</span> <span class="n">space</span><span class="o">+</span><span class="s1">&#39;HEADERS:      &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;headers&#39;</span><span class="p">])</span>
+    <span class="n">message</span> <span class="o">+=</span> <span class="n">space</span><span class="o">+</span><span class="s1">&#39;VERIFY:       &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;verify&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="s1">&#39;payload&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">message</span> <span class="o">+=</span> <span class="n">space</span><span class="o">+</span><span class="s1">&#39;PAYLOAD:&#39;</span><span class="o">+</span><span class="n">space</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;payload&#39;</span><span class="p">])</span>
+    <span class="n">message</span> <span class="o">+=</span> <span class="n">space</span><span class="o">+</span><span class="s1">&#39;RESPONSECODE: &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;resp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span>
+    <span class="n">message</span> <span class="o">+=</span> <span class="n">space</span><span class="o">+</span><span class="s1">&#39;RESPONSE:&#39;</span><span class="o">+</span><span class="n">space</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;resp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">message</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pyhandle.utilhandle</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015-2017, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

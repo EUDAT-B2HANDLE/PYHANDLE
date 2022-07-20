@@ -1,0 +1,279 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Authentication at a Handle Server &#8212; PyHandle 1.0.5-dev documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Authentication at a Handle Server</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="authentication-at-a-handle-server">
+<h1>Authentication at a Handle Server<a class="headerlink" href="#authentication-at-a-handle-server" title="Permalink to this heading">¶</a></h1>
+<p>Below, we describe the two methods to authenticate at a Handle Server for write access.
+In both methods, the library user has a username of this form: <strong>index:prefix/suffix</strong>.</p>
+<p>It does not only look like a handle, it is a handle - it points to an entry in a handle
+where the information needed to verify the user’s identity are stored.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>The user, identified by his username, needs to be granted write permissions
+by the handle server admin. For this, please see below.</p>
+</div>
+<section id="using-username-and-password">
+<h2>Using username and password<a class="headerlink" href="#using-username-and-password" title="Permalink to this heading">¶</a></h2>
+<p>Authenticating via username and password means that the password has to be stored as a <code class="docutils literal notranslate"><span class="pre">HS_SECKEY</span></code> entry in the record of a handle (this entry is, of course, hidden and not visible to the public!). This handle, together with the index of the <code class="docutils literal notranslate"><span class="pre">HS_SECKEY</span></code> entry, is the username.</p>
+<p>For example, in the handle record of handle ‘foo/bar’, there is a <code class="docutils literal notranslate"><span class="pre">HS_SECKEY</span></code> entry with the value ‘mypassword’ at index 300. Then, the username is <strong>300:foo/bar</strong> and the password is ‘mypassword’:</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>Index</p></td>
+<td><p>Key</p></td>
+<td><p>Value</p></td>
+</tr>
+<tr class="row-even"><td><p>…</p></td>
+<td><p>…</p></td>
+<td><p>…</p></td>
+</tr>
+<tr class="row-odd"><td><p>300</p></td>
+<td><p>HS_SECKEY</p></td>
+<td><p>mypassword</p></td>
+</tr>
+<tr class="row-even"><td><p>…</p></td>
+<td><p>…</p></td>
+<td><p>…</p></td>
+</tr>
+</tbody>
+</table>
+<p>The handle server admin has to add the <code class="docutils literal notranslate"><span class="pre">HS_SECKEY</span></code> entry with the user’s password to an existing handle (e.g. ‘&lt;prefix&gt;/allusers’) or create a new handle for this purpose (e.g. ‘&lt;prefix&gt;/johndoe’). He or she also has to grant write permissions to the user (see below).</p>
+</section>
+<section id="using-client-certificates">
+<h2>Using client certificates<a class="headerlink" href="#using-client-certificates" title="Permalink to this heading">¶</a></h2>
+<p>Authenticating via client certificate means that the user’s public key has to be stored as a <code class="docutils literal notranslate"><span class="pre">HS_PUBKEY</span></code> entry in the record of a handle. This handle, together with the index of the <code class="docutils literal notranslate"><span class="pre">HS_PUBKEY</span></code> entry, is the username.</p>
+<p>For example, in the handle record of handle ‘foo/bar’,there is a <code class="docutils literal notranslate"><span class="pre">HS_PUBKEY</span></code> entry with the user’s public key (in a hex format) at index 301. Then, the username is ‘301:foo/bar’. Instead of a password, the user then needs to authenticate using his private key and a certificate containing this username.</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>Index</p></td>
+<td><p>Key</p></td>
+<td><p>Value</p></td>
+</tr>
+<tr class="row-even"><td><p>…</p></td>
+<td><p>…</p></td>
+<td><p>…</p></td>
+</tr>
+<tr class="row-odd"><td><p>301</p></td>
+<td><p>HS_PUBKEY</p></td>
+<td><p>0000A552100…</p></td>
+</tr>
+<tr class="row-even"><td><p>…</p></td>
+<td><p>…</p></td>
+<td><p>…</p></td>
+</tr>
+</tbody>
+</table>
+<p>The handle server admin has to add the <code class="docutils literal notranslate"><span class="pre">HS_PUBKEY</span></code> entry with the user’s public key to an existing handle or
+create a new handle for this purpose. He or she also has to grant write permissions to the user
+(see <a class="reference internal" href="givingpermissiontousers.html#givingpermissiontousers"><span class="std std-ref">Giving write permissions to users</span></a>.).</p>
+<p>For creating the certificate, please follow these instructions: <a class="reference internal" href="creatingclientcertificates.html#creatingclientcertificate"><span class="std std-ref">Creating the client certificate</span></a>.</p>
+</section>
+<section id="common-problems">
+<h2>Common problems<a class="headerlink" href="#common-problems" title="Permalink to this heading">¶</a></h2>
+<p>Some common problems when authenticating, together with possible solutions. Please note that the provided problem
+causes are causes we observed. Of course it is possible that other reasons may cause the same problems, in that case
+these solutions may not work.</p>
+<section id="http-401">
+<h3>HTTP 401<a class="headerlink" href="#http-401" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p><strong>Problem:</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The handle server returns a JSON object that looks like this: <code class="docutils literal notranslate"><span class="pre">{&quot;responseCode&quot;:402,&quot;handle&quot;:&quot;myprefix/123456&quot;}</span></code></p></li>
+<li><p>Handle Server responseCode 402 (<em>Authentication needed</em>)</p></li>
+<li><p>HTTP status code 401 (<em>Unauthorized</em>)</p></li>
+</ul>
+</div></blockquote>
+<p><strong>Possible Solution:</strong></p>
+<blockquote>
+<div><p>This error occurs if the client certificate was not correctly passed to the handle server. Possibly the server
+forwards the request internally to a different port and loses the certificate information on the way (e.g. using httpd ProxyPass).
+Please ask your handle server administrator about this. Testing the same request directly on the port of the handle server (if
+that is open for external access) can help finding out whether this is the problem.</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="http-403">
+<h3>HTTP 403<a class="headerlink" href="#http-403" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p><strong>Problem:</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The handle server returns a JSON object that looks like this: <code class="docutils literal notranslate"><span class="pre">{&quot;responseCode&quot;:400,&quot;handle&quot;:&quot;myprefix/123456&quot;}</span></code></p></li>
+<li><p>Handle Server responseCode: 400 (<em>Other authentication errors</em>)</p></li>
+<li><p>HTTP status code 403 (<em>Forbidden</em>).</p></li>
+</ul>
+</div></blockquote>
+<p><strong>Possible solution 1:</strong></p>
+<blockquote>
+<div><p>This error occurs if the username does not have admin permissions yet. Make sure it is referred to in a
+HS_ADMIN or HS_VLIST that has admin permissions.</p>
+</div></blockquote>
+<p><strong>Possible solution 2:</strong></p>
+<blockquote>
+<div><p>This error also occurs if the username did not get permissions for this specific handle in its HS_ADMIN entry. Each user
+can only modify handles whose HS_ADMIN entry (or one of its HS_ADMIN entries) gives write permissions to him, either directly
+or by pointing to a HS_VLIST that has admin permissions and that contains the username.</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="handshake-failure">
+<h3>Handshake Failure<a class="headerlink" href="#handshake-failure" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p><strong>Problem:</strong></p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">SSL</span> <span class="pre">routines:SSL3_READ_BYTES:ssl</span> <span class="pre">handshake</span> <span class="pre">failure</span></code></p>
+</div></blockquote>
+<p><strong>Possible Solution 1:</strong></p>
+<blockquote>
+<div><p>This error can occur if the private key was encrypted. Please try with an unencrypted private key.</p>
+</div></blockquote>
+<p><strong>Possible Solution 2:</strong></p>
+<blockquote>
+<div><p>Make sure that openssl version 1.0.1 or higher is used. Openssl 0.98 gives handshake errors.</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="ssl-error">
+<h3>SSL Error<a class="headerlink" href="#ssl-error" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p><strong>Problem:</strong></p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">requests.exceptions.SSLError:</span> <span class="pre">[SSL]</span> <span class="pre">PEM</span> <span class="pre">lib</span> <span class="pre">(_ssl.c:2525)</span></code></p>
+</div></blockquote>
+<p><strong>Possible Solution:</strong></p>
+<blockquote>
+<div><p>This error occurs if the private key was not provided, for example if a single file instead of two was provided,
+but the private key was not contained. For this reason, we only recommend and describe passing certificate and
+private key in two separate files.</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="id1">
+<h3>SSL Error<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p><strong>Problem:</strong></p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">SSLError:</span> <span class="pre">SSL3_GET_SERVER_CERTIFICATE:certificate</span> <span class="pre">verify</span> <span class="pre">failed</span></code></p>
+</div></blockquote>
+<p><strong>Possible Solution:</strong></p>
+<blockquote>
+<div><p>This error occurs if the server certificate at the handle server can not be verified at the client side. The library
+default is to verify the certificate. This is normally done with a certificate from a CA authority. The credentials
+file can have an optional parameter <code class="docutils literal notranslate"><span class="pre">HTTPS_verify</span></code> to change the behaviour. The problem can be solved in several ways.
+By adding the correct CA certificate to the bundle on the system. By setting a path to the correct CA certificate as follows:
+<code class="docutils literal notranslate"><span class="pre">&quot;HTTPS_verify&quot;:</span> <span class="pre">&quot;/path_to_ca_certificate/ca_certificate&quot;</span></code>. Or by disabling the checking of the certificate:
+<code class="docutils literal notranslate"><span class="pre">&quot;HTTPS_verify&quot;:</span> <span class="pre">&quot;False&quot;</span></code>. The last option is the least desired option.</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Authentication at a Handle Server</a><ul>
+<li><a class="reference internal" href="#using-username-and-password">Using username and password</a></li>
+<li><a class="reference internal" href="#using-client-certificates">Using client certificates</a></li>
+<li><a class="reference internal" href="#common-problems">Common problems</a><ul>
+<li><a class="reference internal" href="#http-401">HTTP 401</a></li>
+<li><a class="reference internal" href="#http-403">HTTP 403</a></li>
+<li><a class="reference internal" href="#handshake-failure">Handshake Failure</a></li>
+<li><a class="reference internal" href="#ssl-error">SSL Error</a></li>
+<li><a class="reference internal" href="#id1">SSL Error</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/authentication.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Authentication at a Handle Server</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015-2017, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

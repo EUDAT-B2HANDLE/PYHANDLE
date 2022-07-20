@@ -1,0 +1,380 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pyhandle.client.batchhandleclient &#8212; PyHandle 1.0.5-dev documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pyhandle.client.batchhandleclient</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyhandle.client.batchhandleclient</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">This class provides methods to create batch file that contains different operations on Handle.</span>
+<span class="sd">The batch file is executed by the hdl-genericbatch (hdl-genericbatch &lt;batchfile&gt;).</span>
+
+<span class="sd">Author Sofiane Bendoukha (DKRZ), 2017.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">expanduser</span>
+
+<span class="kn">from</span> <span class="nn">pyhandle.batchhsexceptions</span> <span class="kn">import</span> <span class="n">BatchFileExistsException</span>
+<span class="kn">from</span> <span class="nn">pyhandle.pyhandleclient</span> <span class="kn">import</span> <span class="n">HandleClient</span>
+<span class="kn">from</span> <span class="nn">pyhandle.clientcredentials</span> <span class="kn">import</span> <span class="n">PIDClientCredentials</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">util</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">LOGGER</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">util</span><span class="o">.</span><span class="n">NullHandler</span><span class="p">())</span>
+
+<span class="k">class</span> <span class="nc">BatchHandleClient</span><span class="p">(</span><span class="n">HandleClient</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;The BatchHandleClient class&#39;&#39;&#39;</span>
+
+    <span class="n">HANDLE_CLIENT</span> <span class="o">=</span> <span class="s1">&#39;batch&#39;</span>
+    <span class="n">HOME_DIRECTORY</span> <span class="o">=</span> <span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">)</span>
+    <span class="n">_default_batch_file_path</span> <span class="o">=</span> <span class="n">HOME_DIRECTORY</span> <span class="o">+</span> <span class="s1">&#39;/handle_batch&#39;</span>
+
+<div class="viewcode-block" id="BatchHandleClient.__init__"><a class="viewcode-back" href="../../../pyhandleclientbatch.html#pyhandle.client.batchhandleclient.BatchHandleClient.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initialize the batch client and set the path for the batch file.</span>
+
+<span class="sd">        :param credentials: Optional. As json file in form {&quot;user&quot;:&quot;user&quot;, &quot;password&quot;:&quot;password&quot;}</span>
+<span class="sd">        :param args: Optional. This includes different parameters concerning the batch file, such as the PATH.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="mi">60</span> <span class="o">*</span> <span class="s1">&#39;*&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Instantiation of BatchHandleClient</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="mi">60</span> <span class="o">*</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span>
+
+
+
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">BatchHandleClient</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__all_args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__batch_file_path</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;batch_file_path&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__batch_file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__batch_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_batch_file_path</span></div>
+
+<div class="viewcode-block" id="BatchHandleClient.create_batch_file"><a class="viewcode-back" href="../../../pyhandleclientbatch.html#pyhandle.client.batchhandleclient.BatchHandleClient.create_batch_file">[docs]</a>    <span class="k">def</span> <span class="nf">create_batch_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Creates a batch file in a directory specified by the user or in the default directory</span>
+<span class="sd">              (./pyhandle/batch/handle_batch).</span>
+
+<span class="sd">        :param overwrite: Optional. If set to True, the existing batch file</span>
+<span class="sd">            will be overwritten. Defaults to False.</span>
+<span class="sd">        :raises: :exc:`~pyhandle.batchhsexceptions.BatchFileExistsException` Only if overwrite is not set or</span>
+<span class="sd">            set to False.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;BatchHandleClient&#39;</span><span class="p">)</span>
+
+        <span class="n">batch_file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">overwrite</span><span class="p">:</span>
+            <span class="n">batch_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">batch_file_path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">O_CREAT</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">O_WRONLY</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+            <span class="n">batch_file</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">batch_file</span><span class="o">.</span><span class="n">truncate</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">batch_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">batch_file_path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">O_CREAT</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">O_WRONLY</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">O_EXCL</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+                <span class="n">batch_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">exc</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">17</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Could not create batch file, already exists&#39;</span>
+                    <span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span> <span class="o">+</span> <span class="s1">&#39;, as it already exists.&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">BatchFileExistsException</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BatchHandleClient.register_handle_batch"><a class="viewcode-back" href="../../../pyhandleclientbatch.html#pyhandle.client.batchhandleclient.BatchHandleClient.register_handle_batch">[docs]</a>    <span class="k">def</span> <span class="nf">register_handle_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">hdl_admin_index</span><span class="p">,</span> <span class="n">admin_handle</span><span class="p">,</span> <span class="n">perm</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This method creates a simple Handle record including a Handle value to define the administrator of the Handle</span>
+<span class="sd">        and the value for the location (URL)..</span>
+<span class="sd">        Operation name is &#39;CREATE&#39;. The first line is composed of the following:</span>
+<span class="sd">               CREATE + space + handle_name.</span>
+
+<span class="sd">        :param handle: The full name of the handle to be registered (prefix</span>
+<span class="sd">            and suffix)</span>
+<span class="sd">        :param location: The URL of the data entity to be referenced</span>
+<span class="sd">        :param hdl_admin_index: Unique index number</span>
+<span class="sd">        :param admin_handle: Administrator of the Handle</span>
+<span class="sd">        :param perm: permissions</span>
+<span class="sd">        :raises: :exc:`~pyhandle.batchhsexceptions.BatchFileExistsException`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Creating a handle (batch)&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_file_exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">()):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">bfile</span><span class="p">:</span>
+                <span class="n">bfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">CREATE &#39;</span> <span class="o">+</span> <span class="n">handle</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">100 HS_ADMIN 86400 1110 ADMIN &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">hdl_admin_index</span><span class="p">)</span>
+                            <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="n">perm</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="n">admin_handle</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">bfile</span><span class="p">:</span>
+                <span class="n">bfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">ADD &#39;</span> <span class="o">+</span> <span class="n">handle</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">1 URL 86400 1110 UTF8 &#39;</span> <span class="o">+</span> <span class="n">location</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;does not exists&#39;</span>
+            <span class="k">raise</span> <span class="n">BatchFileExistsException</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BatchHandleClient.delete_handle"><a class="viewcode-back" href="../../../pyhandleclientbatch.html#pyhandle.client.batchhandleclient.BatchHandleClient.delete_handle">[docs]</a>    <span class="k">def</span> <span class="nf">delete_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This method deletes an existing Handle and its records.</span>
+<span class="sd">        Operation name &#39;DELETE&#39;.</span>
+
+<span class="sd">        :param handle: Handle name to be deleted</span>
+<span class="sd">        :raises: :exc:`~pyhandle.batchhsexceptions.BatchFileExistsException`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Deleting a handle (batch)&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_file_exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">()):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">bfile</span><span class="p">:</span>
+                <span class="n">bfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">DELETE &#39;</span> <span class="o">+</span> <span class="n">handle</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;does not exists&#39;</span>
+            <span class="k">raise</span> <span class="n">BatchFileExistsException</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BatchHandleClient.modify_handle_value"><a class="viewcode-back" href="../../../pyhandleclientbatch.html#pyhandle.client.batchhandleclient.BatchHandleClient.modify_handle_value">[docs]</a>    <span class="k">def</span> <span class="nf">modify_handle_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="o">**</span><span class="n">kvpairs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This method changes Handle values for an existing Handle.</span>
+<span class="sd">        Operation name &#39;MODIFY&#39;</span>
+
+<span class="sd">        :param handle: Handle whose record is to be modified</span>
+<span class="sd">        :param kvpairs: Contains the unique index number, Handle value type and the value data</span>
+<span class="sd">        :raises: :exc:`~pyhandle.batchhsexceptions.BatchFileExistsException`.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Modifying a value of handle (batch)&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">kvpairs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">kvpairs</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">kvpairs</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">kvpairs</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_file_exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">()):</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">bfile</span><span class="p">:</span>
+                    <span class="n">bfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">MODIFY &#39;</span> <span class="o">+</span> <span class="n">handle</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">+</span> <span class="s1">&#39; 86400 1110 UTF8 &#39;</span> <span class="o">+</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;does not exists&#39;</span>
+                <span class="k">raise</span> <span class="n">BatchFileExistsException</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BatchHandleClient.add_handle_value"><a class="viewcode-back" href="../../../pyhandleclientbatch.html#pyhandle.client.batchhandleclient.BatchHandleClient.add_handle_value">[docs]</a>    <span class="k">def</span> <span class="nf">add_handle_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="o">**</span><span class="n">kvpairs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        The method adds new handle values to an existing handle.</span>
+<span class="sd">        Operation name &#39;ADD&#39;.</span>
+
+<span class="sd">        :param handle: The handle where the new value will be added</span>
+<span class="sd">        :param kvpairs: Contains the unique index number, Handle value type and the value data</span>
+<span class="sd">        :raises: :exc:`~pyhandle.batchhsexceptions.BatchFileExistsException`.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Add handle value&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">kvpairs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">kvpairs</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">kvpairs</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">kvpairs</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_file_exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">()):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span>  <span class="n">bfile</span><span class="p">:</span>
+                <span class="n">bfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">ADD &#39;</span> <span class="o">+</span> <span class="n">handle</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">+</span> <span class="s1">&#39; 86400 1110 UTF8 &#39;</span> <span class="o">+</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;does not exists&#39;</span>
+            <span class="k">raise</span> <span class="n">BatchFileExistsException</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BatchHandleClient.delete_handle_value"><a class="viewcode-back" href="../../../pyhandleclientbatch.html#pyhandle.client.batchhandleclient.BatchHandleClient.delete_handle_value">[docs]</a>    <span class="k">def</span> <span class="nf">delete_handle_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">value_index</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This method removes one or more handle values from an existing handle.</span>
+<span class="sd">        Operation name &#39;REMOVE&#39;.</span>
+
+<span class="sd">        :param handle: Handle from whose record the entry should be deleted.</span>
+<span class="sd">        :param value_index: The index of the value</span>
+<span class="sd">        :raises: :exc:`~pyhandle.batchhsexceptions.BatchFileExistsException`.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Delete handle value&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_file_exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value_index</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">bfile</span><span class="p">:</span>
+                    <span class="n">bfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">REMOVE &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value_index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="n">handle</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">bfile</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value_index</span><span class="p">)):</span>
+                        <span class="n">bfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">REMOVE &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value_index</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="n">handle</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;does not exists&#39;</span>
+            <span class="k">raise</span> <span class="n">BatchFileExistsException</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BatchHandleClient.authenticate_seckey"><a class="viewcode-back" href="../../../pyhandleclientbatch.html#pyhandle.client.batchhandleclient.BatchHandleClient.authenticate_seckey">[docs]</a>    <span class="k">def</span> <span class="nf">authenticate_seckey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Secret key authentication. Operation name &#39;AUTHENTICATE&#39;.</span>
+
+<span class="sd">        :param user: This must be a handle value reference in the format</span>
+<span class="sd">            &quot;index:prefix/suffix&quot;.</span>
+<span class="sd">        :param password: This is the password stored as secret key in the</span>
+<span class="sd">            actual Handle value the username points to.</span>
+<span class="sd">        :param credentials: Optional. When credentials are</span>
+<span class="sd">        :raises: :exc:`~pyhandle.batchhsexceptions.BatchFileExistsException`.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Authenticate with SECKEY&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_file_exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">()):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">bfile</span><span class="p">:</span>
+                <span class="n">bfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">AUTHENTICATE SECKEY:&#39;</span> <span class="o">+</span> <span class="n">user</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">password</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;does not exists&#39;</span>
+            <span class="k">raise</span> <span class="n">BatchFileExistsException</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BatchHandleClient.authenticate_pubkey"><a class="viewcode-back" href="../../../pyhandleclientbatch.html#pyhandle.client.batchhandleclient.BatchHandleClient.authenticate_pubkey">[docs]</a>    <span class="k">def</span> <span class="nf">authenticate_pubkey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">priv_key_path</span><span class="p">,</span> <span class="n">passphrase</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Private key authentication. Operation name &#39;AUTHENTICATE&#39;.</span>
+
+<span class="sd">        :param user: admin_index:admin_handle</span>
+<span class="sd">        :param pubkey_path: private_key_file_path</span>
+<span class="sd">        :param passphrase: If your private key was created and encrypted by passphrase</span>
+<span class="sd">        :raises: :exc:`~pyhandle.batchhsexceptions.BatchFileExistsException`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Authenticate with PUBKEY&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_file_exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">passphrase</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="s1">&#39;w+&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">bfile</span><span class="p">:</span>
+                    <span class="n">bfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;AUTHENTICATE PUBKEY:&#39;</span> <span class="o">+</span> <span class="n">user</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">priv_key_path</span> <span class="o">+</span> <span class="s1">&#39;|&#39;</span> <span class="o">+</span> <span class="n">passphrase</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="s1">&#39;w+&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">bfile</span><span class="p">:</span>
+                    <span class="n">bfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;AUTHENTICATE PUBKEY:&#39;</span> <span class="o">+</span> <span class="n">user</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">priv_key_path</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;does not exists&#39;</span>
+            <span class="k">raise</span> <span class="n">BatchFileExistsException</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_file_path</span><span class="p">(),</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BatchHandleClient.authenticate_with_credentials"><a class="viewcode-back" href="../../../pyhandleclientbatch.html#pyhandle.client.batchhandleclient.BatchHandleClient.authenticate_with_credentials">[docs]</a>    <span class="k">def</span> <span class="nf">authenticate_with_credentials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">credentials</span><span class="p">,</span> <span class="n">auth_type</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Set the credentials for seckey and pubkey authentication.</span>
+
+<span class="sd">        :param credentials: A credentials object, see separate class</span>
+<span class="sd">            PIDClientCredentials.</span>
+<span class="sd">        :param auth_type: Set authentication type to &#39;seckey&#39; (username:password)</span>
+<span class="sd">            or to pubkey (privatekey | passphrase).</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">credentials</span><span class="p">,</span> <span class="n">PIDClientCredentials</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span> <span class="o">=</span> <span class="n">credentials</span><span class="o">.</span><span class="n">get_all_args</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span> <span class="o">=</span> <span class="n">credentials</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="n">credentials</span><span class="o">.</span><span class="n">get_username</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">credentials</span><span class="o">.</span><span class="n">get_password</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">private_key</span> <span class="o">=</span> <span class="n">credentials</span><span class="o">.</span><span class="n">get_path_to_private_key</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">passphrase</span> <span class="o">=</span> <span class="n">credentials</span><span class="o">.</span><span class="n">get_key_passphrase</span><span class="p">()</span>
+
+
+        <span class="k">if</span> <span class="n">auth_type</span> <span class="o">==</span> <span class="s2">&quot;seckey&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">authenticate_seckey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">auth_type</span> <span class="o">==</span> <span class="s2">&quot;pubkey&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">authenticate_pubkey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">private_key</span><span class="p">,</span> <span class="n">passphrase</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">passphrase</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BatchHandleClient.get_all_args"><a class="viewcode-back" href="../../../pyhandleclientbatch.html#pyhandle.client.batchhandleclient.BatchHandleClient.get_all_args">[docs]</a>    <span class="k">def</span> <span class="nf">get_all_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__all_args</span></div>
+
+<div class="viewcode-block" id="BatchHandleClient.get_batch_file_path"><a class="viewcode-back" href="../../../pyhandleclientbatch.html#pyhandle.client.batchhandleclient.BatchHandleClient.get_batch_file_path">[docs]</a>    <span class="k">def</span> <span class="nf">get_batch_file_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__batch_file_path</span></div>
+
+<div class="viewcode-block" id="BatchHandleClient.check_if_file_exists"><a class="viewcode-back" href="../../../pyhandleclientbatch.html#pyhandle.client.batchhandleclient.BatchHandleClient.check_if_file_exists">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_file_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pyhandle.client.batchhandleclient</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015-2017, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

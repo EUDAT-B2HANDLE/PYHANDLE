@@ -1,0 +1,171 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Welcome to PYHANDLE’s documentation! &#8212; PyHandle 1.0.5-dev documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="PyHandleClient" href="pyhandleclient.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyhandleclient.html" title="PyHandleClient"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Welcome to PYHANDLE’s documentation!</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="welcome-to-pyhandle-s-documentation">
+<h1>Welcome to PYHANDLE’s documentation!<a class="headerlink" href="#welcome-to-pyhandle-s-documentation" title="Permalink to this heading">¶</a></h1>
+<p>PyHandle is a Python client library for interaction with a <a class="reference external" href="http://www.handle.net/">Handle System</a> server, providing basic create, read, update and delete capabilities for Handles.
+The library offers a client for the HTTP REST interface, a client that interacts directly with a Handle server SQL back-end and a client to manage batch files.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>In order to perform operations on Handles it is mandatory to select which client you want to work with.
+There are currently three interfaces to interact with Handle System server: The REST interface, the native (SQL)
+database and the BATCH interface (see <a class="reference internal" href="pyhandleclient.html"><span class="doc">PyHandleClient</span></a>).</p>
+</div>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pyhandleclient.html">PyHandleClient</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclient.html#select-a-client">Select a client</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pyhandleclientrest.html">REST Handle Client</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientrest.html#general-usage">General usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientrest.html#instantiation">Instantiation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientrest.html#authentication">Authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientrest.html#basic-handle-interaction">Basic Handle interaction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientrest.html#full-method-documentation">Full method documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientrest.html#module-pyhandle.utilhandle">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientrest.html#module-pyhandle.clientcredentials">Client credentials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientrest.html#module-pyhandle.handleexceptions">Exceptions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pyhandleclientdb.html">DB Handle Client</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientdb.html#instantiation">Instantiation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientdb.html#basic-handle-interaction">Basic Handle interaction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientdb.html#registering-new-handles-hs-admin">Registering new Handles (HS_ADMIN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientdb.html#full-method-documentation">Full method documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientdb.html#module-pyhandle.dbhsexceptions">Exceptions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pyhandleclientbatch.html">BATCH Handle Client</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientbatch.html#basic-handle-interaction">Basic Handle interaction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientbatch.html#instantiation">Instantiation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientbatch.html#creating-batch-files">Creating batch files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientbatch.html#batch-operations">Batch operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientbatch.html#full-method-documentation">Full method documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientbatch.html#batch-file-methods">Batch file methods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientbatch.html#helper-methods">Helper methods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyhandleclientbatch.html#module-pyhandle.batchhsexceptions">Exceptions</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="#">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Welcome to PYHANDLE’s documentation!</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="pyhandleclient.html"
+                          title="next chapter">PyHandleClient</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyhandleclient.html" title="PyHandleClient"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Welcome to PYHANDLE’s documentation!</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015-2017, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,189 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Handle Server Configuration &#8212; PyHandle 1.0.5-dev documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Handle Server Configuration</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="handle-server-configuration">
+<h1>Handle Server Configuration<a class="headerlink" href="#handle-server-configuration" title="Permalink to this heading">¶</a></h1>
+<p>The methods offered by the library make calls against the Handle Server REST interface of server version 8.1.0 and later.
+For security reasons, the Handle server enforces usage of SSL/TLS when contacting the REST interface. Therefore, it is required
+to set up the Handle server to use proper certificates. A default installation will have a default self-signed certificate,
+which should be replaced for production scenarios. The following short guide explains how to provide a signed certificate
+to the Handle server instance.</p>
+<p>In case your clients encounter SSL warnings due to missing chain parts, you may decide to use a Java keystore to deliver the
+missing parts of your certificate chain. Some hints how to do this are given further below as well. Note that the workflow is based
+on a CentOS 7 installation and may be different on other operating systems. If you are not running the Handle server yourself, you need to contact the responsible
+administrators and ask them to fix the issues, of course.</p>
+<section id="replace-the-default-certificate">
+<h2>Replace the default certificate<a class="headerlink" href="#replace-the-default-certificate" title="Permalink to this heading">¶</a></h2>
+<p>The Handle server delivers a certificate taken from the <em>serverCertificate.pem</em> file in the instance directory. To replace this
+with a proper certificate, do the following (based on a CentOS installation):</p>
+<ol class="arabic simple">
+<li><p>Convert your certificate to serverCertificate.pem:</p></li>
+</ol>
+<blockquote>
+<div><div class="line-block">
+<div class="line">$ openssl x509 -in /etc/pki/tls/certs/&lt;your .crt&gt; -out serverCertificate.pem -outform pem</div>
+</div>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>Convert certificate private key to pkcs8 format:</p></li>
+</ol>
+<blockquote>
+<div><div class="line-block">
+<div class="line">$ openssl pkcs8 -in /etc/pki/tls/private/&lt;your key file&gt; -out serverCertificatePrivateKey.pem -inform pem -nocrypt -topk8</div>
+</div>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li><p>Convert to Handle binary key format using hdl-convert-key:</p></li>
+</ol>
+<blockquote>
+<div><div class="line-block">
+<div class="line">$ ../hsj-8.1.0/bin/hdl-convert-key serverCertificatePrivateKey.pem serverCertificatePrivateKey.bin</div>
+</div>
+</div></blockquote>
+</section>
+<section id="creating-the-keystore">
+<h2>Creating the keystore<a class="headerlink" href="#creating-the-keystore" title="Permalink to this heading">¶</a></h2>
+<p>This may be purely optional, depending on whether your clients encounter security warnings due to an incomplete security
+chain and also depending on your strategy to solve the issue. The following is a description of how to provide missing
+chain parts through a Java keystore.</p>
+<ol class="arabic simple">
+<li><p>Create a Java keystore based on your signed server certificate and your trust chain:</p></li>
+</ol>
+<blockquote>
+<div><div class="line-block">
+<div class="line">$ openssl pkcs12 -export -in serverCertificate.pem -inkey &lt;private key.pem&gt; -certfile &lt;your CA bundle.crt&gt; -name “handle” -out keystore.p12</div>
+<div class="line">$ keytool -importkeystore -srckeystore keystore.p12 -srcstoretype pkcs12 -destkeystore handle_keystore -deststoretype JKS</div>
+</div>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>Set a key password:</p></li>
+</ol>
+<blockquote>
+<div><div class="line-block">
+<div class="line">$ keytool -keypasswd -keystore handle_keystore -alias handle</div>
+</div>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li><p>Now check with the keytool that the store contains 1 entry with a full chain. Check that the chain length is correct and all certificates in the chain are listed:</p></li>
+</ol>
+<blockquote>
+<div><div class="line-block">
+<div class="line">$ keytool -list -v -keystore handle_keystore</div>
+</div>
+</div></blockquote>
+<ol class="arabic simple" start="4">
+<li><p>Finally, include a section in config.dct to load the keystore. The following properties must be included in the “hdl_http_config” sections, which may appear twice if you have a dual stack server:</p></li>
+</ol>
+<blockquote>
+<div><div class="line-block">
+<div class="line">“https_default_self_signed_cert” = “no”</div>
+<div class="line">“https_keystore_file” = “handle_keystore”</div>
+<div class="line">“https_alias” = “handle”</div>
+<div class="line">“https_keystore_password” = “…”</div>
+<div class="line">“https_key_password” = “…”</div>
+</div>
+</div></blockquote>
+<p>Keystore password and key password may be the same, but also differ, depending on what you entered in step 1 and 2.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Handle Server Configuration</a><ul>
+<li><a class="reference internal" href="#replace-the-default-certificate">Replace the default certificate</a></li>
+<li><a class="reference internal" href="#creating-the-keystore">Creating the keystore</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/handleserverconfig.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PyHandle 1.0.5-dev documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Handle Server Configuration</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015-2017, Deutsches Klimarechenzentrum GmbH, GRNET S.A., SURFsara.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>
