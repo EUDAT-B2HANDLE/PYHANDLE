@@ -94,12 +94,12 @@ setup(name='pyhandle',
           'future',
           'six',
           'pymysql==0.8.0 ; python_version < "2.8.0"',
-          'pymysql==0.8.0 ; python_version < "3.10.0"',
+          'pymysql==0.8.0 ; python_version < "3.11.0"',
           'pymysql ; python_version > "3.10.0"',
 
       ],
       tests_require=test_dependencies,
-      python_requires='>=3.6.*<=3.10',
+      python_requires='>=3.6.*<3.11',
       cmdclass={'test': NoseTestCommand},
       include_package_data=True
 )
