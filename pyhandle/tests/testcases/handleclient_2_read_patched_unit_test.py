@@ -75,7 +75,7 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
 
         # Call method and check result:
         json_record = self.inst.retrieve_handle_record_json(testhandle)
-        self.assertEquals(json_record['responseCode'],200,
+        self.assertEqual(json_record['responseCode'],200,
             'Unexpected return value: '+str(json_record))
 
     @mock.patch('pyhandle.handleclient.requests.Session.get')

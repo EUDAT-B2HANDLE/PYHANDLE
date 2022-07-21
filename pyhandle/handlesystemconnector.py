@@ -94,51 +94,51 @@ class HandleSystemConnector(object):
 
         if args['handle_server_url']:
             self.__handle_server_url = args['handle_server_url']
-            LOGGER.info(' - handle_server_url set to '+self.__handle_server_url)
+            LOGGER.debug(' - handle_server_url set to '+self.__handle_server_url)
         else:
             self.__handle_server_url = defaults['handle_server_url']
-            LOGGER.info(' - handle_server_url set to default: '+self.__handle_server_url)
+            LOGGER.debug(' - handle_server_url set to default: '+self.__handle_server_url)
 
 
         if args['REST_API_url_extension']:
             self.__REST_API_url_extension = args['REST_API_url_extension']
-            LOGGER.info(' - url_extension_REST_API set to: '+self.__REST_API_url_extension)
+            LOGGER.debug(' - url_extension_REST_API set to: '+self.__REST_API_url_extension)
         else:
             self.__REST_API_url_extension = defaults['REST_API_url_extension']
-            LOGGER.info(' - url_extension_REST_API set to default: '+self.__REST_API_url_extension)
+            LOGGER.debug(' - url_extension_REST_API set to default: '+self.__REST_API_url_extension)
 
 
         if args['HTTPS_verify'] is not None:
             self.__HTTPS_verify = pyhandle.util.get_valid_https_verify(
                 args['HTTPS_verify']
             )
-            LOGGER.info(' - https_verify set to: '+str(self.__HTTPS_verify))
+            LOGGER.debug(' - https_verify set to: '+str(self.__HTTPS_verify))
         else:
             self.__HTTPS_verify = defaults['HTTPS_verify']
-            LOGGER.info(' - https_verify set to default: '+str(self.__HTTPS_verify))
+            LOGGER.debug(' - https_verify set to default: '+str(self.__HTTPS_verify))
 
 
         # Useful for write:
 
         if args['password']:
             self.__password = args['password']
-            LOGGER.info(' - password set.')
+            LOGGER.debug(' - password set.')
 
         if args['username']:
             self.__username = args['username']
-            LOGGER.info(' - username set to: '+self.__username)
+            LOGGER.debug(' - username set to: '+self.__username)
 
         if args['certificate_only']:
             self.__certificate_only = args['certificate_only']
-            LOGGER.info(' - certificate_only set to: '+str(self.__certificate_only))
+            LOGGER.debug(' - certificate_only set to: '+str(self.__certificate_only))
 
         if args['private_key']:
             self.__private_key = args['private_key']
-            LOGGER.info(' - private_key set to: '+str(self.__private_key))
+            LOGGER.debug(' - private_key set to: '+str(self.__private_key))
 
         if args['certificate_and_key']:
             self.__certificate_and_key = args['certificate_and_key']
-            LOGGER.info(' - certificate_and_key set to: '+str(self.__certificate_and_key))
+            LOGGER.debug(' - certificate_and_key set to: '+str(self.__certificate_and_key))
 
     def __check_if_write_access(self, args):
         write_access_argnames = ['username', 'password', 'certificate_only', 'private_key', 'certificate_and_key']
@@ -170,6 +170,11 @@ class HandleSystemConnector(object):
             msg = 'Unknown authentication method: "'+self.__authentication_method+'".'
             self.__has_write_access = False
 
+        if self.__has_write_access:
+            LOGGER.info('Client configured for write access.')
+        else:
+            LOGGER.info('Client could not be configured for write access.')
+
     def __setup_for_auth_by_user_and_pw(self):
 
         # Check username:
@@ -194,7 +199,7 @@ class HandleSystemConnector(object):
                 msg += 'The certificate file was not found at the specified path: '+self.__certificate_only
             if not os.path.isfile(self.__private_key):
                 msg += 'The private key file was not found at the specified path: '+self.__private_key
-            if msg is not '':
+            if msg != '':
                 raise CredentialsFormatError(msg=msg)
 
     def __which_authentication_method(self):
@@ -248,22 +253,25 @@ class HandleSystemConnector(object):
 
     # API methods:
 
-    def send_handle_get_request(self, handle, indices=None):
+    def send_handle_get_request(self, handle, indices=None, **hs_options):
         '''
         Send a HTTP GET request to the handle server to read either an entire
             handle or to some specified values from a handle record, using the
             requests module.
 
         :param handle: The handle.
-        :param indices: Optional. A list of indices to delete. Defaults to
-            None (i.e. the entire handle is deleted.). The list can contain
+        :param indices: Optional. A list of indices to retrieve. Defaults to
+            None (i.e. the entire handle record is retrieved). The list can contain
             integers or strings.
+        :param hs_options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&auth=true"). Please see the Handle Tech Manual for
+            possible values.
         :return: The server's response.
         '''
 
-
         # Assemble required info:
-        url = self.make_handle_URL(handle, indices)
+        url = self.make_handle_URL(handle, indices, **hs_options)
         LOGGER.debug('GET Request to '+url)
         head = self.__get_headers('GET')
         veri = self.__HTTPS_verify
@@ -295,7 +303,6 @@ class HandleSystemConnector(object):
             return True
         else:
             return False
-
 
     def send_handle_put_request(self, **args):
         '''
@@ -495,11 +502,11 @@ class HandleSystemConnector(object):
         accept = 'application/json'
         content_type = 'application/json'
 
-        if action is 'GET':
+        if action == 'GET':
             header['Accept'] = accept
 
 
-        elif action is 'PUT' or action is 'DELETE':
+        elif action == 'PUT' or action == 'DELETE':
 
             if self.__authentication_method == self.__auth_methods['cert']:
                 header['Authorization'] = 'Handle clientCert="true"'
@@ -507,7 +514,7 @@ class HandleSystemConnector(object):
             elif self.__authentication_method == self.__auth_methods['user_pw']:
                 header['Authorization'] = 'Basic ' + self.__basic_authentication_string
 
-            if action is 'PUT':
+            if action == 'PUT':
                 header['Content-Type'] = content_type
 
 
@@ -515,7 +522,7 @@ class HandleSystemConnector(object):
             LOGGER.debug('__getHeader: ACTION is unknown ('+action+')')
         return header
 
-    def make_handle_URL(self, handle, indices=None, overwrite=None, other_url=None):
+    def make_handle_URL(self, handle, indices=None, overwrite=None, other_url=None, **options):
         '''
         Create the URL for a HTTP request (URL + query string) to request
         a specific handle from the Handle Server.
@@ -531,11 +538,23 @@ class HandleSystemConnector(object):
             one specified in the constructor should be used. Defaults to None.
             If set, it should be set including the URL extension,
             e.g. '/api/handles/'.
+        :param options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
+            possible values. To add several "?index=xyz" options, pass a list or 
+            use the parameter "indices". To add several "?type=xyz" options, add
+            them as a list.
         :return: The complete URL, e.g.
          'http://some.handle.server/api/handles/prefix/suffix?index=2&index=6&overwrite=false
         '''
         LOGGER.debug('make_handle_URL...')
         separator = '?'
+
+        # Handle Server does not accept REST API requests with "hdl:" nor "doi:",
+        # it interprets them as part of the prefix.
+        # It will respond with HTTP Status Code 400 and Response: {"responseCode":301,
+        # "message":"That prefix doesn't live here","handle":"hdl:21.14106/TESTTESTTEST"}
+        handle = handle.lstrip('hdl:').lstrip('doi:')
 
         if other_url is not None:
             url = other_url
@@ -545,17 +564,48 @@ class HandleSystemConnector(object):
         url = url.strip('/')+'/'+ handle
 
         if indices is None:
-            indices = []
-        if len(indices) > 0:
+            pass
+        elif len(indices) > 0:
             for index in indices:
+                # TODO: It might be possible to replace this by "?index=various", see Tech Manual.
+                # But be careful, "various" only works with PUT, not with DELETE or GET.
                 url = url+separator+'index='+str(index)
                 separator = '&'
+
+        # Index can be passed several times:
+        # Note: This is not required now, as several "index" values can be passed using "indices", but
+        # TODO: I think we should through away "indices", as this is more elegant.
+        if 'index' in options:
+            if type(options['index']) == type([]):
+                for item in options['index']:
+                    url = url+separator+'index='+str(item)
+                    separator = '&'
+                del options['index']
+
+        # Type can be passed several times:
+        if 'type' in options:
+            if type(options['type']) == type([]):
+                for item in options['type']:
+                    url = url+separator+'type='+str(item)
+                    separator = '&'
+                del options['type']
 
         if overwrite is not None:
             if overwrite:
                 url = url+separator+'overwrite=true'
+                separator = '&'
             else:
                 url = url+separator+'overwrite=false'
+                separator = '&'
+
+        if len(options) > 0:
+            for k,v in options.items():
+                if v == True:
+                    v = 'true'
+                elif v == False:
+                    v = 'false'
+                url = url+separator+k+'='+str(v)
+                separator = '&'
 
         return url
 

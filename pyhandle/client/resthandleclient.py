@@ -129,28 +129,28 @@ class RESTHandleClient(HandleClient):
 
         if 'HS_ADMIN_permissions' in args.keys():
             self.__HS_ADMIN_permissions = args['HS_ADMIN_permissions']
-            LOGGER.info(' - HS_ADMIN_permissions set to: ' + self.__HS_ADMIN_permissions)
+            LOGGER.debug(' - HS_ADMIN_permissions set to: ' + self.__HS_ADMIN_permissions)
         else:
             self.__HS_ADMIN_permissions = defaults['HS_ADMIN_permissions']
-            LOGGER.info(' - HS_ADMIN_permissions set to default: ' + self.__HS_ADMIN_permissions)
+            LOGGER.debug(' - HS_ADMIN_permissions set to default: ' + self.__HS_ADMIN_permissions)
 
         
         if 'modify_HS_ADMIN' in args.keys():
             self.__modify_HS_ADMIN = args['modify_HS_ADMIN']
-            LOGGER.info(' - modify_HS_ADMIN set to: ' + str(self.__modify_HS_ADMIN))
+            LOGGER.debug(' - modify_HS_ADMIN set to: ' + str(self.__modify_HS_ADMIN))
         else:
             self.__modify_HS_ADMIN = defaults['modify_HS_ADMIN']
-            LOGGER.info(' - modify_HS_ADMIN set to default: ' + str(self.__modify_HS_ADMIN))
+            LOGGER.debug(' - modify_HS_ADMIN set to default: ' + str(self.__modify_HS_ADMIN))
 
 
         # Handle owner: The user name to be written into HS_ADMIN.
         # Can be specified in json credentials file (optionally):
         if ('handleowner' in args.keys()) and (args['handleowner'] is not None):
             self.__handleowner = args['handleowner']
-            LOGGER.info(' - handleowner set to: ' + self.__handleowner)
+            LOGGER.debug(' - handleowner set to: ' + self.__handleowner)
         else:
             self.__handleowner = None
-            LOGGER.info(' - handleowner: Will be set to default for each created handle separately.')
+            LOGGER.debug(' - handleowner: Will be set to default for each created handle separately.')
 
     @staticmethod
     def instantiate_for_read_access(handle_server_url=None, **config):
@@ -160,7 +160,7 @@ class RESTHandleClient(HandleClient):
 
         :param handle_server_url: Optional. The URL of the Handle System
             server to read from. Defaults to 'https://hdl.handle.net'
-        :param \**config: More key-value pairs may be passed that will be passed
+        :param **config: More key-value pairs may be passed that will be passed
             on to the constructor as config. Config options from the
             credentials object are overwritten by this.
         :return: An instance of the client.
@@ -180,7 +180,7 @@ class RESTHandleClient(HandleClient):
             reverse lookup servlet.
         :param reverselookup_password: The password to authenticate at the
             reverse lookup servlet.
-        :param \**config: More key-value pairs may be passed that will be passed
+        :param **config: More key-value pairs may be passed that will be passed
             on to the constructor as config. Config options from the
             credentials object are overwritten by this.
         :return: An instance of the client.
@@ -212,7 +212,7 @@ class RESTHandleClient(HandleClient):
             "index:prefix/suffix".
         :param password: This is the password stored as secret key in the
             actual Handle value the username points to.
-        :param \**config: More key-value pairs may be passed that will be passed
+        :param **config: More key-value pairs may be passed that will be passed
             on to the constructor as config.
         :raises: :exc:`~pyhandle.handleexceptions.HandleNotFoundException`: If the username handle is not found.
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
@@ -230,7 +230,7 @@ class RESTHandleClient(HandleClient):
 
         :param credentials: A credentials object, see separate class
             PIDClientCredentials.
-        :param \**config: More key-value pairs may be passed that will be passed
+        :param **config: More key-value pairs may be passed that will be passed
             on to the constructor as config. Config options from the
             credentials object are overwritten by this.
         :raises: :exc:`~pyhandle.handleexceptions.HandleNotFoundException`: If the username handle is not found.
@@ -246,7 +246,7 @@ class RESTHandleClient(HandleClient):
 
     # Methods with read access to Handle Server:
 
-    def retrieve_handle_record_json(self, handle):
+    def retrieve_handle_record_json(self, handle, auth=False, indices=None, **hs_options):
         '''
         Retrieve a handle record from the Handle server as a complete nested
         dict (including index, ttl, timestamp, ...) for later use.
@@ -255,6 +255,18 @@ class RESTHandleClient(HandleClient):
         please use :meth:`~pyhandle.handleclient.RESTHandleClient.retrieve_handle_record`.
 
         :param handle: The Handle whose record to retrieve.
+        :param auth: Optional. If set to True, the handle record will be retrieved
+            from the primary server and not from cache, so changes from the last
+            max. 24 hours will be included. Defaults to False.
+        :param indices: Optional. A list of indices to retrieve. Defaults to
+            None (i.e. the entire handle record is retrieved). The list can contain
+            integers or strings.
+        :param hs_options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
+            possible values. To add several "?index=xyz" options, pass a list or 
+            use the parameter "indices". To add several "?type=xyz" options, add
+            them as a list.
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
         :return: The handle record as a nested dict. If the handle does not
             exist, returns None.
@@ -262,7 +274,16 @@ class RESTHandleClient(HandleClient):
         LOGGER.debug('retrieve_handle_record_json...')
 
         utilhandle.check_handle_syntax(handle)
-        response = self.__send_handle_get_request(handle)
+
+        # Add url parameters (see Tech Manual)
+        if auth == True:
+            hs_options['auth'] = 'true'
+        
+        if len(hs_options)>0:
+            response = self.__send_handle_get_request(handle, indices, **hs_options)
+        else:
+            response = self.__send_handle_get_request(handle, indices)
+        
         response_content = decoded_response(response)
                     
         if hsresponses.handle_not_found(response):
@@ -270,7 +291,8 @@ class RESTHandleClient(HandleClient):
         elif hsresponses.does_handle_exist(response):
          
             handlerecord_json = json.loads(response_content)
-            if not handlerecord_json['handle'] == handle:
+
+            if not handlerecord_json['handle'] == handle.lstrip('hdl:').lstrip('doi:'):
                 raise GenericHandleError(
                     operation='retrieving handle record',
                     handle=handle,
@@ -288,8 +310,7 @@ class RESTHandleClient(HandleClient):
                 response=response
             )
            
-        
-    def retrieve_handle_record(self, handle, handlerecord_json=None):
+    def retrieve_handle_record(self, handle, handlerecord_json=None, auth=False, indices=None, **hs_options):
         '''
         Retrieve a handle record from the Handle server as a dict. If there
         is several entries of the same type, only the first one is
@@ -299,6 +320,18 @@ class RESTHandleClient(HandleClient):
         :param handle: The handle whose record to retrieve.
         :param handlerecord_json: Optional. If the handlerecord has already
             been retrieved from the server, it can be reused.
+        :param auth: Optional. If set to True, the handle record will be retrieved
+            from the primary server and not from cache, so changes from the last
+            max. 24 hours or so will be included. Defaults to False.
+        :param indices: Optional. A list of indices to retrieve. Defaults to
+            None (i.e. the entire handle is retrieved.). The list can contain
+            integers or strings.
+        :param hs_options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
+            possible values. To add several "?index=xyz" options, pass a list or 
+            use the parameter "indices". To add several "?type=xyz" options, add
+            them as a list.
         :return: A dict where the keys are keys from the Handle record (except
             for hidden entries) and every value is a string. The result will be
             None if the Handle does not exist.
@@ -306,7 +339,7 @@ class RESTHandleClient(HandleClient):
         '''
         LOGGER.debug('retrieve_handle_record...')
 
-        handlerecord_json = self.__get_handle_record_if_necessary(handle, handlerecord_json)
+        handlerecord_json = self.__get_handle_record_if_necessary(handle, handlerecord_json, auth, indices, **hs_options)
         if handlerecord_json is None:
             return None  # Instead of HandleNotFoundException!
         list_of_entries = handlerecord_json['values']
@@ -318,7 +351,7 @@ class RESTHandleClient(HandleClient):
                 record_as_dict[key] = str(entry['data']['value'])
         return record_as_dict
 
-    def get_value_from_handle(self, handle, key, handlerecord_json=None):
+    def get_value_from_handle(self, handle, key, handlerecord_json=None, auth=False, indices=None, **hs_options):
         '''
         Retrieve a single value from a single Handle. If several entries with
         this key exist, the methods returns the first one. If the handle
@@ -326,6 +359,18 @@ class RESTHandleClient(HandleClient):
 
         :param handle: The handle to take the value from.
         :param key: The key.
+        :param auth: Optional. If set to True, the handle record will be retrieved
+            from the primary server and not from cache, so changes from the last
+            max. 24 hours or so will be included. Defaults to False.
+        :param indices: Optional. A list of indices to retrieve. Defaults to
+            None (i.e. the entire handle is retrieved.). The list can contain
+            integers or strings.
+        :param hs_options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
+            possible values. To add several "?index=xyz" options, pass a list or 
+            use the parameter "indices". To add several "?type=xyz" options, add
+            them as a list.
         :return: A string containing the value or None if the Handle record
          does not contain the key.
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
@@ -333,12 +378,15 @@ class RESTHandleClient(HandleClient):
         '''
         LOGGER.debug('get_value_from_handle...')
 
-        handlerecord_json = self.__get_handle_record_if_necessary(handle, handlerecord_json)
+        handlerecord_json = self.__get_handle_record_if_necessary(handle, handlerecord_json, auth, indices, **hs_options)
         if handlerecord_json is None:
             raise HandleNotFoundException(handle=handle)
         list_of_entries = handlerecord_json['values']
 
-        indices = []
+        # Instead of this filtering, we could simply pass "?type=key" to the Handle Server!!
+        # TODO: Reimplement!
+
+        indices = [] # Why indices? Why not just grab the value!
         for i in xrange(len(list_of_entries)):
             if list_of_entries[i]['type'] == key:
                 indices.append(i)
@@ -355,9 +403,12 @@ class RESTHandleClient(HandleClient):
     
     # Methods with write access to Handle Server:
 
-    def generate_and_register_handle(self, prefix, location, checksum=None, **extratypes):
+    def generate_and_register_handle(self, prefix, location, checksum=None, overwrite=False, **extratypes):
         '''
         Register a new Handle with a unique random name (random UUID).
+
+        Note: is a similar legacy method. Instead, just use 
+        generate_PID_name(prefix) to create a handle name and use one of the above.
 
         :param prefix: The prefix of the handle to be registered. The method
             will generate a suffix.
@@ -371,6 +422,10 @@ class RESTHandleClient(HandleClient):
 
         LOGGER.debug('generate_and_register_handle...')
 
+        if 'auth' in extratypes:
+            LOGGER.debug('Found keyword "auth", which will be registered as a key-value-pair in the handle record.')
+            # TODO: Is this behaviour desired?
+
         handle = self.generate_PID_name(prefix)
 
         if not location is None:
@@ -381,10 +436,29 @@ class RESTHandleClient(HandleClient):
 
         handle = self.register_handle_kv(
             handle,
-            overwrite=True,
+            overwrite,
             **extratypes
         )
         return handle
+
+
+    def modify_or_add_handle_value(self, handle, ttl=None, **kvpairs):
+        add_if_not_exist = True
+        overwrite = True
+        return self.__handle_modification(handle, ttl, add_if_not_exist, overwrite, **kvpairs)
+
+
+    def modify_handle_value_not_add(self, handle, ttl=None, **kvpairs):
+        add_if_not_exist = False
+        overwrite = True
+        return self.__handle_modification(handle, ttl, add_if_not_exist, overwrite, **kvpairs)
+
+
+    def add_handle_value(self, handle, ttl=None, **kvpairs):
+        add_if_not_exist = True
+        overwrite = False
+        return self.__handle_modification(handle, ttl, add_if_not_exist, overwrite, **kvpairs)
+
 
     def modify_handle_value(self, handle, ttl=None, add_if_not_exist=True, **kvpairs):
         '''
@@ -397,6 +471,8 @@ class RESTHandleClient(HandleClient):
         :param handle: Handle whose record is to be modified
         :param ttl: Optional. Integer value. If ttl should be set to a
             non-default value.
+        :param add_if_not_exist: Optional. Whether a kv pair should be added if
+            the key does not exist yet.
         :param all other args: The user can specify several key-value-pairs.
             These will be the handle value types and values that will be
             modified. The keys are the names or the handle value types (e.g.
@@ -404,18 +480,27 @@ class RESTHandleClient(HandleClient):
             key is 'HS_ADMIN', the new value needs to be of the form
             {'handle':'xyz', 'index':xyz}. The permissions will be set to the
             default permissions.
+        :return: The modified handle.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
         :raises: :exc:`~pyhandle.handleexceptions.HandleNotFoundException`
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
         '''
         LOGGER.debug('modify_handle_value...')
+        overwrite = True
+        return self.__handle_modification(handle, ttl, add_if_not_exist, overwrite, **kvpairs)
 
-        # Read handle record:
-        handlerecord_json = self.retrieve_handle_record_json(handle)
+
+    def __handle_modification(self, handle, ttl=None, add_if_not_exist=True, overwrite=True, **kvpairs):
+
+        # Read handle record (the primary one with auth=True,
+        # because we'll modify the primary one!)
+        # But we're talking to the primary anyway, as we're in read-write mode.
+        auth = True # makes no difference!
+        handlerecord_json = self.retrieve_handle_record_json(handle, auth)
         if handlerecord_json is None:
             msg = 'Cannot modify unexisting handle'
             raise HandleNotFoundException(handle=handle, msg=msg)
-        list_of_entries = handlerecord_json['values']
+        list_of_existing_entries = handlerecord_json['values']
 
         # HS_ADMIN
         if 'HS_ADMIN' in kvpairs.keys() and not self.__modify_HS_ADMIN:
@@ -426,38 +511,50 @@ class RESTHandleClient(HandleClient):
                 handle=handle
             )
 
-        nothingchanged = True
+
+        # All the new entries will be in this list, which will be sent to
+        # the Handle Server as payload.
         new_list_of_entries = []
-        list_of_old_and_new_entries = list_of_entries[:]
-        keys = kvpairs.keys()
+
+        # Existing and new/modified entries will be in this list, which is
+        # used/needed for making up new indexes for new entries.
+        # I guess we don't just use the existing list because we iterate through it.
+        list_of_old_and_new_entries = list_of_existing_entries[:]
+
+        # Iterate over all kv pairs that are to be modified/added:
+        nothingchanged = True
         for key, newval in kvpairs.items():
-            # Change existing entry:
+            
+            # Check if that key already exists in the record:
             changed = False
-            for i in xrange(len(list_of_entries)):
-                if list_of_entries[i]['type'] == key:
+            for i in xrange(len(list_of_existing_entries)):
+                current_entry = list_of_existing_entries[i]
+                if current_entry['type'] == key:
+
+                    # If it does, modify it:
                     if not changed:
-                        list_of_entries[i]['data'] = newval
-                        list_of_entries[i].pop('timestamp')  # will be ignored anyway
+                        current_entry['data'] = newval
+                        current_entry.pop('timestamp')  # will be ignored anyway
                         if key == 'HS_ADMIN':
                             newval['permissions'] = self.__HS_ADMIN_permissions
-                            list_of_entries[i].pop('timestamp')  # will be ignored anyway
-                            list_of_entries[i]['data'] = {
+                            current_entry.pop('timestamp')  # will be ignored anyway
+                            current_entry['data'] = {
                                 'format':'admin',
                                 'value':newval
                             }
-                            LOGGER.info('Modified' + \
+                            LOGGER.debug('Modified' + \
                                 ' "HS_ADMIN" of handle ' + handle)
                         changed = True
                         nothingchanged = False
-                        new_list_of_entries.append(list_of_entries[i])
-                        list_of_old_and_new_entries.append(list_of_entries[i])
+                        new_list_of_entries.append(current_entry)
+                        list_of_old_and_new_entries.append(current_entry)
                     else:
                         msg = 'There is several entries of type "' + key + '".' + \
                             ' This can lead to unexpected behaviour.' + \
                             ' Please clean up before modifying the record.'
                         raise BrokenHandleRecordException(handle=handle, msg=msg)
 
-            # If the entry doesn't exist yet, add it:
+            # If the entry doesn't exist yet, add it (if you're allowed to!).
             if not changed:
                 if add_if_not_exist:
                     LOGGER.debug('modify_handle_value: Adding entry "' + key + '"' + \
@@ -468,6 +565,9 @@ class RESTHandleClient(HandleClient):
                     list_of_old_and_new_entries.append(entry_to_add)
                     changed = True
                     nothingchanged = False
+                else:
+                    LOGGER.debug('modify_handle_value: Key "'+key+'" does not exist,' + \
+                        ' but we\'re not allowed to add it to handle "'+handle+'".')
 
         # Add the indices
         indices = []
@@ -477,7 +577,7 @@ class RESTHandleClient(HandleClient):
         # append to the old record:
         if nothingchanged:
             LOGGER.debug('modify_handle_value: There was no entries ' + \
-                str(kvpairs.keys()) + ' to be modified (handle ' + handle + ').' + \
+                str(kvpairs.keys()) + ' to be modified (handle "' + handle + '").' + \
                 ' To add them, set add_if_not_exist = True')
         else:
             op = 'modifying handle values'
@@ -485,7 +585,7 @@ class RESTHandleClient(HandleClient):
                 handle,
                 new_list_of_entries,
                 indices=indices,
-                overwrite=True,
+                overwrite=overwrite,
                 op=op)
             if hsresponses.handle_success(resp):
                 LOGGER.info('Handle modified: ' + handle)
@@ -498,6 +598,8 @@ class RESTHandleClient(HandleClient):
                     msg=msg,
                     payload=put_payload
                 )
+                
+        return json.loads(decoded_response(resp))['handle']
 
     def delete_handle_value(self, handle, key):
         '''
@@ -506,14 +608,18 @@ class RESTHandleClient(HandleClient):
 
         :param handle: Handle from whose record the entry should be deleted.
         :param key: Key to be deleted. Also accepts a list of keys.
+        :return: The deleted handle.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
         :raises: :exc:`~pyhandle.handleexceptions.HandleNotFoundException`
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
         '''
         LOGGER.debug('delete_handle_value...')
 
-        # read handle record:
-        handlerecord_json = self.retrieve_handle_record_json(handle)
+        # Read handle record (the primary one with auth=True,
+        # because we'll modify the primary one!)
+        # But we're talking to the primary anyway, as we're in read-write mode.
+        auth = True # makes no difference!
+        handlerecord_json = self.retrieve_handle_record_json(handle, auth)
         if handlerecord_json is None:
             msg = 'Cannot modify unexisting handle'
             raise HandleNotFoundException(handle=handle, msg=msg)
@@ -549,8 +655,11 @@ class RESTHandleClient(HandleClient):
             # delete and process response:
             op = 'deleting "' + str(keys) + '"'
             resp = self.__send_handle_delete_request(handle, indices=indices, op=op)
+
             if hsresponses.handle_success(resp):
                 LOGGER.debug("delete_handle_value: Deleted handle values " + str(keys) + "of handle " + handle)
+                return json.loads(decoded_response(resp))['handle']
+
             elif hsresponses.values_not_found(resp):
                 pass
             else:
@@ -566,6 +675,7 @@ class RESTHandleClient(HandleClient):
         :param handle: Handle to be deleted.
         :param other: Deprecated. This only exists to catch wrong method usage
             by users who are used to delete handle VALUES with the method.
+        :return: The deleted handle.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
         :raises: :exc:`~pyhandle.handleexceptions.HandleNotFoundException`
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
@@ -586,9 +696,14 @@ class RESTHandleClient(HandleClient):
 
         op = 'deleting handle'
         resp = self.__send_handle_delete_request(handle, op=op)
+        handle = json.loads(decoded_response(resp))['handle']
+
         if hsresponses.handle_success(resp):
+            # Response: {'handle': '21.14106/TESTTESTTEST', 'responseCode': 1}   with HTTP 200
             LOGGER.info('Handle ' + handle + ' deleted.')
+            return handle
         elif hsresponses.handle_not_found(resp):
+            # Response: {'handle': '21.14106/TESTTESTTEST', 'responseCode': 100} with HTTP 404
             msg = ('delete_handle: Handle ' + handle + ' did not exist, '
                    'so it could not be deleted.')
             LOGGER.debug(msg)
@@ -596,18 +711,41 @@ class RESTHandleClient(HandleClient):
         else:
             raise GenericHandleError(op=op, handle=handle, response=resp)
 
-
     def register_handle_json(self, handle, list_of_entries, overwrite=False):
         '''
-        entry = {'index':index, 'type':entrytype, 'data':data}
-        # Optional 'ttl'
+        Registers a new Handle with given name. If the handle already exists
+        and overwrite is not set to True, the method will throw an
+        exception.
+
+        Note:It allows to pass JSON snippets instead of key-value pairs, so you can 
+        specify the indices. An entry looks like this: 
+        {'index':index, 'type':entrytype, 'data':data}. 
+        This is the format in which the changes are communicated to the handle 
+        server via its REST interface. 
+        An entry of type HS_ADMIN will be added if you do not provide one.
+
+        :param handle: The full name of the handle to be registered (prefix
+            and suffix)
+        :param list_of_entries: The entries to be included in the record,
+            e.g. URL, CHECKSUM, ... Example for an entry:
+            {'index':index, 'type':entrytype, 'data':data}
+            Optionally you can add 'ttl'.
+        :param overwrite: Optional. If set to True, an existing handle record
+            will be overwritten. Defaults to False.
+        :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
+            set to False.
+        :raises: :exc:`~pyhandle.handleexceptions.HandleAuthenticationError`
+        :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
+        :return: The handle name.
         '''
 
         # If already exists and can't be overwritten:
         if overwrite == False:
             handlerecord_json = self.retrieve_handle_record_json(handle)
+            # Note: Adding "?auth=true" to this request makes no sense, as we are
+            # talking to the primary server anyway.
             if handlerecord_json is not None:
-                msg = 'Could not register handle'
+                msg = 'Could not register handle %s' % handle
                 LOGGER.error(msg + ', as it already exists.')
                 raise HandleAlreadyExistsException(handle=handle, msg=msg)
 
@@ -640,6 +778,12 @@ class RESTHandleClient(HandleClient):
         legacy reasons, as this library was created to replace an earlier
         library that had a method with specifically this signature.
 
+        Note 2: It allows to pass (additionally to the handle name) a 
+        mandatory URL, and optionally a CHECKSUM, and more types as 
+        key-value pairs. Old method, made for legacy reasons, as this library 
+        was created to replace an earlier library that had a method with 
+        specifically this signature.
+
         :param handle: The full name of the handle to be registered (prefix
             and suffix)
         :param location: The URL of the data entity to be referenced
@@ -656,6 +800,10 @@ class RESTHandleClient(HandleClient):
         :raises: :exc:`~pyhandle.handleexceptions.HandleSyntaxError`
         :return: The handle name.
         '''
+
+        if 'auth' in extratypes:
+            LOGGER.debug('Found keyword "auth", which will be registered as a key-value-pair in the handle record.')
+            # TODO: Is this behaviour desired?
 
         if extratypes is None:
             extratypes = {}
@@ -683,8 +831,8 @@ class RESTHandleClient(HandleClient):
 
         :param handle: The full name of the handle to be registered (prefix
             and suffix)
-        :param extratypes: Optional, but highly recommended. The key value pairs
-            to be included in the record, e.g. URL, CHECKSUM, ...
+        :param kv_pairs: The key value pairs to be included in the record,
+            e.g. URL, CHECKSUM, ...
         :param overwrite: Optional. If set to True, an existing handle record
             will be overwritten. Defaults to False.
         :raises: :exc:`~pyhandle.handleexceptions.HandleAlreadyExistsException` Only if overwrite is not set or
@@ -695,9 +843,15 @@ class RESTHandleClient(HandleClient):
         '''
         LOGGER.debug('register_handle_kv...')
 
+        if 'auth' in kv_pairs:
+            LOGGER.debug('Found keyword "auth", which will be registered as a key-value-pair in the handle record.')
+            # TODO: Is this behaviour desired?
+
         # If already exists and can't be overwritten:
         if overwrite == False:
             handlerecord_json = self.retrieve_handle_record_json(handle)
+            # Note: Adding "?auth=true" to this request makes no sense, as we are
+            # talking to the primary server anyway.
             if handlerecord_json is not None:
                 msg = 'Could not register handle'
                 LOGGER.error(msg + ', as it already exists.')
@@ -864,8 +1018,10 @@ class RESTHandleClient(HandleClient):
 
         :param handle: The handle.
         :param indices: Optional. A list of indices to delete. Defaults to
-            None (i.e. the entire handle is deleted.). The list can contain
+            None (i.e. the entire handle record is deleted). The list can contain
             integers or strings.
+        :param op: Name of the operation, e.g. 'registering handle', 'deleting handle'
+            or 'modifying handle values'. Only used in throwing exceptions.
         :return: The server's response.
         '''
 
@@ -885,10 +1041,12 @@ class RESTHandleClient(HandleClient):
         :param list_of_entries: A list of handle record entries to be written,
          in the format [{"index":xyz, "type":"xyz", "data":"xyz"}] or similar.
         :param indices: Optional. A list of indices to modify. Defaults
-         to None (i.e. the entire handle is updated.). The list can
+         to None (i.e. the entire handle record is updated). The list can
          contain integers or strings.
         :param overwrite: Optional. Whether the handle should be overwritten
          if it exists already.
+        :param op: Name of the operation, e.g. 'registering handle', 'deleting handle'
+            or 'modifying handle values'. Only used in throwing exceptions.
         :return: The server's response.
         '''
 
@@ -901,33 +1059,58 @@ class RESTHandleClient(HandleClient):
         )
         return resp, payload
 
-    def __send_handle_get_request(self, handle, indices=None):
+    def __send_handle_get_request(self, handle, indices=None, **hs_options):
         '''
         Send a HTTP GET request to the handle server to read either an entire
             handle or to some specified values from a handle record, using the
             requests module.
 
         :param handle: The handle.
-        :param indices: Optional. A list of indices to delete. Defaults to
-            None (i.e. the entire handle is deleted.). The list can contain
-            integers or strings.
+        :param indices: Optional. A list of indices to retrieve. Defaults to
+            None (i.e. the entire handle record is retrieved). The list can contain
+            integers or strings. Deprecated. Please use "index" instead.
+        :param hs_options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&auth=true"). Please see the Handle Tech Manual for
+            possible values. To add several "?index=xyz" options, pass a list or 
+            use the parameter "indices". To add several "?type=xyz" options, add
+            them as a list.
         :return: The server's response.
         '''
 
-        resp = self.__handlesystemconnector.send_handle_get_request(handle, indices)
+        resp = self.__handlesystemconnector.send_handle_get_request(handle, indices, **hs_options)
         return resp
 
-    def __get_handle_record_if_necessary(self, handle, handlerecord_json):
+    def __get_handle_record_if_necessary(self, handle, handlerecord_json, auth, indices, **hs_options):
         '''
         Returns the handle record if it is None or if its handle is not the
             same as the specified handle.
-
+        :param handle: The handle.
+        :param handlerecord_json: The handle record as JSON. If it exists (and if
+            the contained handle matches the handle passed as param), it is simply
+            returned, to avoid repetitive GET requests. If it is None, the handle
+            record will be requested from the Handle Server and returned.
+        :param auth: If set to True, the handle record will be retrieved from the 
+            primary server and not from cache, so changes from the last max. 24 hours
+            will be included. (The cache is refreshed after max 24h by default, this
+            value may differ, depending on handle record's "ttl" value).
+        :param indices: Optional. A list of indices to retrieve. Defaults to
+            None (i.e. the entire handle record is retrieved). The list can contain
+            integers or strings.
+        :param hs_options: Optional. A list of key-value pairs which will be appended
+            to the URL as parameters, to be passed to the Handle Server during the
+            GET request (e.g. "&type=xyz"). Please see the Handle Tech Manual for
+            possible values. To add several "?index=xyz" options, pass a list or 
+            use the parameter "indices". To add several "?type=xyz" options, add
+            them as a list.
         '''
+
+
         if handlerecord_json is None:
-            handlerecord_json = self.retrieve_handle_record_json(handle)
+            handlerecord_json = self.retrieve_handle_record_json(handle, auth, indices, **hs_options)
         else:
             if handle != handlerecord_json['handle']:
-                handlerecord_json = self.retrieve_handle_record_json(handle)
+                handlerecord_json = self.retrieve_handle_record_json(handle, auth, indices, **hs_options)
         return handlerecord_json
 
     def __make_another_index(self, list_of_entries, url=False, hs_admin=False):

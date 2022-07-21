@@ -183,6 +183,10 @@ Handle record methods
 
 .. automethod:: pyhandle.handleclient.RESTHandleClient.register_handle
 
+.. automethod:: pyhandle.handleclient.RESTHandleClient.register_handle_kv
+
+.. automethod:: pyhandle.handleclient.RESTHandleClient.register_handle_json
+
 .. automethod:: pyhandle.handleclient.RESTHandleClient.generate_and_register_handle
 
 .. automethod:: pyhandle.handleclient.RESTHandleClient.delete_handle

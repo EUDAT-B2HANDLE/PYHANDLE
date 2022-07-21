@@ -9,6 +9,7 @@ As [B2Handle](https://github.com/EUDAT-B2SAFE/B2HANDLE) was developed with a spe
 
 
 
+
 # Installation
 
 You can install the PyHandle library as follows:
@@ -26,6 +27,21 @@ The library is also available on PyPi and can be installed via pip:
 ```
 
 For more information on the methods offered by the library, please consult the [technical documentation](http://eudat-b2safe.github.io/PYHANDLE/).
+
+## Instantiate:
+
+One of the core steps is to instantiate the file with the needed credentials. 
+A guide on how to use them is the following: 
+
+```
+credentials_file = './credentials/creds.json'
+# Path must be relative to current working dir
+# JSON file must contain absolute paths, or paths relative to the creds.json file!!
+creds = pyhandle.clientcredentials.PIDClientCredentials.load_from_JSON(credentials_file)
+client = pyhandle.handleclient.PyHandleClient('rest').instantiate_with_credentials(
+        creds, HTTPS_verify=https_verify)
+```
+
 # Building the documentation
 
 For more details about the library you can build the documention using [Sphinx](http://www.sphinx-doc.org), requiring at least version 1.3. Sphinx and can be installed via pip. To build HTML documentation locally, then run:
@@ -41,7 +57,6 @@ python setup.py build_sphinx
 Check out the documentation [here](https://eudat-b2safe.github.io/PYHANDLE/).
 
 (You can find the source in the GitHub repository at [/docs/source/index.rst](./docs/source/index.rst)!)
-
 
 # License
 
@@ -139,6 +154,7 @@ virtualenv venv
 source venv/bin/activate
 pip install pypandoc
 python setup.py sdist upload -r pypi
+
 
 # TODO: Deprecated, move to twine!
 ```

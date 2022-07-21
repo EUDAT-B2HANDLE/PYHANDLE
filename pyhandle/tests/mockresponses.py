@@ -30,22 +30,25 @@ class MockResponse(object):
     which has a specific combination of HTTP status code, handle
     response code and content.
     '''
-    def __init__(self, status_code=None, content=None, request=None, success=False, notfound=False, empty=False, wascreated=False):
+    def __init__(self, handle=None, status_code=None, content=None, request=None, success=False, notfound=False, empty=False, wascreated=False):
 
         self.content = None
         self.status_code = None
         self.request = None
 
         # Some predefined cases:
+        if handle is not None and (handle.startswith('hdl:') or handle.startswith('doi:')):
+            self.status_code = 400
         if success:
             self.status_code = 200
             self.content = '{"responseCode":1, "handle":"my/testhandle"}'
         elif notfound:
             self.status_code = 404
-            self.content = '{"responseCode":100}'
+            self.content = '{"responseCode":100, "handle":"my/testhandle"}'
+            # This response to a delete-handle request was verified 2022-06-28 by Merret
         elif empty:
             self.status_code = 200
-            self.content = '{"responseCode":200}'
+            self.content = '{"responseCode":200, "handle":"my/testhandle"}'
         elif wascreated:
             self.status_code = 201
             self.content = '{"responseCode":1, "handle":"my/testhandle"}'
@@ -58,7 +61,7 @@ class MockResponse(object):
             self.request = request
         # Defaults (they do not override):
         if self.content is None:    
-            self.content = '{"responseCode":1}'
+            self.content = '{"responseCode":1, "handle":"my/testhandle"}'
         if self.status_code is None:
             self.status_code = 200
         if self.request is None:

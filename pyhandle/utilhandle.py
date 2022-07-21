@@ -11,6 +11,7 @@ from urllib.parse import quote
 from . import handleexceptions
 from . import util
 
+
 def remove_index_from_handle(handle_with_index):
     '''
     Returns index and handle separately, in a tuple.
@@ -63,7 +64,19 @@ def check_handle_syntax(string):
         raise handleexceptions.HandleSyntaxError(msg=msg, handle=string, expected_syntax=expected)
 
     if ':' in string:
-        check_handle_syntax_with_index(string, base_already_checked=True)
+        if string.startswith('hdl:'): # Fixing https://github.com/EUDAT-B2HANDLE/PYHANDLE/issues/49
+            # TODO: Note: What about DOIs? -> Fixed in a different PR
+            # Note of caution: Handle Server won't accept REST API calls with hdl: prepended.
+            # It will respond with HTTP Status Code 400 and Response: {"responseCode":301,
+            # "message":"That prefix doesn't live here","handle":"hdl:21.14106/TESTTESTTEST"}
+            # The problem is prevented by removing any hdl: or doi: right before making the request.
+            return True
+            
+        else:
+            check_handle_syntax_with_index(string, base_already_checked=True)
+            # TODO: Actually this is not a handle, but refers to a field inside a handle record, so
+            # to be strict, we should not accept this.
+
 
     return True
 
@@ -92,8 +105,12 @@ def check_handle_syntax_with_index(string, base_already_checked=False):
     try:
         int(arr[0])
     except ValueError:
-        msg = 'Index is not an integer'
-        raise handleexceptions.HandleSyntaxError(msg=msg, handle=string, expected_syntax=expected)
+        if arr[0] == 'hdl:':
+            msg = 'Handle string starts with "hdl:", not with an index.'
+            raise handleexceptions.HandleSyntaxError(msg=msg, handle=string, expected_syntax=expected)
+        else:
+            msg = 'Index is not an integer'
+            raise handleexceptions.HandleSyntaxError(msg=msg, handle=string, expected_syntax=expected)
 
     if not base_already_checked:
         check_handle_syntax(string)
