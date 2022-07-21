@@ -25,6 +25,7 @@ pipeline {
                         sh '''
                         echo 'Done';
                         '''
+                    }
                 }
             }
         }
