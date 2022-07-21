@@ -4,9 +4,7 @@ FROM       python:3.5
 RUN        pip install \
            mock \
            coverage \
-           nose && \
-           pip install -U "requests==2.23.0" && \
-           pip install -U pymysql
+           nose 
 
 ADD        . /opt/PYHANDLE
 RUN        cd /opt/PYHANDLE && \

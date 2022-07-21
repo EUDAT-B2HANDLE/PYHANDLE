@@ -1,0 +1,7 @@
+# vim:set ft=dockerfile:
+FROM       python:3.10
+
+ADD        . /opt/PYHANDLE
+RUN        cd /opt/PYHANDLE && \
+           python setup.py install
+
