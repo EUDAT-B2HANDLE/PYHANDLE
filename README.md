@@ -27,7 +27,7 @@ The library is also available on PyPi and can be installed via pip:
  pip install pyhandle
 ```
 
-For more information on the methods offered by the library, please consult the [technical documentation](http://eudat-b2safe.github.io/PYHANDLE/).
+For more information on the methods offered by the library, please consult the [technical documentation](http://eudat-b2handle.github.io/PYHANDLE/).
 
 ## Instantiate:
 
@@ -43,22 +43,13 @@ client = pyhandle.handleclient.PyHandleClient('rest').instantiate_with_credentia
         creds, HTTPS_verify=https_verify)
 ```
 
-# Building the documentation
-
-For more details about the library you can build the documention using [Sphinx](http://www.sphinx-doc.org), requiring at least version 1.3. Sphinx and can be installed via pip. To build HTML documentation locally, then run:
-
-```bash
-python setup.py build_sphinx
-```
-
 
 # Link to documentation
 
-Check out the technical documentation [here](https://eudat-b2safe.github.io/PYHANDLE/).
+Check out the technical documentation [here](https://eudat-b2handle.github.io/PYHANDLE/).
 
-Check out the overall documentation [here](https://eudat-b2safe.github.io/).
+Check out the overall documentation [here](https://eudat-b2handle.github.io/).
 
-(You can find the source in the GitHub repository at [/docs/source/index.rst](./docs/source/index.rst)!)
 
 # License
 
