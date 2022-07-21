@@ -56,22 +56,13 @@ def find_version(*file_paths):
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
-
-# Note: The package maintainer needs pypandoc and pygments to properly convert
-# the Markdown-formatted README into RestructuredText before uploading to PyPi
-# See https://bitbucket.org/pypa/pypi/issues/148/support-markdown-for-readmes
-try:
-    import pypandoc
-    long_description=pypandoc.convert('README.md', 'rst')
-except(IOError, ImportError):
-    long_description=open('README.md').read()
-
-
+long_description=open('README.md').read()
 
 setup(name='pyhandle',
       version=find_version("pyhandle", "__init__.py"),
       description=('Library for management of handles '),
       long_description=long_description,
+      long_description_content_type='text/markdown',
       classifiers=[
           'Development Status :: 1 - Planning',
           'Programming Language :: Python :: 3',
