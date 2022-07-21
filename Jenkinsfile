@@ -10,7 +10,6 @@ pipeline {
         
     }
     stages {
-
         stage ('Run tests for each python version') {
             parallel {
                 stage ('Test python 2.7') {
