@@ -89,7 +89,7 @@ setup(name='pyhandle',
       packages=find_packages(),
       zip_safe=False,
       install_requires=[
-          'requests',
+          'requests==2.23.0',
           'datetime',
           'future',
           'six',
