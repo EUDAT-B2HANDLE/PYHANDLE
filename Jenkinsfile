@@ -21,6 +21,10 @@ pipeline {
                             args "-u root:root"
                         }
                     }
+                steps {
+                        sh '''
+                        echo 'Done';
+                        '''
                 }
             }
         }
