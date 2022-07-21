@@ -1,0 +1,11 @@
+# vim:set ft=dockerfile:
+FROM       python:3.10
+
+#RUN 	   pip install -U "requests==2.23.0" && \
+#           pip install -U pymysql \
+#           pip install -U sphinx
+
+ADD        . /opt/PYHANDLE
+RUN        cd /opt/PYHANDLE && \
+           python setup.py install
+

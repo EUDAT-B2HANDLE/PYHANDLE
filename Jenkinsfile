@@ -10,7 +10,21 @@ pipeline {
         
     }
     stages {
-            stage ('Run tests for each python version') {
+        stage ('Check dependencies and building process for each python version') {
+            parallel {
+                stage ('Test python 3.10') {
+                     agent {
+                        dockerfile {
+                            filename "DockersDep/Dockerfile-py3.10"
+                            dir "$PROJECT_DIR"
+                            additionalBuildArgs "-t eudat-pyhandle"
+                            args "-u root:root"
+                        }
+                    }
+                }
+            }
+        }
+        stage ('Run tests for each python version') {
             parallel {
                 stage ('Test python 2.7') {
                     agent {
