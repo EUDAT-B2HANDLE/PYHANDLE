@@ -93,7 +93,7 @@ setup(name='pyhandle',
           'datetime',
           'future',
           'six',
-          'pymysql==0.8.0 
+          'pymysql==0.8.0'
 
       ],
       tests_require=test_dependencies,
