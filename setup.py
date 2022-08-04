@@ -55,6 +55,12 @@ def find_version(*file_paths):
     if version_match:
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
+    
+REQUIREMENTS = []
+if sys.version_info[0] == 2:
+    REQUIREMENTS = ['requests==2.20.0'],
+else:
+    REQUIREMENTS = ['pymysql==0.8.0'],
 
 long_description=open('README.md').read()
 
@@ -85,11 +91,9 @@ setup(name='pyhandle',
           'datetime',
           'future',
           'six',
-          'pymysql==0.8.0 ; python_version < "2.8.0"',
-          'pymysql==0.8.0 ; python_version < "3.11.0"'       
+          'pymysql==0.8.0; python_version<"3.11.0"'       
       ],
       tests_require=test_dependencies,
-      python_requires='>=3.6.*<3.11',
       cmdclass={'test': NoseTestCommand},
       include_package_data=True
 )
