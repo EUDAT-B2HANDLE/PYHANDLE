@@ -91,7 +91,7 @@ setup(name='pyhandle',
           'datetime',
           'future',
           'six',
-          'pymysql==0.8.0; python_version<"3.11.0"'       
+          'pymysql==0.8.0'       
       ],
       tests_require=test_dependencies,
       cmdclass={'test': NoseTestCommand},
