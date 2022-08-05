@@ -57,10 +57,8 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
     
 REQUIREMENTS = []
-if sys.version_info[0] == 2:
-    REQUIREMENTS = ['requests==2.20.0'],
-else:
-    REQUIREMENTS = ['pymysql==0.8.0'],
+REQUIREMENTS = ['requests==2.23.0','datetime','future','six', 'pymysql==0.8.0'] 
+ 
 
 long_description=open('README.md').read()
 
@@ -86,15 +84,9 @@ setup(name='pyhandle',
       license='Apache License 2.0',
       packages=find_packages(),
       zip_safe=False,
-      install_requires=[
-          'requests==2.23.0',
-          'datetime',
-          'future',
-          'six',
-          'pymysql==0.8.0'       
-      ],
       tests_require=test_dependencies,
       cmdclass={'test': NoseTestCommand},
-      include_package_data=True
+      include_package_data=True, 
+      install_requires=REQUIREMENTS
 )
 
