@@ -108,9 +108,9 @@ class Searcher(object):
             if self.__user is None and self.__password is None:
                 LOGGER.debug(msg+' Neither username nor password were provided.')
             elif self.__user is None:
-                LOGGER.debug(debug+' Username not provided. Password is '+str(self.__password))
+                LOGGER.debug(msg+' Username not provided. Password is '+str(self.__password))
             else:
-                LOGGER.debug(debug+' Password not provided. Username is '+str(self.__user))
+                LOGGER.debug(msg+' Password not provided. Username is '+str(self.__user))
             return False
 
     def __check_and_set_search_url(self):
