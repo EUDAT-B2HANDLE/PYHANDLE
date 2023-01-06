@@ -10,23 +10,6 @@ pipeline {
         
     }
     stages {
-        stage ('Test python 3.5') {
-            agent {
-                dockerfile {
-                    filename "pyhandle/tests/testdockers/Dockerfile-py3.5"
-                    dir "$PROJECT_DIR"
-                    additionalBuildArgs "-t eudat-pyhandle:py3.5"
-                    args "-u root:root"
-                }
-            }
-            steps {
-                sh '''
-                    cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
-                    ./docker-entrypoint.sh coverage
-                '''
-                cobertura coberturaReportFile: '**/coverage.xml'
-            }
-        }
         stage ('Test python 3.6') {
             agent {
                 dockerfile {
