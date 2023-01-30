@@ -95,6 +95,33 @@ pipeline {
                 cobertura coberturaReportFile: '**/coverage.xml'
             }
         }
+        
+        stage ('Upload to PyPI'){
+            when {
+                branch 'master'
+            }
+            agent {
+                docker {
+                    image 'argo.registry:5000/python3'
+                }
+            }
+            steps {
+                echo 'Build python package'
+                withCredentials(bindings: [usernamePassword(credentialsId: 'pyhandle-pypi-token', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh '''
+                        cd ${WORKSPACE}/$PROJECT_DIR
+                        pipenv install --dev
+                        pipenv run python setup.py sdist bdist_wheel
+                        pipenv run python -m twine upload -u $USERNAME -p $PASSWORD dist/*
+                    '''
+                }
+            }
+            post {
+                always {
+                    cleanWs()
+                }
+            }
+        }
        stage ('Deploy Docs') {
            when {
                 changeset 'docs/source/**'
