@@ -107,7 +107,7 @@ pipeline {
             }
             steps {
                 echo 'Build python package'
-                withCredentials(bindings: [usernamePassword(credentialsId: 'pypi-token', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                withCredentials(bindings: [usernamePassword(credentialsId: 'pyhandle-pypi-token', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                     sh '''
                         cd ${WORKSPACE}/$PROJECT_DIR
                         pipenv install --dev
