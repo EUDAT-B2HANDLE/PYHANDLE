@@ -915,7 +915,7 @@ class RESTHandleClient(HandleClient):
             raise GenericHandleError(
                 operation=op,
                 handle=handle,
-                reponse=resp,
+                response=resp,
                 payload=put_payload
             )
 
