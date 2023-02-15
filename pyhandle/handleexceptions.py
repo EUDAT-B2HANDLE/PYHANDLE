@@ -10,7 +10,10 @@ import json
 import re
 from .util import add_missing_optional_args_with_value_none
 
-class BrokenHandleRecordException(Exception):
+class PyhandleBaseException(Exception):
+    pass
+
+class BrokenHandleRecordException(PyhandleBaseException):
 
     def __init__(self, **args):
 
@@ -33,7 +36,7 @@ class BrokenHandleRecordException(Exception):
         super(self.__class__, self).__init__(self.msg)
 
 
-class IllegalOperationException(Exception):
+class IllegalOperationException(PyhandleBaseException):
     '''
     To be raised when the user tries to create a HS_ADMIN self.handle,
     when he wants to create or remove 10320/loc entries using the
@@ -62,7 +65,7 @@ class IllegalOperationException(Exception):
         super(self.__class__, self).__init__(self.msg)
 
 
-class GenericHandleError(Exception):
+class GenericHandleError(PyhandleBaseException):
     '''
     To be raised when the Handle Server returned an unexpected status code
     that does not map to any other specific exception.
@@ -101,7 +104,7 @@ class GenericHandleError(Exception):
 
         super(self.__class__, self).__init__(self.msg)
 
-class ReverseLookupException(Exception):
+class ReverseLookupException(PyhandleBaseException):
     '''
     To be raised if the reverse lookup servlet returns an error.
     '''
@@ -134,7 +137,7 @@ class ReverseLookupException(Exception):
         super(self.__class__, self).__init__(self.msg)
       
 
-class HandleNotFoundException(Exception):
+class HandleNotFoundException(PyhandleBaseException):
     '''
     To be raised if the self.handle was not found on the Handle Server.
     '''
@@ -164,7 +167,7 @@ class HandleNotFoundException(Exception):
 
         super(self.__class__, self).__init__(self.msg)
 
-class HandleSyntaxError(Exception):
+class HandleSyntaxError(PyhandleBaseException):
     '''
     To be raised if the Handle does not have correct syntax.
     '''
@@ -192,7 +195,7 @@ class HandleSyntaxError(Exception):
 
         super(self.__class__, self).__init__(self.msg)
 
-class HandleAlreadyExistsException(Exception):
+class HandleAlreadyExistsException(PyhandleBaseException):
     '''
     To be raised if self.handle already exists.
     '''
@@ -216,7 +219,7 @@ class HandleAlreadyExistsException(Exception):
 
         super(self.__class__, self).__init__(self.msg)
 
-class HandleAuthenticationError(Exception):
+class HandleAuthenticationError(PyhandleBaseException):
     '''
     To be raised if authentication failed, if there was no
     write permission for creating, modifying, deleting.
@@ -256,7 +259,7 @@ class HandleAuthenticationError(Exception):
 
         super(self.__class__, self).__init__(self.msg)
 
-class CredentialsFormatError(Exception):
+class CredentialsFormatError(PyhandleBaseException):
     '''
     To be raised if credentials are ill-formatted or miss essential items.'''
     def __init__(self, **args):
