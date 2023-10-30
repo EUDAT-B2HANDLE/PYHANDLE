@@ -9,6 +9,8 @@ from setuptools.command.test import test as TestCommand
 
 class NoseTestCommand(TestCommand):
 
+    # TODO: Replace!
+
     def finalize_options(self):
         TestCommand.finalize_options(self)
 
@@ -25,7 +27,7 @@ class NoseTestCommand(TestCommand):
 # Set common test dependencies
 test_dependencies = [
     'mock',
-    'nose',
+    'pytest',
 ]
 
 
@@ -91,7 +93,7 @@ setup(name='pyhandle',
       ],
       tests_require=test_dependencies,
       python_requires='>=3.6, <3.11',
-      cmdclass={'test': NoseTestCommand},
+      cmdclass={'test': NoseTestCommand}, # Deprecated!
       include_package_data=True
 )
 
