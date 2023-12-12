@@ -71,6 +71,7 @@ setup(name='pyhandle',
           'Programming Language :: Python :: 3.8',
           'Programming Language :: Python :: 3.9',
           'Programming Language :: Python :: 3.10',
+          'Programming Language :: Python :: 3.11',
           'License :: OSI Approved :: Apache Software License',
           'Intended Audience :: Developers',
           'Topic :: Software Development :: Libraries :: Python Modules',
@@ -87,10 +88,10 @@ setup(name='pyhandle',
           'future',
           'six',
           'pymysql==0.8.0 ; python_version < "2.8.0"',
-          'pymysql==0.8.0 ; python_version < "3.11.0"'       
+          'pymysql==0.8.0 ; python_version < "3.12.0"'
       ],
       tests_require=test_dependencies,
-      python_requires='>=3.6, <3.11',
+      python_requires='>=3.6, <3.12',
       cmdclass={'test': NoseTestCommand},
       include_package_data=True
 )
