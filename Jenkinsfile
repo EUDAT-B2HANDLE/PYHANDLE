@@ -95,7 +95,23 @@ pipeline {
                 cobertura coberturaReportFile: '**/coverage.xml'
             }
         }
-        
+        stage ('Test python 3.11') {
+            agent {
+                dockerfile {
+                    filename "pyhandle/tests/testdockers/Dockerfile-py3.11"
+                    dir "$PROJECT_DIR"
+                    additionalBuildArgs "-t eudat-pyhandle:py3.11"
+                    args "-u root:root"
+                }
+            }
+            steps {
+                sh '''
+                    cd $WORKSPACE/$PROJECT_DIR/pyhandle/tests
+                    ./docker-entrypoint-310.sh coverage
+                '''
+                cobertura coberturaReportFile: '**/coverage.xml'
+            }
+        }
         stage ('Upload to PyPI'){
             when {
                 branch 'master'

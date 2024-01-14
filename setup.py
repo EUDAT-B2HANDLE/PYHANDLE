@@ -22,12 +22,12 @@ class NoseTestCommand(TestCommand):
         # See also nosetests section in setup.cfg
         nose.run_exit(argv=['nosetests', test_script])
 
+
 # Set common test dependencies
 test_dependencies = [
     'mock',
     'nose',
 ]
-
 
 if sys.version_info < (2, 7):
     test_dependencies.append('argparse')
@@ -38,7 +38,7 @@ if sys.version_info < (2, 7):
         import multiprocessing
     except ImportError:
         pass
-    
+
 here = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -56,7 +56,8 @@ def find_version(*file_paths):
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
-long_description=open('README.md').read()
+
+long_description = open('README.md').read()
 
 setup(name='pyhandle',
       version=find_version("pyhandle", "__init__.py"),
@@ -71,27 +72,29 @@ setup(name='pyhandle',
           'Programming Language :: Python :: 3.8',
           'Programming Language :: Python :: 3.9',
           'Programming Language :: Python :: 3.10',
+          'Programming Language :: Python :: 3.11',
           'License :: OSI Approved :: Apache Software License',
           'Intended Audience :: Developers',
           'Topic :: Software Development :: Libraries :: Python Modules',
       ],
-      keywords=['handles', 'PIDs'],   
+      keywords=['handles', 'PIDs'],
       download_url='https://github.com/EUDAT-B2SAFE/PYHANDLE',
       license='Apache License 2.0',
       packages=find_packages(),
       zip_safe=False,
       install_requires=[
           'requests==2.25.1; python_version ~= "3.5.0"',
-          'requests==2.27.1; python_version >= "3.6"',
+          'requests==2.27.1; python_version == "3.6"',
+          'requests>=2.31.0; python_version > "3.6"',
           'datetime',
           'future',
           'six',
           'pymysql==0.8.0 ; python_version < "2.8.0"',
-          'pymysql==0.8.0 ; python_version < "3.11.0"'       
+          'pymysql==0.8.0 ; python_version < "3.11.0"',
+          'pymysql==1.1.0 ; python_version >= "3.11.0"'
       ],
       tests_require=test_dependencies,
-      python_requires='>=3.6, <3.11',
+      python_requires='>=3.6',
       cmdclass={'test': NoseTestCommand},
       include_package_data=True
-)
-
+      )
