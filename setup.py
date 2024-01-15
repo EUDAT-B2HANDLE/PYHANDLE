@@ -84,6 +84,7 @@ setup(name='pyhandle',
       install_requires=[
           'requests==2.27.1; python_version=="3.5.0"',
           'requests>=2.28.1; python_version>="3.6.0"',
+          'cython; python_version>="3.10.0"',
           'datetime',
           'future',
           'six',
