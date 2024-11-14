@@ -10,6 +10,7 @@ __version__ = "1.2.1"
 
 from . import clientcredentials
 from . import handleclient
+from .handleexceptions import *
 
 # Make sure that a single "import pyhandle" allows the use of
 # relevant submodules!
