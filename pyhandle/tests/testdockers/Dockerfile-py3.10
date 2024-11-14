@@ -8,8 +8,9 @@ RUN        chown -R jenkins:jenkins /home/jenkins
 RUN        pip install \
            mock \
            pytest \
-           pytest-cov \
-           pip install -U sphinx
+           pytest-cov 
+
+RUN           pip install -U sphinx
 
 ADD        . /opt/PYHANDLE
 RUN        cd /opt/PYHANDLE && \
