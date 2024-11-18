@@ -2,14 +2,9 @@ import codecs
 import os
 import re
 import sys
-
-if sys.version_info < (3,12):
-    from setuptools import setup, find_packages
-    from setuptools.command.test import test as TestCommand
-elif sys.version_info >= (3,12):
-    from python3-setuptools import setup, find_packages
-    from python3-setuptools.command.test import test as TestCommand
-    
+from setuptools import setup, find_packages
+from setuptools.command.test import test as TestCommand
+   
 
 class NoseTestCommand(TestCommand):
 
