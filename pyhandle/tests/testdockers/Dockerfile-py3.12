@@ -8,6 +8,7 @@ RUN        chown -R jenkins:jenkins /home/jenkins
 RUN        pip install \
            mock \
            pytest \
+           python3-setuptools \
            pytest-cov 
            
 RUN           pip install -U sphinx
