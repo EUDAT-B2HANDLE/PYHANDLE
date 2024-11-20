@@ -1,0 +1,25 @@
+# vim:set ft=dockerfile:
+FROM       python:3.12
+
+RUN        useradd jenkins 
+RUN        mkdir -p /home/jenkins/
+RUN        chown -R jenkins:jenkins /home/jenkins
+
+RUN python -m ensurepip --upgrade
+
+RUN        pip install \
+           mock \
+           pytest \
+           pytest-cov \
+           setuptools \
+           wheel
+           
+RUN           pip install -U sphinx
+
+ADD        . /opt/PYHANDLE
+RUN        cd /opt/PYHANDLE && \
+           python setup.py install
+
+WORKDIR    /opt/PYHANDLE/pyhandle/tests
+
+CMD ["./docker-entrypoint-310.sh", "coverage"]
