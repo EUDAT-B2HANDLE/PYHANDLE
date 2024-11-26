@@ -93,7 +93,7 @@ setup(name='pyhandle',
           'six',
           'pymysql==0.8.0 ; python_version < "2.8.0"',
           'pymysql==0.8.0 ; python_version < "3.11.0"',
-          'pymysql==1.1.0 ; python_version >= "3.11.0"'
+          'pymysql==1.1.1 ; python_version >= "3.11.0"'
       ],
       tests_require=test_dependencies,
       python_requires='>=3.6',
