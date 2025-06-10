@@ -86,7 +86,7 @@ setup(name='pyhandle',
       zip_safe=False,
       install_requires=[
           'requests==2.25.1; python_version ~= "3.5.0"',
-          'requests==2.27.1; python_version == "3.6"',
+          'requests==2.32.4; python_version == "3.6"',
           'requests>=2.31.0; python_version > "3.6"',
           'datetime',
           'future',
