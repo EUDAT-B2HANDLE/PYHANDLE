@@ -7,7 +7,9 @@ PyHandle currently supports Python >=3.5 (tested up to 3.10), and requires at le
 PyHandle is based on a prior development of the [EUDAT project](https://eudat.eu) under the name B2Handle.
 As [B2Handle](https://github.com/EUDAT-B2SAFE/B2HANDLE) was developed with a specific scope - Handle operations in the EUDAT project - in mind, it has been improved and made more generic to cater to a broader audience.
 
-We advice you to use PyHandle isteard of B2HADNLE. 
+We advice you to use PyHandle isteard of B2HANDLE.
+
+This work is co-funded by the EOSC-Beyond project.
 
 
 # Installation
