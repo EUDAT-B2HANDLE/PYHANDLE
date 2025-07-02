@@ -12,7 +12,7 @@ import re
 import requests
 import json
 import pyhandle
-from past.builtins import xrange
+
 from pyhandle.handleexceptions import ReverseLookupException
 
 LOGGER = logging.getLogger(__name__)
@@ -334,7 +334,7 @@ class Searcher(object):
         if prefix is not None:
             LOGGER.debug('search_handle: Restricting search to prefix '+prefix)
             filteredlist_of_handles = []
-            for i in xrange(len(list_of_handles)):
+            for i in range(len(list_of_handles)):
                 if list_of_handles[i].split('/')[0] == prefix:
                     filteredlist_of_handles.append(list_of_handles[i])
             list_of_handles = filteredlist_of_handles

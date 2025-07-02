@@ -18,7 +18,7 @@ RUN           pip install -U sphinx
 
 ADD        . /opt/PYHANDLE
 RUN        cd /opt/PYHANDLE && \
-           python setup.py install
+           pip install .
 
 WORKDIR    /opt/PYHANDLE/pyhandle/tests
 

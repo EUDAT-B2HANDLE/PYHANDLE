@@ -16,10 +16,13 @@ You can install the PyHandle library as follows:
 
 ```bash
 git clone https://github.com/EUDAT-B2SAFE/PYHANDLE.git
-cd PYHANDLE/
-python setup.py install
 ```
- 
+( for python <= 3.11)
+```cd PYHANDLE/ && python setup.py install ```
+
+(for python >= 3.12)
+```cd PYHANDLE/ && pip install .```
+
 The library is also available on PyPi and can be installed via pip:
 
 ```bash
