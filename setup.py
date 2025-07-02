@@ -27,6 +27,7 @@ class NoseTestCommand(TestCommand):
 test_dependencies = [
     'mock',
     'nose',
+    'future
 ]
 
 if sys.version_info < (2, 7):
