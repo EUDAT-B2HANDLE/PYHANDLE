@@ -8,8 +8,6 @@ import datetime
 import copy
 import requests  # This import is needed for mocking in unit tests.
 
-from past.builtins import xrange
-
 from .. pyhandleclient import HandleClient
 from .. import utilhandle
 from .. import hsresponses
@@ -387,7 +385,7 @@ class RESTHandleClient(HandleClient):
         # TODO: Reimplement!
 
         indices = [] # Why indices? Why not just grab the value!
-        for i in xrange(len(list_of_entries)):
+        for i in range(len(list_of_entries)):
             if list_of_entries[i]['type'] == key:
                 indices.append(i)
 
@@ -527,7 +525,7 @@ class RESTHandleClient(HandleClient):
             
             # Check if that key already exists in the record:
             changed = False
-            for i in xrange(len(list_of_existing_entries)):
+            for i in range(len(list_of_existing_entries)):
                 current_entry = list_of_existing_entries[i]
                 if current_entry['type'] == key:
 
@@ -571,7 +569,7 @@ class RESTHandleClient(HandleClient):
 
         # Add the indices
         indices = []
-        for i in xrange(len(new_list_of_entries)):
+        for i in range(len(new_list_of_entries)):
             indices.append(new_list_of_entries[i]['index'])
 
         # append to the old record:
@@ -1150,7 +1148,7 @@ class RESTHandleClient(HandleClient):
         # find new index:
         all_prohibited_indices = existing_indices | prohibited_indices
         searchmax = max(start, max(all_prohibited_indices)) + 2
-        for index in xrange(start, searchmax):
+        for index in range(start, searchmax):
             if index not in all_prohibited_indices:
                 return index
 
@@ -1238,7 +1236,7 @@ class RESTHandleClient(HandleClient):
             in the given list.
         '''
         indices = []
-        for i in xrange(len(list_of_entries)):
+        for i in range(len(list_of_entries)):
             if list_of_entries[i]['type'] == key:
                 indices.append(i)
         return indices

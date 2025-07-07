@@ -1,5 +1,3 @@
-
-from past.builtins import xrange
 def add_missing_optional_args_with_value_none(args, optional_args):
     '''
     Adds key-value pairs to the passed dictionary, so that
@@ -62,7 +60,7 @@ def remove_value_none_from_dict(dictionary):
 
 def return_indices_of_value_none(mylist):
     isnone = []
-    for i in xrange(len(mylist)):
+    for i in range(len(mylist)):
         if mylist[i] is None:
             isnone.append(i)
     return isnone
