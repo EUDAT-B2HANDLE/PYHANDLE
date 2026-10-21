@@ -1,5 +1,9 @@
-__version__ = "1.5.0"
-# The version as used in setup.py and docs/source/conf.py.
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("pyhandle")
+except PackageNotFoundError:
+    __version__ = "0+unknown"
 
 # IMPORTANT
 # Please put no comment above the __version__ variable,
@@ -8,11 +12,36 @@ __version__ = "1.5.0"
 # the package name, the next non-empty comment would be
 # printed as description).
 
-from . import clientcredentials
-from . import handleclient
-from .handleexceptions import *
+from . import clientcredentials, handleclient
+from .handleexceptions import (
+    BrokenHandleRecordException,
+    CredentialsFormatError,
+    GenericHandleError,
+    HandleAlreadyExistsException,
+    HandleAuthenticationError,
+    HandleNotFoundException,
+    HandleSyntaxError,
+    IllegalOperationException,
+    PyhandleBaseException,
+    ReverseLookupException,
+)
+
+__all__ = [
+    "clientcredentials",
+    "handleclient",
+    "BrokenHandleRecordException",
+    "CredentialsFormatError",
+    "GenericHandleError",
+    "HandleAlreadyExistsException",
+    "HandleAuthenticationError",
+    "HandleNotFoundException",
+    "HandleSyntaxError",
+    "IllegalOperationException",
+    "PyhandleBaseException",
+    "ReverseLookupException",
+]
 
 # Make sure that a single "import pyhandle" allows the use of
 # relevant submodules!
-# See 
+# See
 # https://github.com/psf/requests/blob/master/requests/__init__.py#L120

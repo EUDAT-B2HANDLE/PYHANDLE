@@ -2,7 +2,7 @@
 
 PyHandle is a Python client library for interaction with a [Handle System](https://handle.net) server, providing basic create, read, update and delete capabilities for Handles. The library offers a client for the HTTP REST interface. It also includes a client that interacts directly with a Handle server SQL back-end and a client that creates customized Batch files (containing Batch operations that can be performed using the GenericBatch command utility provided by the Handle System), but those two are no longer maintained.
 
-PyHandle currently supports Python >=3.5 (tested up to 3.10), and requires at least a Handle System server 9. The library requires OpenSSL v1.0.1 or higher. Python 2.7 and 3.10 are supported. 
+PyHandle supports Python 3.11 and newer, and requires at least a Handle System server 9. The library requires OpenSSL v1.0.1 or higher.
 
 PyHandle is based on a prior development of the [EUDAT project](https://eudat.eu) under the name B2Handle.
 As [B2Handle](https://github.com/EUDAT-B2SAFE/B2HANDLE) was developed with a specific scope - Handle operations in the EUDAT project - in mind, it has been improved and made more generic to cater to a broader audience.
@@ -12,16 +12,7 @@ We advice you to use PyHandle isteard of B2HADNLE.
 
 # Installation
 
-You can install the PyHandle library as follows:
-
-```bash
-git clone https://github.com/EUDAT-B2SAFE/PYHANDLE.git
-```
-( for python <= 3.11)
-```cd PYHANDLE/ && python setup.py install ```
-
-(for python >= 3.12)
-```cd PYHANDLE/ && pip install .```
+Install the package with `python -m pip install pyhandle`.
 
 The library is also available on PyPi and can be installed via pip:
 

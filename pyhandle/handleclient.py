@@ -1,39 +1,37 @@
-'''
+"""
 This module provides the main client for the PYHANDLE
     library.
-'''
-from __future__ import absolute_import
+"""
 
 import logging
-import pyhandle
-import requests
 
 from pyhandle.client.batchhandleclient import BatchHandleClient
 from pyhandle.client.dbhandleclient import DBHandleClient
 from pyhandle.client.resthandleclient import RESTHandleClient
+
 from . import util
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(util.NullHandler())
-REQUESTLOGGER = logging.getLogger('log_all_requests_of_testcases_to_file')
+REQUESTLOGGER = logging.getLogger("log_all_requests_of_testcases_to_file")
 REQUESTLOGGER.propagate = False
 REQUESTLOGGER.addHandler(util.NullHandler())
 
 
 class PyHandleClient(object):
-    ''' PYHANDLE main client class '''
+    """PYHANDLE main client class"""
 
     HANDLE_CLIENTS = [DBHandleClient, RESTHandleClient, BatchHandleClient]
 
     def __init__(self, client, credentials=None, batch_file_path=None):
-        '''
+        """
         Initialize a REST or Db client.
 
         :param client: A string that can be 'rest' or 'db'
         :param credentials: Optional: key-value pairs to specify credentials for the MySQL database.
-        '''
+        """
 
-        allowed_args = ['rest', 'db', 'batch']
+        allowed_args = ["rest", "db", "batch"]
 
         if client in allowed_args:
             self.client = client
@@ -44,19 +42,17 @@ class PyHandleClient(object):
             raise ValueError("Allowed clients: 'rest', 'db' or 'batch'")
 
     def select_handle_client(self):
-        '''
+        """
         Instantiate REST, DB or Batch client.
         :return: Instance of the client.
-        '''
+        """
 
-        for client in self.HANDLE_CLIENTS:
-            if client.check_client(self.client):
-                if self.client == 'db':
-                    return client(self.credentials)
-                elif self.client == 'batch':
-                    return client(batch_file_path=self.batch_file_path)
-                else:
-                    return client()
+        if DBHandleClient.check_client(self.client):
+            return DBHandleClient(self.credentials)
+        elif BatchHandleClient.check_client(self.client):
+            return BatchHandleClient(batch_file_path=self.batch_file_path)
+        elif RESTHandleClient.check_client(self.client):
+            return RESTHandleClient()
 
     def create_batch_file(self, overwrite=False):
         return self.handle_client.create_batch_file(overwrite)
@@ -67,14 +63,23 @@ class PyHandleClient(object):
     def instantiate_with_credentials(self, credentials, **config):
         return self.handle_client.instantiate_with_credentials(credentials, **config)
 
-    def instantiate_with_username_and_password(self, handle_server_url, username, password, **config):
-        return self.handle_client.instantiate_with_username_and_password(handle_server_url, username, password,
-                                                                         **config)
+    def instantiate_with_username_and_password(
+        self, handle_server_url, username, password, **config
+    ):
+        return self.handle_client.instantiate_with_username_and_password(
+            handle_server_url, username, password, **config
+        )
 
-    def instantiate_for_read_and_search(self, handle_server_url, reverselookup_username, reverselookup_password,
-                                        **config):
-        return self.handle_client.instantiate_for_read_and_search(handle_server_url, reverselookup_username,
-                                                                  reverselookup_password, **config)
+    def instantiate_for_read_and_search(
+        self,
+        handle_server_url,
+        reverselookup_username,
+        reverselookup_password,
+        **config,
+    ):
+        return self.handle_client.instantiate_for_read_and_search(
+            handle_server_url, reverselookup_username, reverselookup_password, **config
+        )
 
     def retrieve_handle_record_json(self, handle):
         return self.handle_client.retrieve_handle_record_json(handle)
@@ -94,11 +99,17 @@ class PyHandleClient(object):
     def delete_handle(self, handle):
         self.handle_client.delete_handle(handle)
 
-    def generate_and_register_handle(self, prefix, location, checksum=None, **extratypes):
-        return self.handle_client.generate_and_register_handle(prefix, location, checksum, **extratypes)
+    def generate_and_register_handle(
+        self, prefix, location, checksum=None, **extratypes
+    ):
+        return self.handle_client.generate_and_register_handle(
+            prefix, location, checksum, **extratypes
+        )
 
     def register_handle(self, handle, location, overwrite=False, **extratypes):
-        return self.handle_client.register_handle(handle, location, overwrite, **extratypes)
+        return self.handle_client.register_handle(
+            handle, location, overwrite=overwrite, **extratypes
+        )
 
     def search_handle(self, pattern=None, **args):
         return self.handle_client.search_handle(pattern, **args)
@@ -125,13 +136,17 @@ class PyHandleClient(object):
         return self.handle_client.check_if_handle_exists(handle)
 
     def __get_handle_record_if_necessary(self, handle, handlerecord_json):
-        return self.handle_client.__get_handle_record_if_necessary(handle, handlerecord_json)
+        return self.handle_client.__get_handle_record_if_necessary(
+            handle, handlerecord_json
+        )
 
     def pretty_print(self, record):
         return self.handle_client.pretty_print(record)
 
     def register_handle_batch(self, handle, url, hdl_admin_index, admin_handle, perm):
-        return self.handle_client.register_handle_batch(handle, url, hdl_admin_index, admin_handle, perm)
+        return self.handle_client.register_handle_batch(
+            handle, url, hdl_admin_index, admin_handle, perm
+        )
 
     def add_handle_value(self, handle, **kvpairs):
         self.handle_client.add_handle_value(handle, **kvpairs)

@@ -1,0 +1,69 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: uv sync --all-groups
+      - run: uv run pytest --cov=pyhandle --cov-report=xml --junitxml=test-results.xml
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: test-results-py${{ matrix.python-version }}
+          path: |
+            test-results.xml
+            coverage.xml
+          retention-days: 365
+      - uses: codecov/codecov-action@v7
+        if: matrix.python-version == '3.14'
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+
+  ruff-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - run: uv sync --all-groups
+      - run: uv run ruff format --check --diff .
+
+  ruff-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - run: uv sync --all-groups
+      - run: uv run ruff check --output-format=github .
+
+  ty:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - run: uv sync --all-groups
+      - run: uv run ty check pyhandle

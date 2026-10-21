@@ -1,25 +1,27 @@
 """Testing methods that normally need Handle server read access,
 by patching the get request to replace read access."""
 
-import sys
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
+import json
+import unittest
 
 import mock
-import json
+
 import pyhandle
 from pyhandle.client.resthandleclient import RESTHandleClient
-from pyhandle.handleexceptions import HandleSyntaxError, GenericHandleError, HandleNotFoundException
-from pyhandle.tests.mockresponses import MockResponse, MockSearchResponse, MockCredentials
+from pyhandle.handleexceptions import (
+    GenericHandleError,
+    HandleNotFoundException,
+    HandleSyntaxError,
+)
+from tests.mockresponses import MockCredentials, MockResponse
 
 # Load some data that is needed for testing
-PATH_RES = pyhandle.util.get_neighbour_directory(__file__, 'resources')
-RECORD = open(PATH_RES+'/handlerecord_for_reading_PUBLIC.json').read()
+PATH_RES = pyhandle.util.get_neighbour_directory(__file__, "resources")
+RECORD = open(PATH_RES + "/handlerecord_for_reading_PUBLIC.json").read()
+
 
 class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
-    '''Testing methods that read the 10320/loc entry.'''
+    """Testing methods that read the 10320/loc entry."""
 
     def setUp(self):
         self.inst = RESTHandleClient()
@@ -29,7 +31,7 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
 
     # retrieve_handle_record_json:
 
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_retrieve_handle_record_json_normal(self, getpatch):
         """Test if retrieve_handle_record_json returns the correct things.."""
 
@@ -42,16 +44,15 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
         getpatch.return_value = mock_response
 
         # Call method and check result:
-        received = self.inst.retrieve_handle_record_json(expected['handle'])
-        self.assertEqual(received, expected,
-            'Unexpected return from handle retrieval.')
+        received = self.inst.retrieve_handle_record_json(expected["handle"])
+        self.assertEqual(received, expected, "Unexpected return from handle retrieval.")
 
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_retrieve_handle_record_json_handle_does_not_exist(self, getpatch):
         """Test return value (None) if handle does not exist (retrieve_handle_record_json)."""
 
         # Test variables:
-        testhandle = 'dont/exist'
+        testhandle = "dont/exist"
 
         # Define the replacement for the patched method:
         mock_response = MockResponse(notfound=True)
@@ -59,15 +60,18 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
 
         # Call method and check result:
         json_record = self.inst.retrieve_handle_record_json(testhandle)
-        self.assertIsNone(json_record,
-            'The return value should be None if the handle does not exist, not: '+str(json_record))
+        self.assertIsNone(
+            json_record,
+            "The return value should be None if the handle does not exist, not: "
+            + str(json_record),
+        )
 
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_retrieve_handle_record_json_handle_empty(self, getpatch):
         """Test return value if handle is empty (retrieve_handle_record_json)."""
 
         # Test variables:
-        testhandle = 'dont/exist'
+        testhandle = "dont/exist"
 
         # Define the replacement for the patched method:
         mock_response = MockResponse(empty=True)
@@ -75,15 +79,18 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
 
         # Call method and check result:
         json_record = self.inst.retrieve_handle_record_json(testhandle)
-        self.assertEqual(json_record['responseCode'],200,
-            'Unexpected return value: '+str(json_record))
+        self.assertEqual(
+            json_record["responseCode"],
+            200,
+            "Unexpected return value: " + str(json_record),
+        )
 
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_retrieve_handle_record_json_genericerror(self, getpatch):
         """Test exception if retrieve_handle_record_json returns a strange HTTP code."""
 
         # Test variables:
-        testhandle = 'dont/exist'
+        testhandle = "dont/exist"
 
         # Define the replacement for the patched method:
         mock_response = MockResponse(status_code=99999)
@@ -91,55 +98,69 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
 
         # Call method and check result:
         with self.assertRaises(GenericHandleError):
-            json_record = self.inst.retrieve_handle_record_json(testhandle)
+            self.inst.retrieve_handle_record_json(testhandle)
 
     # retrieve_handle_record:
 
-    #@mock.patch('pyhandle.handleclient.RESTHandleClient._EUDATHandleClient__send_handle_get_request')
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    # @mock.patch('pyhandle.handleclient.RESTHandleClient._EUDATHandleClient__send_handle_get_request')
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_retrieve_handle_record_when_json_not_given(self, getpatch):
         """Test retrieving a handle record"""
 
         # Test variables
         handlerecord_string = RECORD
         handlerecord_json = json.loads(handlerecord_string)
-        testhandle = handlerecord_json['handle']
-        
+        testhandle = handlerecord_json["handle"]
+
         # Define the replacement for the patched method:
         mock_response = MockResponse(success=True, content=handlerecord_string)
         getpatch.return_value = mock_response
 
         # Call method and check result:
         dict_record = self.inst.retrieve_handle_record(testhandle)
-        self.assertIn('TEST1', dict_record,
-            'Key "test1" not in handlerecord dictionary!')
-        self.assertIn('TEST2', dict_record,
-            'Key "test2" not in handlerecord dictionary!')
-        self.assertIn('TESTDUP', dict_record,
-            'Key "TESTDUP" not in handlerecord dictionary!')
-        self.assertIn('HS_ADMIN', dict_record,
-            'Key "HS_ADMIN" not in handlerecord dictionary!')
+        self.assertIn(
+            "TEST1", dict_record, 'Key "test1" not in handlerecord dictionary!'
+        )
+        self.assertIn(
+            "TEST2", dict_record, 'Key "test2" not in handlerecord dictionary!'
+        )
+        self.assertIn(
+            "TESTDUP", dict_record, 'Key "TESTDUP" not in handlerecord dictionary!'
+        )
+        self.assertIn(
+            "HS_ADMIN", dict_record, 'Key "HS_ADMIN" not in handlerecord dictionary!'
+        )
 
-        self.assertEqual(dict_record['TEST1'], 'val1',
-            'The value of "test1" is not "val1.')
-        self.assertEqual(dict_record['TEST2'], 'val2',
-            'The value of "test2" is not "val2.')
-        self.assertIn(dict_record['TESTDUP'], ("dup1", "dup2"),
-            'The value of the duplicate key "TESTDUP" should be "dup1" or "dup2".')
-        self.assertIn('permissions', dict_record['HS_ADMIN'],
-            'The HS_ADMIN has no permissions: '+dict_record['HS_ADMIN'])
+        self.assertEqual(
+            dict_record["TEST1"], "val1", 'The value of "test1" is not "val1.'
+        )
+        self.assertEqual(
+            dict_record["TEST2"], "val2", 'The value of "test2" is not "val2.'
+        )
+        self.assertIn(
+            dict_record["TESTDUP"],
+            ("dup1", "dup2"),
+            'The value of the duplicate key "TESTDUP" should be "dup1" or "dup2".',
+        )
+        self.assertIn(
+            "permissions",
+            dict_record["HS_ADMIN"],
+            "The HS_ADMIN has no permissions: " + dict_record["HS_ADMIN"],
+        )
 
-        self.assertEqual(len(dict_record), 4,
-            'The record should have a length of 5 (as the duplicate is ignored.')
+        self.assertEqual(
+            len(dict_record),
+            4,
+            "The record should have a length of 5 (as the duplicate is ignored.",
+        )
 
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
-    def test_retrieve_handle_record_when_handle_is_wrong(self, getpatch):
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
+    def test_retrieve_handle_record_when_handle_does_not_match_record(self, getpatch):
         """Test error when retrieving a handle record with contradicting inputs."""
-        
+
         # Test variable
-        testhandle = 'something/else'
+        testhandle = "something/else"
         handlerecord_string = RECORD
-        handlerecord_json = json.loads(handlerecord_string)
 
         # Define the replacement for the patched method:
         mock_response = MockResponse(success=True, content=handlerecord_string)
@@ -149,7 +170,7 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
         with self.assertRaises(GenericHandleError):
             self.inst.retrieve_handle_record(testhandle)
 
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_retrieve_handle_record_when_handle_is_None(self, getpatch):
         """Test error when retrieving a handle record with a None input."""
 
@@ -160,12 +181,12 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
         with self.assertRaises(HandleSyntaxError):
             self.inst.retrieve_handle_record(testhandle)
 
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_retrieve_handle_record_when_handle_is_wrong(self, getpatch):
         """Test error when retrieving a nonexistent handle record."""
-        
+
         # Test variable
-        testhandle = 'who/cares'
+        testhandle = "who/cares"
 
         # Define the replacement for the patched method:
         mock_response = MockResponse(notfound=True)
@@ -173,17 +194,18 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
 
         # Call method and check result:
         hrec = self.inst.retrieve_handle_record(testhandle)
-        self.assertIsNone(hrec,
-            'The handle record for a nonexistent handle should be None!')
+        self.assertIsNone(
+            hrec, "The handle record for a nonexistent handle should be None!"
+        )
 
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_retrieve_handle_record_when_handlerecord_is_None(self, getpatch):
         """Test error when retrieving a handle record, giving a None type."""
 
         # Test variable
         handlerecord_string = RECORD
         handlerecord_json = json.loads(handlerecord_string)
-        testhandle = handlerecord_json['handle']
+        testhandle = handlerecord_json["handle"]
         givenrecord = None
 
         # Define the replacement for the patched method:
@@ -192,36 +214,51 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
 
         # Call method and check result:
         dict_record = self.inst.retrieve_handle_record(testhandle, givenrecord)
-        self.assertIn('TEST1', dict_record,
-            'Key "test1" not in handlerecord dictionary!')
-        self.assertIn('TEST2', dict_record,
-            'Key "test2" not in handlerecord dictionary!')
-        self.assertIn('TESTDUP', dict_record,
-            'Key "TESTDUP" not in handlerecord dictionary!')
-        self.assertIn('HS_ADMIN', dict_record,
-            'Key "HS_ADMIN" not in handlerecord dictionary!')
+        self.assertIn(
+            "TEST1", dict_record, 'Key "test1" not in handlerecord dictionary!'
+        )
+        self.assertIn(
+            "TEST2", dict_record, 'Key "test2" not in handlerecord dictionary!'
+        )
+        self.assertIn(
+            "TESTDUP", dict_record, 'Key "TESTDUP" not in handlerecord dictionary!'
+        )
+        self.assertIn(
+            "HS_ADMIN", dict_record, 'Key "HS_ADMIN" not in handlerecord dictionary!'
+        )
 
-        self.assertEqual(dict_record['TEST1'], 'val1',
-            'The value of "test1" is not "val1.')
-        self.assertEqual(dict_record['TEST2'], 'val2',
-            'The value of "test2" is not "val2.')
-        self.assertIn(dict_record['TESTDUP'], ("dup1", "dup2"),
-            'The value of the duplicate key "TESTDUP" should be "dup1" or "dup2".')
-        self.assertIn('permissions', dict_record['HS_ADMIN'],
-            'The HS_ADMIN has no permissions: '+dict_record['HS_ADMIN'])
+        self.assertEqual(
+            dict_record["TEST1"], "val1", 'The value of "test1" is not "val1.'
+        )
+        self.assertEqual(
+            dict_record["TEST2"], "val2", 'The value of "test2" is not "val2.'
+        )
+        self.assertIn(
+            dict_record["TESTDUP"],
+            ("dup1", "dup2"),
+            'The value of the duplicate key "TESTDUP" should be "dup1" or "dup2".',
+        )
+        self.assertIn(
+            "permissions",
+            dict_record["HS_ADMIN"],
+            "The HS_ADMIN has no permissions: " + dict_record["HS_ADMIN"],
+        )
 
-        self.assertEqual(len(dict_record), 4,
-            'The record should have a length of 5 (as the duplicate is ignored.')
+        self.assertEqual(
+            len(dict_record),
+            4,
+            "The record should have a length of 5 (as the duplicate is ignored.",
+        )
 
     # get_value_from_handle
 
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_get_value_from_handle_when_handle_inexistent(self, getpatch):
         """Test error when retrieving a handle record, giving a None type."""
-        
+
         # Test variables
-        testhandle = 'who/cares'
-        key = 'foo'
+        testhandle = "who/cares"
+        key = "foo"
 
         # Define the replacement for the patched method:
         mock_response = MockResponse(notfound=True)
@@ -233,31 +270,32 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
 
         # Instantiation
 
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_instantiate_with_username_and_password_wrongpw(self, getpatch):
-        
 
         # Define the replacement for the patched method:
         mock_response = MockResponse(success=True)
         getpatch.return_value = mock_response
 
         inst = RESTHandleClient.instantiate_with_username_and_password(
-                'http://someurl', '100:my/testhandle', 'passywordy')
+            "http://someurl", "100:my/testhandle", "passywordy"
+        )
 
         self.assertIsInstance(inst, RESTHandleClient)
 
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_instantiate_with_username_and_password_inexistentuser(self, getpatch):
-        
+
         # Define the replacement for the patched method:
         mock_response = MockResponse(notfound=True)
         getpatch.return_value = mock_response
 
         with self.assertRaises(HandleNotFoundException):
-            inst = RESTHandleClient.instantiate_with_username_and_password(
-                'http://someurl', '100:john/doe', 'passywordy')
+            RESTHandleClient.instantiate_with_username_and_password(
+                "http://someurl", "100:john/doe", "passywordy"
+            )
 
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_instantiate_with_credentials_inexistentuser(self, getpatch):
         """Test instantiation of client: Exception if username does not exist."""
 
@@ -266,22 +304,23 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
         getpatch.return_value = mock_response
 
         # Test variables
-        testusername_inexistent = '100:john/doe'
+        testusername_inexistent = "100:john/doe"
         credentials = pyhandle.clientcredentials.PIDClientCredentials(
-            client='client',
-            handle_server_url='some/url',
+            client="client",
+            handle_server_url="some/url",
             username=testusername_inexistent,
-            password='some_password')
+            password="some_password",
+        )
 
         # Run code to be tested + check exception:
         # Create instance with credentials
         with self.assertRaises(HandleNotFoundException):
-            inst = RESTHandleClient.instantiate_with_credentials(credentials)
+            RESTHandleClient.instantiate_with_credentials(credentials)
 
         # If the user name has no index, exception is already thrown in credentials creation!
-        #self.assertRaises(HandleSyntaxError, pyhandle.PIDClientCredentials, 'url', 'prefix/suffix', randompassword)
+        # self.assertRaises(HandleSyntaxError, pyhandle.PIDClientCredentials, 'url', 'prefix/suffix', randompassword)
 
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_instantiate_with_credentials(self, getpatch):
         """Test instantiation of client: No exception if password wrong."""
 
@@ -291,10 +330,11 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
 
         # Test variables
         credentials = pyhandle.clientcredentials.PIDClientCredentials(
-            client='client',
-            handle_server_url='some/url',
-            username='100:my/testhandle',
-            password='some_password_123')
+            client="client",
+            handle_server_url="some/url",
+            username="100:my/testhandle",
+            password="some_password_123",
+        )
 
         # Run code to be tested
         # Create instance with credentials
@@ -303,7 +343,9 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
         # Check desired outcomes
         self.assertIsInstance(inst, RESTHandleClient)
 
-    @mock.patch('pyhandle.handlesystemconnector.HandleSystemConnector.check_if_username_exists')
+    @mock.patch(
+        "pyhandle.handlesystemconnector.HandleSystemConnector.check_if_username_exists"
+    )
     def test_instantiate_with_credentials_config(self, checkpatch):
         """Test instantiation of client: No exception if password wrong."""
 
@@ -312,18 +354,23 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
         checkpatch.return_value = mock_response
 
         # Test variables
-        credentials = MockCredentials(restapi='foobar')
+        credentials = MockCredentials(restapi="foobar")
 
-        self.assertEqual(credentials.get_config()['REST_API_url_extension'],'foobar',
-            'Config: '+str(credentials.get_config()))
+        self.assertEqual(
+            credentials.get_config()["REST_API_url_extension"],
+            "foobar",
+            "Config: " + str(credentials.get_config()),
+        )
 
         # Run code to be tested
         # Create instance with credentials
         inst = RESTHandleClient.instantiate_with_credentials(credentials)
         self.assertIsInstance(inst, RESTHandleClient)
 
-    @mock.patch('pyhandle.handlesystemconnector.HandleSystemConnector.check_if_username_exists')
-    @mock.patch('pyhandle.handleclient.requests.Session.get')
+    @mock.patch(
+        "pyhandle.handlesystemconnector.HandleSystemConnector.check_if_username_exists"
+    )
+    @mock.patch("pyhandle.handlesystemconnector.requests.Session.get")
     def test_instantiate_with_credentials_config_override(self, getpatch, checkpatch):
         """Test instantiation of client: We pass a config value in the credentials
         and also as an arg in the instantiation. We want the latter to override the
@@ -336,31 +383,72 @@ class RESTHandleClientReadaccessPatchedTestCase(unittest.TestCase):
         checkpatch.return_value = mock_response
 
         # Define the replacement for the patched GET:
-        cont = {"responseCode":1,"handle":"my/testhandle","values":[{"index":111,"type":"TEST1","data":{"format":"string","value":"val1"},"ttl":86400,"timestamp":"2015-09-30T15:08:49Z"},{"index":2222,"type":"TEST2","data":{"format":"string","value":"val2"},"ttl":86400,"timestamp":"2015-09-30T15:08:49Z"},{"index":333,"type":"TEST3","data":{"format":"string","value":"val3"},"ttl":86400,"timestamp":"2015-09-30T15:08:49Z"},{"index":4,"type":"TEST4","data":{"format":"string","value":"val4"},"ttl":86400,"timestamp":"2015-09-30T15:08:49Z"}]}
+        cont = {
+            "responseCode": 1,
+            "handle": "my/testhandle",
+            "values": [
+                {
+                    "index": 111,
+                    "type": "TEST1",
+                    "data": {"format": "string", "value": "val1"},
+                    "ttl": 86400,
+                    "timestamp": "2015-09-30T15:08:49Z",
+                },
+                {
+                    "index": 2222,
+                    "type": "TEST2",
+                    "data": {"format": "string", "value": "val2"},
+                    "ttl": 86400,
+                    "timestamp": "2015-09-30T15:08:49Z",
+                },
+                {
+                    "index": 333,
+                    "type": "TEST3",
+                    "data": {"format": "string", "value": "val3"},
+                    "ttl": 86400,
+                    "timestamp": "2015-09-30T15:08:49Z",
+                },
+                {
+                    "index": 4,
+                    "type": "TEST4",
+                    "data": {"format": "string", "value": "val4"},
+                    "ttl": 86400,
+                    "timestamp": "2015-09-30T15:08:49Z",
+                },
+            ],
+        }
         mock_response = MockResponse(success=True, content=json.dumps(cont))
         getpatch.return_value = mock_response
 
         # Test variables
         # Passing mock credentials, give them the value "foobar", which
         # should be overridden!
-        credentials = MockCredentials(restapi='foobar')
-        self.assertEqual(credentials.get_config()['REST_API_url_extension'],'foobar',
-            'Config: '+str(credentials.get_config()))
+        credentials = MockCredentials(restapi="foobar")
+        self.assertEqual(
+            credentials.get_config()["REST_API_url_extension"],
+            "foobar",
+            "Config: " + str(credentials.get_config()),
+        )
 
         # Run code to be tested
         # Create instance with credentials. It gets the "REST_API_url_extention"
         # from both the credentials and as a param.
         inst = RESTHandleClient.instantiate_with_credentials(
-            credentials,
-            REST_API_url_extension='bar/bar/bar')
+            credentials, REST_API_url_extension="bar/bar/bar"
+        )
         self.assertIsInstance(inst, RESTHandleClient)
 
         # How to know now which one was used?
         # Call a read and check its url! Did it get foobar or barbarbar appended?
-        inst.get_value_from_handle('my/testhandle', 'key')
-        positional_args_passed = getpatch.call_args_list[len(getpatch.call_args_list)-1][0]
+        inst.get_value_from_handle("my/testhandle", "key")
+        positional_args_passed = getpatch.call_args_list[
+            len(getpatch.call_args_list) - 1
+        ][0]
         passed_url = positional_args_passed[0]
 
         # Compare with expected URL:
-        self.assertIn('bar/bar/bar',passed_url,
-            'bar/bar/bar is not specified in the URL '+passed_url)
+        self.assertIn(
+            "bar/bar/bar",
+            passed_url,
+            "bar/bar/bar is not specified in the URL " + passed_url,
+        )
